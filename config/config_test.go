@@ -12,7 +12,7 @@ func init() {
 	deep.CompareUnexportedFields = true
 }
 
-func TestNewConfig(t *testing.T) {
+func TestNewConfigWithOldConfigStyle(t *testing.T) {
 	os.Args = nil
 	os.Setenv("KAFKA_TOPICS", "retryTopic2mins:120,retryTopic5mins:300,deadLetterTopic")
 	os.Setenv("KAFKA_DEAD_LETTER_TOPIC", "deadLetterTopic")
@@ -444,4 +444,135 @@ func TestConfig_FindTopicKey(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestNewConfigWithNewConfigStyle(t *testing.T) {
+	os.Args = nil
+	os.Setenv("KAFKA_SOURCE_TOPICS", "product,payment")
+	os.Setenv("KAFKA_RETRY_INTERVALS", "120,300")
+	os.Setenv("KAFKA_HOST", "broker1,broker2")
+	os.Setenv("KAFKA_GROUP", "kafkaGroup")
+	os.Setenv("TLS_ENABLE", "false")
+	os.Setenv("TLS_VERIFY_PEER", "false")
+
+	expDeadLetterProduct := &KafkaTopic{
+		Name: "deadLetter.kafkaGroup.product",
+		Key:  "product",
+	}
+	expRetry2Product := &KafkaTopic{
+		Name:  "retry2.kafkaGroup.product",
+		Delay: time.Duration(300000000000),
+		Key:   "product",
+		Next:  expDeadLetterProduct,
+	}
+	expRetry1Product := &KafkaTopic{
+		Name:  "retry1.kafkaGroup.product",
+		Delay: time.Duration(120000000000),
+		Key:   "product",
+		Next:  expRetry2Product,
+	}
+	expMainProduct := &KafkaTopic{
+		Name: "product",
+		Key:  "product",
+		Next: expRetry1Product,
+	}
+	expDeadLetterPayment := &KafkaTopic{
+		Name: "deadLetter.kafkaGroup.payment",
+		Key:  "payment",
+	}
+	expRetry2Payment := &KafkaTopic{
+		Name:  "retry2.kafkaGroup.payment",
+		Delay: time.Duration(300000000000),
+		Key:   "payment",
+		Next:  expDeadLetterPayment,
+	}
+	expRetry1Payment := &KafkaTopic{
+		Name:  "retry1.kafkaGroup.payment",
+		Delay: time.Duration(120000000000),
+		Key:   "payment",
+		Next:  expRetry2Payment,
+	}
+	expMainPayment := &KafkaTopic{
+		Name: "payment",
+		Key:  "payment",
+		Next: expRetry1Payment,
+	}
+
+	exp := &Config{
+		Host:             []string{"broker1", "broker2"},
+		Group:            "kafkaGroup",
+		ConsumableTopics: []*KafkaTopic{expMainProduct, expRetry1Product, expRetry2Product, expMainPayment, expRetry1Payment, expRetry2Payment},
+		TopicMap: map[string]*KafkaTopic{
+			"product":                       expMainProduct,
+			"retry1.kafkaGroup.product":     expRetry1Product,
+			"retry2.kafkaGroup.product":     expRetry2Product,
+			"deadLetter.kafkaGroup.product": expDeadLetterProduct,
+			"payment":                       expMainPayment,
+			"retry1.kafkaGroup.payment":     expRetry1Payment,
+			"retry2.kafkaGroup.payment":     expRetry2Payment,
+			"deadLetter.kafkaGroup.payment": expDeadLetterPayment,
+		},
+	}
+
+	c := NewConfig()
+	if diff := deep.Equal(c, exp); diff != nil {
+		t.Error(diff)
+	}
+
+	os.Clearenv()
+}
+
+func TestNewConfigWithNewConfigStyle_WithEmptyRetryInternals(t *testing.T) {
+	os.Args = nil
+	os.Setenv("KAFKA_SOURCE_TOPICS", "product")
+	os.Setenv("KAFKA_HOST", "broker1,broker2")
+	os.Setenv("KAFKA_GROUP", "kafkaGroup")
+	os.Setenv("TLS_ENABLE", "false")
+	os.Setenv("TLS_VERIFY_PEER", "false")
+
+	expDeadLetterProduct := &KafkaTopic{
+		Name: "deadLetter.kafkaGroup.product",
+		Key:  "product",
+	}
+	expMainProduct := &KafkaTopic{
+		Name: "product",
+		Key:  "product",
+		Next: expDeadLetterProduct,
+	}
+
+	exp := &Config{
+		Host:             []string{"broker1", "broker2"},
+		Group:            "kafkaGroup",
+		ConsumableTopics: []*KafkaTopic{expMainProduct},
+		TopicMap: map[string]*KafkaTopic{
+			"product":                       expMainProduct,
+			"deadLetter.kafkaGroup.product": expDeadLetterProduct,
+		},
+	}
+
+	c := NewConfig()
+	if diff := deep.Equal(c, exp); diff != nil {
+		t.Error(diff)
+	}
+
+	os.Clearenv()
+}
+
+func TestNewConfigWithNewConfigStyle_WithConflictingConfigStyles(t *testing.T) {
+	os.Args = nil
+	os.Setenv("KAFKA_SOURCE_TOPICS", "product")
+	os.Setenv("KAFKA_TOPICS", "product")
+	os.Setenv("KAFKA_HOST", "broker1,broker2")
+	os.Setenv("KAFKA_GROUP", "kafkaGroup")
+	os.Setenv("TLS_ENABLE", "false")
+	os.Setenv("TLS_VERIFY_PEER", "false")
+
+	defer func() {
+		os.Clearenv()
+		if r := recover(); r == nil {
+			t.Errorf("expected the test to panic, but it didn't")
+		}
+	}()
+
+	NewConfig()
 }

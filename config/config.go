@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"log"
+	"strconv"
 	"strings"
 	"time"
 
@@ -10,11 +11,13 @@ import (
 )
 
 type args struct {
-	KafkaHost         []string `arg:"--kafka-host,env:KAFKA_HOST,required"`
-	KafkaGroup        string   `arg:"--kafka-group,env:KAFKA_GROUP"`
-	KafkaTopics       []string `arg:"--kafka-topics,env:KAFKA_TOPICS"`
-	TLSEnable         bool     `arg:"--kafka-tls,env:TLS_ENABLE"`
-	TLSSkipVerifyPeer bool     `arg:"--kafka-tls-skip-verify-peer,env:TLS_SKIP_VERIFY_PEER"`
+	KafkaHost           []string `arg:"--kafka-host,env:KAFKA_HOST,required"`
+	KafkaGroup          string   `arg:"--kafka-group,env:KAFKA_GROUP"`
+	KafkaTopics         []string `arg:"--kafka-topics,env:KAFKA_TOPICS"`
+	KafkaSourceTopics   []string `arg:"--kafka-source-topics,env:KAFKA_SOURCE_TOPICS"`
+	KafkaRetryIntervals []int    `arg:"--kafka-retry-intervals,env:KAFKA_RETRY_INTERVALS"`
+	TLSEnable           bool     `arg:"--kafka-tls,env:TLS_ENABLE"`
+	TLSSkipVerifyPeer   bool     `arg:"--kafka-tls-skip-verify-peer,env:TLS_SKIP_VERIFY_PEER"`
 }
 
 type Config struct {
@@ -46,8 +49,16 @@ func NewConfig() *Config {
 		TLSSkipVerifyPeer: a.TLSSkipVerifyPeer,
 	}
 
+	if a.KafkaTopics != nil && a.KafkaSourceTopics != nil {
+		log.Panicf("either use new config style var KAFKA_SOURCE_TOPICS or use old config style var KAFKA_TOPICS to define the topics")
+	}
+
 	if a.KafkaTopics != nil {
 		c.AddTopicsFromStrings("default", a.KafkaTopics)
+	}
+
+	if a.KafkaSourceTopics != nil {
+		c.addTopicsFromSource(a.KafkaGroup, a.KafkaSourceTopics, a.KafkaRetryIntervals)
 	}
 
 	return c
@@ -123,4 +134,48 @@ func (cfg *Config) FindTopicKey(topicName string) string {
 	}
 
 	return topic.Key
+}
+
+func (cfg *Config) addTopicsFromSource(group string, topics []string, retryIntervals []int) {
+	for _, topic := range topics {
+		// main topic
+		derivedTopics := []*KafkaTopic{
+			{
+				Name: topic,
+				Key:  topic,
+			},
+		}
+
+		// retry topics
+		for i, interval := range retryIntervals {
+			d, err := time.ParseDuration(strconv.Itoa(interval) + "s")
+			if err != nil {
+				log.Panicf("could not parse delay in seconds %d in KAFKA_RETRY_INTERVALS env var: %v", interval, topics)
+			}
+			rt := &KafkaTopic{
+				Name:  fmt.Sprintf("retry%d.%s.%s", i+1, group, topic),
+				Delay: d,
+				Key:   topic,
+			}
+
+			if i == 0 {
+				derivedTopics[0].Next = rt
+			} else {
+				derivedTopics[i].Next = rt
+			}
+
+			derivedTopics = append(derivedTopics, rt)
+		}
+
+		// deadLetter topic
+		dt := &KafkaTopic{
+			Name: fmt.Sprintf("deadLetter.%s.%s", group, topic),
+			Key:  topic,
+		}
+		derivedTopics[len(derivedTopics)-1].Next = dt
+
+		derivedTopics = append(derivedTopics, dt)
+
+		cfg.AddTopics(topic, derivedTopics)
+	}
 }
