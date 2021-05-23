@@ -20,7 +20,7 @@ type Collection struct {
 	logger    Logger
 }
 
-func NewCollection(cfg *config.Config, p FailureProducer, handler sarama.ConsumerGroupHandler, scfg *sarama.Config, log Logger) *Collection {
+func NewCollection(cfg *config.Config, p FailureProducer, fch chan Failure, hm HandlerMap, scfg *sarama.Config, log Logger) *Collection {
 	if log == nil {
 		log = nullLogger{}
 	}
@@ -29,7 +29,7 @@ func NewCollection(cfg *config.Config, p FailureProducer, handler sarama.Consume
 		cfg:       cfg,
 		consumers: []sarama.ConsumerGroup{},
 		producer:  p,
-		handler:   handler,
+		handler:   NewConsumer(fch, cfg, hm, log),
 		saramaCfg: scfg,
 		logger:    log,
 	}
@@ -91,7 +91,7 @@ func (cc *Collection) startConsumerGroup(ctx context.Context, wg *sync.WaitGroup
 func (cc *Collection) startConsumer(cl sarama.ConsumerGroup, ctx context.Context, wg *sync.WaitGroup, topic *config.KafkaTopic) {
 	go func() {
 		for err := range cl.Errors() {
-			cc.logger.Errorf("error occurred in consumer group handler: %w", err)
+			cc.logger.Errorf("error occurred in consumer group Handler: %w", err)
 		}
 	}()
 

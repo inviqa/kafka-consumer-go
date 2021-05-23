@@ -15,18 +15,20 @@ import (
 func TestNewCollection(t *testing.T) {
 	cfg := &config.Config{}
 	fp := NewFailureProducer(context.Background(), test.NewMockSyncProducer(), make(chan Failure, 10), nil)
-	cgh := test.NewMockConsumerGroupHandler()
+	fch := make(chan Failure)
 	scfg := config.NewSaramaConfig(false, false)
+	l := nullLogger{}
+	hm := HandlerMap{}
 
 	exp := &Collection{
 		cfg:       cfg,
 		consumers: []sarama.ConsumerGroup{},
 		producer:  fp,
-		handler:   cgh,
+		handler:   NewConsumer(fch, cfg, hm, l),
 		saramaCfg: scfg,
-		logger:    nullLogger{},
+		logger:    l,
 	}
-	col := NewCollection(cfg, fp, cgh, scfg, nil)
+	col := NewCollection(cfg, fp, fch, hm, scfg, nil)
 	if !reflect.DeepEqual(exp, col) {
 		t.Errorf("expected %v, but got %v", exp, col)
 	}

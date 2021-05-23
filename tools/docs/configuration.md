@@ -9,6 +9,34 @@ To use this module you must configure it so that it knows how to connect to the 
 
 ## Kafka topics
 
+There are two ways to configure kafka topics.
+
+### Using automated retry and deadLetter topic generation:
+
+You cann use the `KAFKA_SOURCE_TOPICS` environment variable in combination with `KAFKA_RETRY_INTERVALS` to control which topics to consume from in your cluster.
+This module generates a set of consume topics with retry intervals based on given environment variables.
+
+For example, the following config:
+
+```
+KAFKA_SOURCE_TOPICS=mainTopic
+KAFKA_RETRY_INTERVALS=120
+```
+
+would generate topics:
+
+```
+mainTopic
+retry1.kafkaGroup.mainTopic (delay:120)
+deadLetter.kafkaGroup.mainTopic
+```
+
+You can see it has automatically generated the retry and deadLetter topic names along with the retry delay.
+
+### Manually providing the topic names and delay:
+
+This is the old way of configuring the kafka topics in this module. 
+
 You can use the `KAFKA_TOPICS` environment variable to control which topics to consume from in your cluster.
 
 If only one set of topics needs to be consumed then the following config can be used:
