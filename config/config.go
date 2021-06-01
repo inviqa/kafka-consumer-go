@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/alexflint/go-arg"
@@ -13,7 +12,6 @@ import (
 type args struct {
 	KafkaHost           []string `arg:"--kafka-host,env:KAFKA_HOST,required"`
 	KafkaGroup          string   `arg:"--kafka-group,env:KAFKA_GROUP"`
-	KafkaTopics         []string `arg:"--kafka-topics,env:KAFKA_TOPICS"`
 	KafkaSourceTopics   []string `arg:"--kafka-source-topics,env:KAFKA_SOURCE_TOPICS"`
 	KafkaRetryIntervals []int    `arg:"--kafka-retry-intervals,env:KAFKA_RETRY_INTERVALS"`
 	TLSEnable           bool     `arg:"--kafka-tls,env:TLS_ENABLE"`
@@ -49,56 +47,11 @@ func NewConfig() *Config {
 		TLSSkipVerifyPeer: a.TLSSkipVerifyPeer,
 	}
 
-	if a.KafkaTopics != nil && a.KafkaSourceTopics != nil {
-		log.Panicf("either use new config style var KAFKA_SOURCE_TOPICS or use old config style var KAFKA_TOPICS to define the topics")
-	}
-
-	if a.KafkaTopics != nil {
-		c.AddTopicsFromStrings("default", a.KafkaTopics)
-	}
-
 	if a.KafkaSourceTopics != nil {
 		c.addTopicsFromSource(a.KafkaGroup, a.KafkaSourceTopics, a.KafkaRetryIntervals)
 	}
 
 	return c
-}
-
-func parseTopics(topicKey string, topics []string) []*KafkaTopic {
-	parsedTopics := make([]*KafkaTopic, len(topics))
-	for i, t := range topics {
-		name := t
-		delay := time.Duration(0)
-		if !isDeadLetterTopic(i, topics) {
-			p := strings.Split(t, ":")
-			name = p[0]
-			var err error
-			delay, err = time.ParseDuration(p[1] + "s")
-			if err != nil {
-				log.Panicf("could not parse delay in seconds %s in KAFKA_TOPICS env var: %v", p[1], topics)
-			}
-		}
-
-		topic := &KafkaTopic{
-			Name:  name,
-			Key:   topicKey,
-			Delay: delay,
-		}
-		if i != 0 {
-			parsedTopics[i-1].Next = topic
-		}
-		parsedTopics[i] = topic
-	}
-
-	return parsedTopics
-}
-
-func isDeadLetterTopic(i int, topics []string) bool {
-	return i == (len(topics) - 1)
-}
-
-func (cfg *Config) AddTopicsFromStrings(topicKey string, topics []string) {
-	cfg.AddTopics(topicKey, parseTopics(topicKey, topics))
 }
 
 func (cfg *Config) AddTopics(topicKey string, topics []*KafkaTopic) {
