@@ -145,7 +145,7 @@ func newTestConfig() *config.Config {
 
 	return &config.Config{
 		Group: "kafkaGroup",
-		TopicMap: map[string]*config.KafkaTopic{
+		TopicMap: map[config.TopicKey]*config.KafkaTopic{
 			"product":                       product,
 			"retry.kafkaGroup.product":      retryProduct,
 			"deadLetter.kafkaGroup.product": deadLetterProduct,

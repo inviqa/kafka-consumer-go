@@ -26,7 +26,7 @@ func TestNextTopicNameInChain(t *testing.T) {
 	}
 
 	cfg := &Config{
-		TopicMap: map[string]*KafkaTopic{
+		TopicMap: map[TopicKey]*KafkaTopic{
 			"firstRetry":  exp1,
 			"secondRetry": exp2,
 		},
@@ -52,7 +52,7 @@ func TestNextTopicNameInChain_ErrorIfLast(t *testing.T) {
 	}
 
 	cfg := &Config{
-		TopicMap: map[string]*KafkaTopic{
+		TopicMap: map[TopicKey]*KafkaTopic{
 			"firstRetry":  exp1,
 			"secondRetry": exp2,
 		},
@@ -78,7 +78,7 @@ func TestNextTopicNameInChain_ErrorIfNotFound(t *testing.T) {
 	}
 
 	cfg := &Config{
-		TopicMap: map[string]*KafkaTopic{
+		TopicMap: map[TopicKey]*KafkaTopic{
 			"firstRetry":  exp1,
 			"secondRetry": exp2,
 		},
@@ -95,7 +95,7 @@ func TestConfig_AddTopics(t *testing.T) {
 		Host             []string
 		Group            string
 		ConsumableTopics []*KafkaTopic
-		TopicMap         map[string]*KafkaTopic
+		TopicMap         map[TopicKey]*KafkaTopic
 	}
 	type args struct {
 		topicKey string
@@ -106,7 +106,7 @@ func TestConfig_AddTopics(t *testing.T) {
 		fields              fields
 		args                args
 		expConsumableTopics []*KafkaTopic
-		expTopicMap         map[string]*KafkaTopic
+		expTopicMap         map[TopicKey]*KafkaTopic
 	}{
 		{
 			name: "Add to nil",
@@ -138,7 +138,7 @@ func TestConfig_AddTopics(t *testing.T) {
 					Delay: 1,
 				},
 			},
-			expTopicMap: map[string]*KafkaTopic{
+			expTopicMap: map[TopicKey]*KafkaTopic{
 				"first": {
 					Name:  "first",
 					Delay: 0,
@@ -182,7 +182,7 @@ func TestConfig_AddTopics(t *testing.T) {
 					Delay: 1,
 				},
 			},
-			expTopicMap: map[string]*KafkaTopic{
+			expTopicMap: map[TopicKey]*KafkaTopic{
 				"first": {
 					Name:  "first",
 					Delay: 0,
@@ -205,7 +205,7 @@ func TestConfig_AddTopics(t *testing.T) {
 						Delay: 0,
 					},
 				},
-				TopicMap: map[string]*KafkaTopic{
+				TopicMap: map[TopicKey]*KafkaTopic{
 					"alreadyThere": {
 						Name:  "alreadyThere",
 						Delay: 0,
@@ -241,7 +241,7 @@ func TestConfig_AddTopics(t *testing.T) {
 					Delay: 1,
 				},
 			},
-			expTopicMap: map[string]*KafkaTopic{
+			expTopicMap: map[TopicKey]*KafkaTopic{
 				"alreadyThere": {
 					Name:  "alreadyThere",
 					Delay: 0,
@@ -268,7 +268,7 @@ func TestConfig_AddTopics(t *testing.T) {
 				ConsumableTopics: tt.fields.ConsumableTopics,
 				TopicMap:         tt.fields.TopicMap,
 			}
-			cfg.AddTopics(tt.args.topicKey, tt.args.topics)
+			cfg.AddTopics(tt.args.topics)
 
 			if diff := deep.Equal(cfg.ConsumableTopics, tt.expConsumableTopics); diff != nil {
 				t.Error(diff)
@@ -288,7 +288,7 @@ func TestConfig_FindTopicKey(t *testing.T) {
 		Group            string
 		ClientId         string
 		ConsumableTopics []*KafkaTopic
-		TopicMap         map[string]*KafkaTopic
+		TopicMap         map[TopicKey]*KafkaTopic
 	}
 	type args struct {
 		topicName string
@@ -297,12 +297,12 @@ func TestConfig_FindTopicKey(t *testing.T) {
 		name   string
 		fields fields
 		args   args
-		want   string
+		want   TopicKey
 	}{
 		{
 			name: "Finds topic",
 			fields: fields{
-				TopicMap: map[string]*KafkaTopic{
+				TopicMap: map[TopicKey]*KafkaTopic{
 					"notThisOne": {
 						Name:  "notThisOne",
 						Delay: 0,
@@ -326,7 +326,7 @@ func TestConfig_FindTopicKey(t *testing.T) {
 		{
 			name: "Default if topic not found",
 			fields: fields{
-				TopicMap: map[string]*KafkaTopic{
+				TopicMap: map[TopicKey]*KafkaTopic{
 					"notThisOne": {
 						Name:  "notThisOne",
 						Delay: 0,
@@ -414,7 +414,7 @@ func TestNewConfig(t *testing.T) {
 		Host:             []string{"broker1", "broker2"},
 		Group:            "kafkaGroup",
 		ConsumableTopics: []*KafkaTopic{expMainProduct, expRetry1Product, expRetry2Product, expMainPayment, expRetry1Payment, expRetry2Payment},
-		TopicMap: map[string]*KafkaTopic{
+		TopicMap: map[TopicKey]*KafkaTopic{
 			"product":                       expMainProduct,
 			"retry1.kafkaGroup.product":     expRetry1Product,
 			"retry2.kafkaGroup.product":     expRetry2Product,
@@ -456,7 +456,7 @@ func TestNewConfig_WithEmptyRetryInternals(t *testing.T) {
 		Host:             []string{"broker1", "broker2"},
 		Group:            "kafkaGroup",
 		ConsumableTopics: []*KafkaTopic{expMainProduct},
-		TopicMap: map[string]*KafkaTopic{
+		TopicMap: map[TopicKey]*KafkaTopic{
 			"product":                       expMainProduct,
 			"deadLetter.kafkaGroup.product": expDeadLetterProduct,
 		},

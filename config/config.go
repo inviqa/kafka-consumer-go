@@ -22,7 +22,7 @@ type Config struct {
 	Host              []string
 	Group             string
 	ConsumableTopics  []*KafkaTopic
-	TopicMap          map[string]*KafkaTopic
+	TopicMap          map[TopicKey]*KafkaTopic
 	TLSEnable         bool
 	TLSSkipVerifyPeer bool
 }
@@ -30,9 +30,11 @@ type Config struct {
 type KafkaTopic struct {
 	Name  string
 	Delay time.Duration
-	Key   string
+	Key   TopicKey
 	Next  *KafkaTopic
 }
+
+type TopicKey string
 
 func NewConfig() *Config {
 	a := &args{
@@ -54,19 +56,19 @@ func NewConfig() *Config {
 	return c
 }
 
-func (cfg *Config) AddTopics(topicKey string, topics []*KafkaTopic) {
+func (cfg *Config) AddTopics(topics []*KafkaTopic) {
 	cfg.ConsumableTopics = append(cfg.ConsumableTopics, topics[:len(topics)-1]...)
 
 	if cfg.TopicMap == nil {
-		cfg.TopicMap = map[string]*KafkaTopic{}
+		cfg.TopicMap = map[TopicKey]*KafkaTopic{}
 	}
 	for _, topic := range topics {
-		cfg.TopicMap[topic.Name] = topic
+		cfg.TopicMap[TopicKey(topic.Name)] = topic
 	}
 }
 
 func (cfg *Config) NextTopicNameInChain(currentTopic string) (string, error) {
-	topic, ok := cfg.TopicMap[currentTopic]
+	topic, ok := cfg.TopicMap[TopicKey(currentTopic)]
 	if !ok {
 		return "", fmt.Errorf("topic not found")
 	}
@@ -80,8 +82,8 @@ func (cfg *Config) NextTopicNameInChain(currentTopic string) (string, error) {
 	return next.Name, nil
 }
 
-func (cfg *Config) FindTopicKey(topicName string) string {
-	topic, ok := cfg.TopicMap[topicName]
+func (cfg *Config) FindTopicKey(topicName string) TopicKey {
+	topic, ok := cfg.TopicMap[TopicKey(topicName)]
 	if !ok {
 		return "default"
 	}
@@ -95,7 +97,7 @@ func (cfg *Config) addTopicsFromSource(group string, topics []string, retryInter
 		derivedTopics := []*KafkaTopic{
 			{
 				Name: topic,
-				Key:  topic,
+				Key:  TopicKey(topic),
 			},
 		}
 
@@ -108,7 +110,7 @@ func (cfg *Config) addTopicsFromSource(group string, topics []string, retryInter
 			rt := &KafkaTopic{
 				Name:  fmt.Sprintf("retry%d.%s.%s", i+1, group, topic),
 				Delay: d,
-				Key:   topic,
+				Key:   TopicKey(topic),
 			}
 
 			if i == 0 {
@@ -123,12 +125,12 @@ func (cfg *Config) addTopicsFromSource(group string, topics []string, retryInter
 		// deadLetter topic
 		dt := &KafkaTopic{
 			Name: fmt.Sprintf("deadLetter.%s.%s", group, topic),
-			Key:  topic,
+			Key:  TopicKey(topic),
 		}
 		derivedTopics[len(derivedTopics)-1].Next = dt
 
 		derivedTopics = append(derivedTopics, dt)
 
-		cfg.AddTopics(topic, derivedTopics)
+		cfg.AddTopics(derivedTopics)
 	}
 }
