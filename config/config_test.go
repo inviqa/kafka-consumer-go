@@ -12,51 +12,6 @@ func init() {
 	deep.CompareUnexportedFields = true
 }
 
-func TestNewConfig(t *testing.T) {
-	os.Args = nil
-	os.Setenv("KAFKA_TOPICS", "retryTopic2mins:120,retryTopic5mins:300,deadLetterTopic")
-	os.Setenv("KAFKA_DEAD_LETTER_TOPIC", "deadLetterTopic")
-	os.Setenv("KAFKA_HOST", "broker1,broker2")
-	os.Setenv("KAFKA_GROUP", "kafkaGroup")
-	os.Setenv("TLS_ENABLE", "false")
-	os.Setenv("TLS_VERIFY_PEER", "false")
-
-	exp3 := &KafkaTopic{
-		Name: "deadLetterTopic",
-		Key:  "default",
-	}
-	exp2 := &KafkaTopic{
-		Name:  "retryTopic5mins",
-		Delay: time.Duration(300000000000),
-		Key:   "default",
-		Next:  exp3,
-	}
-	exp1 := &KafkaTopic{
-		Name:  "retryTopic2mins",
-		Delay: time.Duration(120000000000),
-		Key:   "default",
-		Next:  exp2,
-	}
-
-	exp := &Config{
-		Host:             []string{"broker1", "broker2"},
-		Group:            "kafkaGroup",
-		ConsumableTopics: []*KafkaTopic{exp1, exp2},
-		TopicMap: map[string]*KafkaTopic{
-			"retryTopic2mins": exp1,
-			"retryTopic5mins": exp2,
-			"deadLetterTopic": exp3,
-		},
-	}
-
-	c := NewConfig()
-	if diff := deep.Equal(c, exp); diff != nil {
-		t.Error(diff)
-	}
-
-	os.Clearenv()
-}
-
 func TestNextTopicNameInChain(t *testing.T) {
 	exp2 := &KafkaTopic{
 		Name:  "secondRetry",
@@ -71,7 +26,7 @@ func TestNextTopicNameInChain(t *testing.T) {
 	}
 
 	cfg := &Config{
-		TopicMap: map[string]*KafkaTopic{
+		TopicMap: map[TopicKey]*KafkaTopic{
 			"firstRetry":  exp1,
 			"secondRetry": exp2,
 		},
@@ -97,7 +52,7 @@ func TestNextTopicNameInChain_ErrorIfLast(t *testing.T) {
 	}
 
 	cfg := &Config{
-		TopicMap: map[string]*KafkaTopic{
+		TopicMap: map[TopicKey]*KafkaTopic{
 			"firstRetry":  exp1,
 			"secondRetry": exp2,
 		},
@@ -123,7 +78,7 @@ func TestNextTopicNameInChain_ErrorIfNotFound(t *testing.T) {
 	}
 
 	cfg := &Config{
-		TopicMap: map[string]*KafkaTopic{
+		TopicMap: map[TopicKey]*KafkaTopic{
 			"firstRetry":  exp1,
 			"secondRetry": exp2,
 		},
@@ -135,55 +90,12 @@ func TestNextTopicNameInChain_ErrorIfNotFound(t *testing.T) {
 	}
 }
 
-func TestParseTopics(t *testing.T) {
-	exp3 := &KafkaTopic{
-		Name: "deadLetter",
-		Key:  "default",
-	}
-	exp2 := &KafkaTopic{
-		Name:  "second",
-		Delay: 60000000000,
-		Key:   "default",
-		Next:  exp3,
-	}
-	exp1 := &KafkaTopic{
-		Name:  "first",
-		Delay: 0,
-		Key:   "default",
-		Next:  exp2,
-	}
-
-	type args struct {
-		key    string
-		topics []string
-	}
-	tests := []struct {
-		name string
-		args args
-		want []*KafkaTopic
-	}{
-		{
-			name: "parse topics from strings",
-			args: args{key: "default", topics: []string{"first:0", "second:60", "deadLetter"}},
-			want: []*KafkaTopic{exp1, exp2, exp3},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := parseTopics(tt.args.key, tt.args.topics)
-			if diff := deep.Equal(got, tt.want); diff != nil {
-				t.Error(diff)
-			}
-		})
-	}
-}
-
 func TestConfig_AddTopics(t *testing.T) {
 	type fields struct {
 		Host             []string
 		Group            string
 		ConsumableTopics []*KafkaTopic
-		TopicMap         map[string]*KafkaTopic
+		TopicMap         map[TopicKey]*KafkaTopic
 	}
 	type args struct {
 		topicKey string
@@ -194,7 +106,7 @@ func TestConfig_AddTopics(t *testing.T) {
 		fields              fields
 		args                args
 		expConsumableTopics []*KafkaTopic
-		expTopicMap         map[string]*KafkaTopic
+		expTopicMap         map[TopicKey]*KafkaTopic
 	}{
 		{
 			name: "Add to nil",
@@ -226,7 +138,7 @@ func TestConfig_AddTopics(t *testing.T) {
 					Delay: 1,
 				},
 			},
-			expTopicMap: map[string]*KafkaTopic{
+			expTopicMap: map[TopicKey]*KafkaTopic{
 				"first": {
 					Name:  "first",
 					Delay: 0,
@@ -270,7 +182,7 @@ func TestConfig_AddTopics(t *testing.T) {
 					Delay: 1,
 				},
 			},
-			expTopicMap: map[string]*KafkaTopic{
+			expTopicMap: map[TopicKey]*KafkaTopic{
 				"first": {
 					Name:  "first",
 					Delay: 0,
@@ -293,7 +205,7 @@ func TestConfig_AddTopics(t *testing.T) {
 						Delay: 0,
 					},
 				},
-				TopicMap: map[string]*KafkaTopic{
+				TopicMap: map[TopicKey]*KafkaTopic{
 					"alreadyThere": {
 						Name:  "alreadyThere",
 						Delay: 0,
@@ -329,7 +241,7 @@ func TestConfig_AddTopics(t *testing.T) {
 					Delay: 1,
 				},
 			},
-			expTopicMap: map[string]*KafkaTopic{
+			expTopicMap: map[TopicKey]*KafkaTopic{
 				"alreadyThere": {
 					Name:  "alreadyThere",
 					Delay: 0,
@@ -356,7 +268,7 @@ func TestConfig_AddTopics(t *testing.T) {
 				ConsumableTopics: tt.fields.ConsumableTopics,
 				TopicMap:         tt.fields.TopicMap,
 			}
-			cfg.AddTopics(tt.args.topicKey, tt.args.topics)
+			cfg.AddTopics(tt.args.topics)
 
 			if diff := deep.Equal(cfg.ConsumableTopics, tt.expConsumableTopics); diff != nil {
 				t.Error(diff)
@@ -376,7 +288,7 @@ func TestConfig_FindTopicKey(t *testing.T) {
 		Group            string
 		ClientId         string
 		ConsumableTopics []*KafkaTopic
-		TopicMap         map[string]*KafkaTopic
+		TopicMap         map[TopicKey]*KafkaTopic
 	}
 	type args struct {
 		topicName string
@@ -385,12 +297,12 @@ func TestConfig_FindTopicKey(t *testing.T) {
 		name   string
 		fields fields
 		args   args
-		want   string
+		want   TopicKey
 	}{
 		{
 			name: "Finds topic",
 			fields: fields{
-				TopicMap: map[string]*KafkaTopic{
+				TopicMap: map[TopicKey]*KafkaTopic{
 					"notThisOne": {
 						Name:  "notThisOne",
 						Delay: 0,
@@ -414,7 +326,7 @@ func TestConfig_FindTopicKey(t *testing.T) {
 		{
 			name: "Default if topic not found",
 			fields: fields{
-				TopicMap: map[string]*KafkaTopic{
+				TopicMap: map[TopicKey]*KafkaTopic{
 					"notThisOne": {
 						Name:  "notThisOne",
 						Delay: 0,
@@ -444,4 +356,116 @@ func TestConfig_FindTopicKey(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestNewConfig(t *testing.T) {
+	os.Args = nil
+	os.Setenv("KAFKA_SOURCE_TOPICS", "product,payment")
+	os.Setenv("KAFKA_RETRY_INTERVALS", "120,300")
+	os.Setenv("KAFKA_HOST", "broker1,broker2")
+	os.Setenv("KAFKA_GROUP", "kafkaGroup")
+	os.Setenv("TLS_ENABLE", "false")
+	os.Setenv("TLS_VERIFY_PEER", "false")
+
+	expDeadLetterProduct := &KafkaTopic{
+		Name: "deadLetter.kafkaGroup.product",
+		Key:  "product",
+	}
+	expRetry2Product := &KafkaTopic{
+		Name:  "retry2.kafkaGroup.product",
+		Delay: time.Duration(300000000000),
+		Key:   "product",
+		Next:  expDeadLetterProduct,
+	}
+	expRetry1Product := &KafkaTopic{
+		Name:  "retry1.kafkaGroup.product",
+		Delay: time.Duration(120000000000),
+		Key:   "product",
+		Next:  expRetry2Product,
+	}
+	expMainProduct := &KafkaTopic{
+		Name: "product",
+		Key:  "product",
+		Next: expRetry1Product,
+	}
+	expDeadLetterPayment := &KafkaTopic{
+		Name: "deadLetter.kafkaGroup.payment",
+		Key:  "payment",
+	}
+	expRetry2Payment := &KafkaTopic{
+		Name:  "retry2.kafkaGroup.payment",
+		Delay: time.Duration(300000000000),
+		Key:   "payment",
+		Next:  expDeadLetterPayment,
+	}
+	expRetry1Payment := &KafkaTopic{
+		Name:  "retry1.kafkaGroup.payment",
+		Delay: time.Duration(120000000000),
+		Key:   "payment",
+		Next:  expRetry2Payment,
+	}
+	expMainPayment := &KafkaTopic{
+		Name: "payment",
+		Key:  "payment",
+		Next: expRetry1Payment,
+	}
+
+	exp := &Config{
+		Host:             []string{"broker1", "broker2"},
+		Group:            "kafkaGroup",
+		ConsumableTopics: []*KafkaTopic{expMainProduct, expRetry1Product, expRetry2Product, expMainPayment, expRetry1Payment, expRetry2Payment},
+		TopicMap: map[TopicKey]*KafkaTopic{
+			"product":                       expMainProduct,
+			"retry1.kafkaGroup.product":     expRetry1Product,
+			"retry2.kafkaGroup.product":     expRetry2Product,
+			"deadLetter.kafkaGroup.product": expDeadLetterProduct,
+			"payment":                       expMainPayment,
+			"retry1.kafkaGroup.payment":     expRetry1Payment,
+			"retry2.kafkaGroup.payment":     expRetry2Payment,
+			"deadLetter.kafkaGroup.payment": expDeadLetterPayment,
+		},
+	}
+
+	c := NewConfig()
+	if diff := deep.Equal(c, exp); diff != nil {
+		t.Error(diff)
+	}
+
+	os.Clearenv()
+}
+
+func TestNewConfig_WithEmptyRetryInternals(t *testing.T) {
+	os.Args = nil
+	os.Setenv("KAFKA_SOURCE_TOPICS", "product")
+	os.Setenv("KAFKA_HOST", "broker1,broker2")
+	os.Setenv("KAFKA_GROUP", "kafkaGroup")
+	os.Setenv("TLS_ENABLE", "false")
+	os.Setenv("TLS_VERIFY_PEER", "false")
+
+	expDeadLetterProduct := &KafkaTopic{
+		Name: "deadLetter.kafkaGroup.product",
+		Key:  "product",
+	}
+	expMainProduct := &KafkaTopic{
+		Name: "product",
+		Key:  "product",
+		Next: expDeadLetterProduct,
+	}
+
+	exp := &Config{
+		Host:             []string{"broker1", "broker2"},
+		Group:            "kafkaGroup",
+		ConsumableTopics: []*KafkaTopic{expMainProduct},
+		TopicMap: map[TopicKey]*KafkaTopic{
+			"product":                       expMainProduct,
+			"deadLetter.kafkaGroup.product": expDeadLetterProduct,
+		},
+	}
+
+	c := NewConfig()
+	if diff := deep.Equal(c, exp); diff != nil {
+		t.Error(diff)
+	}
+
+	os.Clearenv()
 }

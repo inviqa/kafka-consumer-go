@@ -1,36 +1,32 @@
 ### Multiple sets of topics
 
-A consumer can also listen to multiple main topics. This can be done by using an environment variable for each set of
-topics and parsing it using this module.
+A consumer can also listen to multiple main topics. This can be done by passing comma separated list of main topics to the `KAFKA_SOURCE_TOPICS` variable.
+
+For example, the following config:
+```
+KAFKA_SOURCE_TOPICS=price,product
+KAFKA_RETRY_INTERVALS=120
+```
+would generate topics:
+```
+price
+retry1.kafkaGroup.price (delay:120)
+deadLetter.kafkaGroup.price
+
+product
+retry1.kafkaGroup.product (delay:120)
+deadLetter.kafkaGroup.product
+```
+
+Then, you can consume it in consumer as follows:
 
 ```go
 package config
 
-import (
-	okconf "github.com/inviqa/kafka-consumer-go/config"
-)
-
 const (
-	PageTopicsKey    = "price"
+	PriceTopicsKey    = "price"
 	ProductTopicsKey = "product"
 )
-
-type Config struct {
-	Kafka *okconf.Config
-	// other config specific to the service
-}
-
-func NewConfig() *Config {
-	c := &Config{
-		Kafka: okconf.NewConfig(),
-		// other config
-	}
-
-	c.Kafka.AddTopicsFromStrings(PageTopicsKey, a.KafkaPriceTopics)
-	c.Kafka.AddTopicsFromStrings(ProductTopicsKey, a.KafkaProductTopics)
-
-	return c
-}
 ```
 
 The consumer can look up the topic key for the message topic when consuming it in order to decide how to consume it:
