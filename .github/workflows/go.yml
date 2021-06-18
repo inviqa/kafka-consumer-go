@@ -18,8 +18,7 @@ jobs:
       with:
         go-version: ${{ matrix.go }}
 
-    - run: go install golang.org/x/tools/cmd/goimports
-    - run: goimports -w .
+    - run: go run golang.org/x/tools/cmd/goimports -w .
     - run: go mod tidy
     - name: Check goimports and go mod tidy
       run: |
