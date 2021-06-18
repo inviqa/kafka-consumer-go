@@ -46,7 +46,7 @@ jobs:
     strategy:
       matrix:
         go: [ '1.16' ]
-    name: run tests @ ${{ matrix.go }}
+    name: run static analysis @ ${{ matrix.go }}
     steps:
       - uses: actions/checkout@v2
       - name: Setup Go
