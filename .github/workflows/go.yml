@@ -41,20 +41,12 @@ jobs:
 
     - run: go test -v ./...
 
-  analyse:
+  security:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        go: [ '1.16' ]
-    name: run static analysis @ ${{ matrix.go }}
+    name: run gosec
     steps:
       - uses: actions/checkout@v2
-      - name: Setup Go
-        uses: actions/setup-go@v2
-        with:
-          go-version: ${{ matrix.go }}
 
-      - run: go vet ./...
       - name: Gosec Security Scanner
         uses: securego/gosec@master
         with:
