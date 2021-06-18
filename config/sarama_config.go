@@ -21,6 +21,7 @@ func NewSaramaConfig(tlsEnable bool, tlsSkipVerify bool) *sarama.Config {
 
 	if tlsEnable {
 		cfg.Net.TLS.Enable = true
+		// #nosec G402
 		cfg.Net.TLS.Config = &tls.Config{InsecureSkipVerify: tlsSkipVerify}
 	}
 
