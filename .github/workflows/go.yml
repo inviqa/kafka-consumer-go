@@ -40,8 +40,25 @@ jobs:
         go-version: ${{ matrix.go }}
 
     - run: go test -v ./...
-    - name: Gosec Security Scanner
-      uses: securego/gosec@master
+
+  analyse:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go: [ '1.16' ]
+    name: run tests @ ${{ matrix.go }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ matrix.go }}
+
+      - run: go vet ./...
+      - name: Gosec Security Scanner
+        uses: securego/gosec@master
+        with:
+          args: ./...
 
   build:
     runs-on: ubuntu-latest
