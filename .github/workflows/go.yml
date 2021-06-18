@@ -1,5 +1,3 @@
-name: Go
-
 on:
   push:
     branches: [ master ]
@@ -7,19 +5,64 @@ on:
     branches: [ master ]
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go: ['1.16']
+    name: run lint @ ${{ matrix.go }}
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: ${{ matrix.go }}
+
+    - run: go run golang.org/x/tools/cmd/goimports -w .
+    - run: go mod tidy
+    - name: Check goimports and go mod tidy
+      run: |
+        if [ -n "$(git status --porcelain)" ]; then
+          exit 1
+        fi
+
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go: [ '1.16' ]
+    name: run tests @ ${{ matrix.go }}
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: ${{ matrix.go }}
+
+    - run: go test -v ./...
+
+  security:
+    runs-on: ubuntu-latest
+    name: run gosec
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Gosec Security Scanner
+        uses: securego/gosec@master
+        with:
+          args: ./...
 
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go: [ '1.16' ]
+    name: run build @ ${{ matrix.go }}
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
+      - name: Setup Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ matrix.go }}
 
-    - name: Set up Go
-      uses: actions/setup-go@v2
-      with:
-        go-version: 1.16
-
-    - name: Build
-      run: go build -v ./...
-
-    - name: Test
-      run: go test -v ./...
+      - run: go build -v ./...
