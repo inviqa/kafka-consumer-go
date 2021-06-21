@@ -1,7 +1,6 @@
-# Multiple sets of topics
+# Using multiple main topics
 
-A consumer can also listen to multiple main topics. This can be done by passing a comma separated list of main topics to
-the `KAFKA_SOURCE_TOPICS` variable.
+A consumer can also consume from multiple main topics. This can be done by passing a comma separated list of main topics to the `KAFKA_SOURCE_TOPICS` variable.
 
 For example, the following config:
 
