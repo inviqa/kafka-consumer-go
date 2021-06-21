@@ -26,7 +26,7 @@ func TestNewConsumer(t *testing.T) {
 	hs := HandlerMap{
 		"product": func(msg *sarama.ConsumerMessage) error { return nil },
 	}
-	l := nullLogger{}
+	l := NullLogger{}
 
 	exp := &consumer{
 		failureCh: fch,
@@ -47,7 +47,7 @@ func TestConsumer_ConsumeClaim(t *testing.T) {
 	hs := HandlerMap{
 		"product": handler.handle,
 	}
-	l := nullLogger{}
+	l := NullLogger{}
 
 	con := NewConsumer(fch, cfg, hs, l)
 
@@ -84,7 +84,7 @@ func TestConsumer_ConsumeClaim_WithFailure(t *testing.T) {
 	hs := HandlerMap{
 		"product": handler.handle,
 	}
-	l := nullLogger{}
+	l := NullLogger{}
 
 	con := NewConsumer(fch, cfg, hs, l)
 

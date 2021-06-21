@@ -17,7 +17,7 @@ func TestNewCollection(t *testing.T) {
 	fp := NewFailureProducer(context.Background(), test.NewMockSyncProducer(), make(chan Failure, 10), nil)
 	fch := make(chan Failure)
 	scfg := config.NewSaramaConfig(false, false)
-	l := nullLogger{}
+	l := NullLogger{}
 	hm := HandlerMap{}
 
 	exp := &Collection{
@@ -51,7 +51,7 @@ func TestCollection_CloseWithError(t *testing.T) {
 	mcg2 := test.NewMockConsumerGroup()
 	mcg1.ErrorOnClose()
 
-	col := &Collection{consumers: []sarama.ConsumerGroup{mcg1, mcg2}, logger: nullLogger{}}
+	col := &Collection{consumers: []sarama.ConsumerGroup{mcg1, mcg2}, logger: NullLogger{}}
 	col.Close()
 
 	if !mcg2.WasClosed() || len(col.consumers) > 0 {

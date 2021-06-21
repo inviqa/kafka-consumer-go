@@ -26,7 +26,7 @@ func NewFailureProducerWithDefaults(cfg *config.Config, ctx context.Context, fch
 	var err error
 
 	if log == nil {
-		log = nullLogger{}
+		log = NullLogger{}
 	}
 
 	for i := 0; i < maxConnectionAttempts; i++ {
@@ -51,7 +51,7 @@ func NewFailureProducerWithDefaults(cfg *config.Config, ctx context.Context, fch
 
 func NewFailureProducer(ctx context.Context, p sarama.SyncProducer, fch <-chan Failure, log Logger) FailureProducer {
 	if log == nil {
-		log = nullLogger{}
+		log = NullLogger{}
 	}
 
 	return &failureProducer{

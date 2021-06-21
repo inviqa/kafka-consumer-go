@@ -22,7 +22,7 @@ type Collection struct {
 
 func NewCollection(cfg *config.Config, p FailureProducer, fch chan Failure, hm HandlerMap, scfg *sarama.Config, log Logger) *Collection {
 	if log == nil {
-		log = nullLogger{}
+		log = NullLogger{}
 	}
 
 	return &Collection{
