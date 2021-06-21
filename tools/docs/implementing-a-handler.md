@@ -75,11 +75,16 @@ func main() {
 	// create your handler map, where the keys are the topic names, and the values are the corresponding handlers
 	handlerMap := okc.HandlerMap{
 		"product": ph.Handle,
-    }
-    
-    // start the consumer, which is blocking and will wait until context cancellation
+	}
+
+	cfg, err := okconf.NewConfig()
+	if err != nil {
+		log.WithError(err).Panic("unable to create consumer configuration")
+	}
+	
+	// start the consumer, which is blocking and will wait until context cancellation
 	fch := make(chan okc.Failure)
-	okc.Start(okconf.NewConfig(), ctx, fch, handlerMap, logger)
+	okc.Start(cfg, ctx, fch, handlerMap, logger)
 }
 ```
 

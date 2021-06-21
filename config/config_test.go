@@ -426,7 +426,11 @@ func TestNewConfig(t *testing.T) {
 		},
 	}
 
-	c := NewConfig()
+	c, err := NewConfig()
+	if err != nil {
+		t.Fatalf("unexpected error: %s", err)
+	}
+
 	if diff := deep.Equal(c, exp); diff != nil {
 		t.Error(diff)
 	}
@@ -462,10 +466,36 @@ func TestNewConfig_WithEmptyRetryInternals(t *testing.T) {
 		},
 	}
 
-	c := NewConfig()
+	c, err := NewConfig()
+	if err != nil {
+		t.Fatalf("unexpected error: %s", err)
+	}
 	if diff := deep.Equal(c, exp); diff != nil {
 		t.Error(diff)
 	}
 
 	os.Clearenv()
+}
+
+func TestNewConfig_WithError(t *testing.T) {
+	defer func() {
+		os.Clearenv()
+	}()
+
+	t.Run("missing KAFKA_HOST", func(t *testing.T) {
+		_, err := NewConfig()
+		if err == nil {
+			t.Error("expected an error but got nil")
+		}
+	})
+
+	t.Run("invalid KAFKA_RETRY_INTERVALS", func(t *testing.T) {
+		os.Setenv("KAFKA_HOST", "kafka:9092")
+		os.Setenv("KAFKA_RETRY_INTERVALS", "58493058409358439058349058903485309")
+
+		_, err := NewConfig()
+		if err == nil {
+			t.Error("expected an error but got nil")
+		}
+	})
 }
