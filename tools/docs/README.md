@@ -31,6 +31,7 @@ See [configuration].
 ## Advanced topics
 
 * [Using multiple main topics](advanced/using-multiple-main-topics.md)
+* [Customising the topic naming](advanced/custom-topic-naming.md)
 
 [configuration]: /tools/docs/configuration.md
 [implementing a handler]: /tools/docs/implementing-a-handler.md
