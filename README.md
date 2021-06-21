@@ -18,6 +18,10 @@ See the [docs](/tools/docs) on how to use this Go module.
 
 This project maintains a changelog, which you can find [here](/CHANGELOG.md).
 
+## Upgrading
+
+To check upgrade paths between versions, you can use the [upgrade](/UPGRADE.md) doc.
+
 ## Running tests
 
 This module ships with unit tests. You can run these with `go test ./...`.
