@@ -14,9 +14,17 @@ go get github.com/inviqa/kafka-consumer-go
 
 See the [docs](/tools/docs) on how to use this Go module.
 
+## Changelog
+
+This project maintains a changelog, which you can find [here](/CHANGELOG.md).
+
 ## Running tests
 
 This module ships with unit tests. You can run these with `go test ./...`.
+
+# Performing a release
+
+See the [releasing docs](/tools/docs/releasing.md) for info.
 
 # License
 
