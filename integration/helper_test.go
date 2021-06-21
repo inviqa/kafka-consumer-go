@@ -52,7 +52,7 @@ func createConfig() *config.Config {
 	os.Setenv("KAFKA_SOURCE_TOPICS", "mainTopic")
 	os.Setenv("KAFKA_RETRY_INTERVALS", "1")
 
-	c := config.NewConfig()
+	c, _ := config.NewConfig()
 
 	if os.Getenv("GO_TEST_MODE") == testModeDocker {
 		c.Host = []string{"kafka:29092"}
