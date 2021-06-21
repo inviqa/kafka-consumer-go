@@ -1,11 +1,36 @@
-## Usage
+# Documentation
 
-It is expected that the topics contain at least the initial topic to consume from, and a dead-letter topic for any failed messages. Additional retry topics can also be configured inbetween the initial and dead-letter topics. Each topic in the chain, aside from the dead-letter topic, has a configurable retry delay.
+## How it works
+
+This module takes care of the consuming of messages from a Kafka cluster, and delegates the processing of those messages to a topic handler function that you provide in your implementation.
+
+If your topic handler function returns an error, e.g. if an upstream service is down and you cannot process the message because of it, then this module will automatically forward on the failed message to a retry topic to be picked up later.
+
+In its simplest configuration, there is a single main topic where messages are consumed from, and a chain of retry topics that messages move through if they error during processing, i.e. the topic handler function returns an error value.
+
+An example topic chain would be something like
+
+`event.product` -> `retry1.groupName.product` -> `deadLetter.groupName.product`
+
+The topic chain is determined by your [configuration].
+
+## Getting started
+
+This module should be imported into your Go service using:
+
+    go get github.com/inviqa/kafka-consumer-go
+
+You will now need to configure the consumer, see [configuration] for more on this.
+
+The next step will be to start to write your topic handlers. See [implementing a handler] for information on how to do this.
 
 ## Configuration
 
-See [configuration](/tools/docs/configuration.md) for more on how to configure this module.
+See [configuration].
 
-## Implementing in your service
+## Advanced topics
 
-See [implementing a handler](/tools/docs/implementing-a-handler.md) for information on how to implement a consumer handler with this module.
+* [Using multiple main topics](advanced/using-multiple-main-topics.md)
+
+[configuration]: /tools/docs/configuration.md
+[implementing a handler]: /tools/docs/implementing-a-handler.md
