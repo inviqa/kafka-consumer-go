@@ -28,8 +28,7 @@ would generate a topic chain of
 
 You can see it has automatically generated the retry and deadLetter topic names along with the retry delay.
 
->_NOTE: You do not need to have any retry topics in the chain, but it is advisable in most circumstances. 
-If you don't set the `KAFKA_RETRY_INTERVALS` variable, then it would directly send the failures to the deadLetter topic._
+>_NOTE: You do not need to have any retry topics in the chain, but it is advisable in most circumstances. If you don't set the `KAFKA_RETRY_INTERVALS` variable, then it would directly send the failures to the deadLetter topic._
 
 ### Flow of event processing:
 
