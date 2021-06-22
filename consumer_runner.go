@@ -9,10 +9,14 @@ import (
 )
 
 func Start(kcfg *config.Config, ctx context.Context, fch chan Failure, hs HandlerMap, l Logger) {
+	if l == nil {
+		l = NullLogger{}
+	}
+
 	wg := &sync.WaitGroup{}
 
 	// create a failure producer
-	producer, err := NewFailureProducerWithDefaults(kcfg, ctx, fch, l)
+	producer, err := NewFailureProducerWithDefaults(kcfg, fch, l)
 	if err != nil {
 		log.Panic("could not start Kafka failure producer")
 	}

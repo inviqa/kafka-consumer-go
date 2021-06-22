@@ -32,6 +32,30 @@ jobs:
       matrix:
         go: [ '1.16' ]
     name: run tests @ ${{ matrix.go }}
+    services:
+      zookeeper:
+        image: wurstmeister/zookeeper
+        env:
+          SERVICE_NAME: zookeeper
+          CONTAINER_NAME: zk-node-1
+          ZOOKEEPER_SERVER_IDS: zk-node-1:1
+          ZOOKEEPER_INSTANCES: zk-node-1
+          ZOOKEEPER_ZK_NODE_1_HOST: zookeeper
+          ZOOKEEPER_ZK_NODE_1_CLIENT_PORT: 2181
+          ZOOKEEPER_ZK_NODE_1_PEER_PORT: 2888
+          ZOOKEEPER_ZK_NODE_1_LEADER_ELECTION_PORT: 3888
+        ports:
+          - 2181:2181
+      kafka:
+        image: wurstmeister/kafka:2.12-2.4.1
+        env:
+          KAFKA_LISTENERS: LISTENER_INT://kafka:29092,LISTENER_EXT://kafka:9092
+          KAFKA_ADVERTISED_LISTENERS: LISTENER_INT://kafka:29092,LISTENER_EXT://localhost:9092
+          KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: LISTENER_INT:PLAINTEXT,LISTENER_EXT:PLAINTEXT
+          KAFKA_INTER_BROKER_LISTENER_NAME: LISTENER_INT
+          KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+        ports:
+          - 9092:9092
     steps:
     - uses: actions/checkout@v2
     - name: Setup Go
@@ -40,6 +64,7 @@ jobs:
         go-version: ${{ matrix.go }}
 
     - run: go test -v ./...
+    - run: sleep 5 && LOG_LEVEL=error go test -count=1 -v --tags=integration ./integration/
 
   security:
     runs-on: ubuntu-latest

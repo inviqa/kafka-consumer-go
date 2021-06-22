@@ -11,22 +11,21 @@ import (
 )
 
 type FailureProducer interface {
-	ListenForFailures(wg *sync.WaitGroup)
+	ListenForFailures(ctx context.Context, wg *sync.WaitGroup)
 }
 
 type failureProducer struct {
-	ctx      context.Context
 	producer sarama.SyncProducer
 	fch      <-chan Failure
 	logger   Logger
 }
 
-func NewFailureProducerWithDefaults(cfg *config.Config, ctx context.Context, fch <-chan Failure, log Logger) (FailureProducer, error) {
+func NewFailureProducerWithDefaults(cfg *config.Config, fch <-chan Failure, log Logger) (FailureProducer, error) {
 	var sp sarama.SyncProducer
 	var err error
 
 	if log == nil {
-		log = nullLogger{}
+		log = NullLogger{}
 	}
 
 	for i := 0; i < maxConnectionAttempts; i++ {
@@ -46,23 +45,22 @@ func NewFailureProducerWithDefaults(cfg *config.Config, ctx context.Context, fch
 		time.Sleep(connectionInterval)
 	}
 
-	return NewFailureProducer(ctx, sp, fch, log), nil
+	return NewFailureProducer(sp, fch, log), nil
 }
 
-func NewFailureProducer(ctx context.Context, p sarama.SyncProducer, fch <-chan Failure, log Logger) FailureProducer {
+func NewFailureProducer(p sarama.SyncProducer, fch <-chan Failure, log Logger) FailureProducer {
 	if log == nil {
-		log = nullLogger{}
+		log = NullLogger{}
 	}
 
 	return &failureProducer{
-		ctx:      ctx,
 		producer: p,
 		fch:      fch,
 		logger:   log,
 	}
 }
 
-func (p failureProducer) ListenForFailures(wg *sync.WaitGroup) {
+func (p failureProducer) ListenForFailures(ctx context.Context, wg *sync.WaitGroup) {
 	p.logger.Info("starting Kafka retry producer")
 
 	wg.Add(1)
@@ -78,9 +76,7 @@ func (p failureProducer) ListenForFailures(wg *sync.WaitGroup) {
 			select {
 			case f := <-p.fch:
 				p.publishFailure(f)
-			}
-
-			if p.ctx.Err() != nil {
+			case <-ctx.Done():
 				return
 			}
 		}
