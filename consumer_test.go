@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/inviqa/kafka-consumer-go/test"
+	"github.com/inviqa/kafka-consumer-go/test/saramatest"
 
 	"github.com/go-test/deep"
 
@@ -51,8 +51,8 @@ func TestConsumer_ConsumeClaim(t *testing.T) {
 
 	con := NewConsumer(fch, cfg, hs, l)
 
-	gs := test.NewMockConsumerGroupSession()
-	gc := test.NewMockConsumerGroupClaim()
+	gs := saramatest.NewMockConsumerGroupSession()
+	gc := saramatest.NewMockConsumerGroupClaim()
 
 	msg1 := &sarama.ConsumerMessage{Value: []byte(`{"type":"productCreated"}`), Topic: "product"}
 	gc.PublishMessage(msg1)
@@ -88,8 +88,8 @@ func TestConsumer_ConsumeClaim_WithFailure(t *testing.T) {
 
 	con := NewConsumer(fch, cfg, hs, l)
 
-	gs := test.NewMockConsumerGroupSession()
-	gc := test.NewMockConsumerGroupClaim()
+	gs := saramatest.NewMockConsumerGroupSession()
+	gc := saramatest.NewMockConsumerGroupClaim()
 
 	msg1 := &sarama.ConsumerMessage{Value: []byte(`{"type":"productCreated"}`), Topic: "product"}
 	gc.PublishMessage(msg1)

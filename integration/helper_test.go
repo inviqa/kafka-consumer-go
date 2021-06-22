@@ -74,5 +74,5 @@ func publishMessageToKafka(b []byte, topic string) {
 }
 
 func consumeFromKafkaUntil(done func(chan<- bool), handler consumer.Handler) {
-	test.ConsumeFromKafkaUntil(cfg, consumer.HandlerMap{"mainTopic": handler}, time.Second * 10, done)
+	test.ConsumeFromKafkaUntil(cfg, consumer.HandlerMap{"mainTopic": handler}, time.Second*10, done)
 }

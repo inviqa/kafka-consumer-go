@@ -1,9 +1,9 @@
+// +build integration
+
 package kafka
 
 type TestMessage struct {
 	Type     string   `json:"type"`
-	Data     TestData `json:"data"`
+	Data     struct{} `json:"data"`
 	XEventId string   `json:"event_id"`
 }
-
-type TestData struct{}

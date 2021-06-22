@@ -9,12 +9,12 @@ import (
 
 	"github.com/Shopify/sarama"
 	"github.com/inviqa/kafka-consumer-go/config"
-	"github.com/inviqa/kafka-consumer-go/test"
+	"github.com/inviqa/kafka-consumer-go/test/saramatest"
 )
 
 func TestNewCollection(t *testing.T) {
 	cfg := &config.Config{}
-	fp := NewFailureProducer(test.NewMockSyncProducer(), make(chan Failure, 10), nil)
+	fp := NewFailureProducer(saramatest.NewMockSyncProducer(), make(chan Failure, 10), nil)
 	fch := make(chan Failure)
 	scfg := config.NewSaramaConfig(false, false)
 	l := NullLogger{}
@@ -35,8 +35,8 @@ func TestNewCollection(t *testing.T) {
 }
 
 func TestCollection_Close(t *testing.T) {
-	mcg1 := test.NewMockConsumerGroup()
-	mcg2 := test.NewMockConsumerGroup()
+	mcg1 := saramatest.NewMockConsumerGroup()
+	mcg2 := saramatest.NewMockConsumerGroup()
 	col := &Collection{consumers: []sarama.ConsumerGroup{mcg1, mcg2}}
 
 	col.Close()
@@ -47,8 +47,8 @@ func TestCollection_Close(t *testing.T) {
 }
 
 func TestCollection_CloseWithError(t *testing.T) {
-	mcg1 := test.NewMockConsumerGroup()
-	mcg2 := test.NewMockConsumerGroup()
+	mcg1 := saramatest.NewMockConsumerGroup()
+	mcg2 := saramatest.NewMockConsumerGroup()
 	mcg1.ErrorOnClose()
 
 	col := &Collection{consumers: []sarama.ConsumerGroup{mcg1, mcg2}, logger: NullLogger{}}
@@ -60,7 +60,7 @@ func TestCollection_CloseWithError(t *testing.T) {
 }
 
 func TestCollection_StartConsumer(t *testing.T) {
-	mcg := test.NewMockConsumerGroup()
+	mcg := saramatest.NewMockConsumerGroup()
 	ctx := context.Background()
 	cfg := &config.Config{}
 
@@ -79,7 +79,7 @@ func TestCollection_StartConsumer(t *testing.T) {
 }
 
 func TestCollection_StartConsumerWithError(t *testing.T) {
-	mcg := test.NewMockConsumerGroup()
+	mcg := saramatest.NewMockConsumerGroup()
 	mcg.ErrorOnConsume()
 	ctx, cancel := context.WithCancel(context.Background())
 	cfg := &config.Config{}
