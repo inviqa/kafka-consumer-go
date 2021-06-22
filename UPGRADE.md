@@ -6,4 +6,4 @@ This document highlights breaking changes in releases that will require some mig
 
 * `config.NewConfig()` now returns an error value, as well as a `*config.Config` value, so you will need to check for an error and handle it accordingly
 * You can now use `test.NewConfig()` to create a `config.Config` value for testing. See [testing](/tools/docs/advanced/testing.md) for more information.
-
+* You can now use the `test.ConsumeFromKafkaUntil()` function in your integration tests to make it easier to wait until messages are consumed and conditions have been satisfied. See [testing](/tools/docs/advanced/testing.md) for more information.
