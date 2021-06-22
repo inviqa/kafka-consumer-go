@@ -9,6 +9,10 @@ import (
 )
 
 func Start(kcfg *config.Config, ctx context.Context, fch chan Failure, hs HandlerMap, l Logger) {
+	if l == nil {
+		l = NullLogger{}
+	}
+
 	wg := &sync.WaitGroup{}
 
 	// create a failure producer

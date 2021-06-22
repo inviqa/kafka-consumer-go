@@ -39,17 +39,15 @@ func init() {
 }
 
 func createConfig() *config.Config {
-	args := os.Args
-	defer func() {
-		os.Args = args
-	}()
-	os.Args = nil
 	os.Setenv("KAFKA_HOST", "localhost:9092")
 	os.Setenv("KAFKA_GROUP", "test-kafka-consumer-go")
 	os.Setenv("KAFKA_SOURCE_TOPICS", "mainTopic")
 	os.Setenv("KAFKA_RETRY_INTERVALS", "1")
 
-	c, _ := config.NewConfig()
+	c, err := config.NewConfig()
+	if err != nil {
+		panic(err)
+	}
 
 	if os.Getenv("GO_TEST_MODE") == testModeDocker {
 		c.Host = []string{"kafka:29092"}
@@ -78,13 +76,12 @@ func publishMessageToKafka(b []byte, topic string) {
 func consumeFromKafkaUntil(done func(chan<- bool), handler consumer.Handler) {
 	doneCh := make(chan bool)
 	ctx, cancel := context.WithCancel(context.Background())
-	logger := consumer.NullLogger{}
 	fch := make(chan consumer.Failure)
 	handlerMap := consumer.HandlerMap{
 		"mainTopic": handler,
 	}
 
-	go consumer.Start(cfg, ctx, fch, handlerMap, logger)
+	go consumer.Start(cfg, ctx, fch, handlerMap, nil)
 	go done(doneCh)
 
 	select {
