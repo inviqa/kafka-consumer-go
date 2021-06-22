@@ -9,12 +9,12 @@ import (
 )
 
 const (
-	envVarHost           = "KAFKA_HOST"
-	envVarGroup          = "KAFKA_GROUP"
-	envVarSourceTopics   = "KAFKA_SOURCE_TOPICS"
-	envVarRetryIntervals = "KAFKA_RETRY_INTERVALS"
-	envVarTLSEnable      = "TLS_ENABLE"
-	envVarTLSSkipVerify  = "TLS_SKIP_VERIFY_PEER"
+	EnvVarHost           = "KAFKA_HOST"
+	EnvVarGroup          = "KAFKA_GROUP"
+	EnvVarSourceTopics   = "KAFKA_SOURCE_TOPICS"
+	EnvVarRetryIntervals = "KAFKA_RETRY_INTERVALS"
+	EnvVarTLSEnable      = "TLS_ENABLE"
+	EnvVarTLSSkipVerify  = "TLS_SKIP_VERIFY_PEER"
 )
 
 type Config struct {
@@ -120,23 +120,23 @@ func (cfg *Config) addTopicsFromSource(topics []string, retryIntervals []int) er
 }
 
 func (cfg *Config) loadFromEnvVars() error {
-	cfg.Host = strings.Split(os.Getenv(envVarHost), ",")
-	cfg.Group = os.Getenv(envVarGroup)
-	cfg.TLSEnable = envVarAsBool(envVarTLSEnable)
-	cfg.TLSSkipVerifyPeer = envVarAsBool(envVarTLSSkipVerify)
+	cfg.Host = strings.Split(os.Getenv(EnvVarHost), ",")
+	cfg.Group = os.Getenv(EnvVarGroup)
+	cfg.TLSEnable = envVarAsBool(EnvVarTLSEnable)
+	cfg.TLSSkipVerifyPeer = envVarAsBool(EnvVarTLSSkipVerify)
 
-	sourceTopics := strings.Split(os.Getenv(envVarSourceTopics), ",")
-	retryIntervals, err := envVarAsIntSlice(envVarRetryIntervals)
+	sourceTopics := strings.Split(os.Getenv(EnvVarSourceTopics), ",")
+	retryIntervals, err := envVarAsIntSlice(EnvVarRetryIntervals)
 	if err != nil {
-		return fmt.Errorf("consumer/config: error parsing %s: %w", envVarRetryIntervals, err)
+		return fmt.Errorf("consumer/config: error parsing %s: %w", EnvVarRetryIntervals, err)
 	}
 
 	if cfg.Host == nil || len(cfg.Host) == 0 {
-		return fmt.Errorf("consumer/config: you must define a %s value", envVarHost)
+		return fmt.Errorf("consumer/config: you must define a %s value", EnvVarHost)
 	}
 
 	if strings.TrimSpace(cfg.Group) == "" {
-		return fmt.Errorf("consumer/config: you must define a %s value", envVarGroup)
+		return fmt.Errorf("consumer/config: you must define a %s value", EnvVarGroup)
 	}
 
 	if err := cfg.addTopicsFromSource(sourceTopics, retryIntervals); err != nil {
