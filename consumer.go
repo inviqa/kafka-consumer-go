@@ -1,7 +1,7 @@
 package consumer
 
 import (
-	"log"
+	"fmt"
 
 	"github.com/Shopify/sarama"
 	"github.com/inviqa/kafka-consumer-go/config"
@@ -39,16 +39,16 @@ func (c *consumer) ConsumeClaim(session sarama.ConsumerGroupSession, claim saram
 			k := c.cfg.FindTopicKey(message.Topic)
 			h, ok := c.handlers[k]
 			if !ok {
-				log.Panicf("Handler not found for topic: %s", k)
+				return fmt.Errorf("consumer: handler not found for topic: %s", k)
 			}
 
-			err := h(message)
-			if err != nil {
+			if err := h(message); err != nil {
 				c.sendToFailureChannel(message, err)
 			}
 
 			c.markMessageProcessed(session, message)
 		case <-session.Context().Done():
+			c.logger.Debug("consumer: session context finished, returning")
 			return nil
 		}
 	}

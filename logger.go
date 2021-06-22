@@ -1,6 +1,7 @@
 package consumer
 
 type Logger interface {
+	Debug(args ...interface{})
 	Debugf(format string, args ...interface{})
 	Error(args ...interface{})
 	Errorf(format string, args ...interface{})
@@ -11,6 +12,9 @@ type Logger interface {
 type NullLogger struct{}
 
 func (n NullLogger) Debugf(format string, args ...interface{}) {
+}
+
+func (n NullLogger) Debug(args ...interface{}) {
 }
 
 func (n NullLogger) Error(args ...interface{}) {

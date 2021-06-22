@@ -48,7 +48,7 @@ func (cc *Collection) Start(ctx context.Context, wg *sync.WaitGroup) error {
 		}
 		cc.consumers = append(cc.consumers, group)
 	}
-	cc.producer.ListenForFailures(wg)
+	cc.producer.ListenForFailures(ctx, wg)
 
 	return nil
 }
@@ -104,9 +104,6 @@ func (cc *Collection) startConsumer(cl sarama.ConsumerGroup, ctx context.Context
 			case <-timer.C:
 				if err := cl.Consume(ctx, []string{topic.Name}, cc.handler); err != nil {
 					cc.logger.Errorf("error when consuming from Kafka", err)
-				}
-				if ctx.Err() != nil {
-					return
 				}
 			case <-ctx.Done():
 				timer.Stop()

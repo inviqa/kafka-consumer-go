@@ -40,7 +40,7 @@ func init() {
 
 func createConfig() *config.Config {
 	os.Setenv("KAFKA_HOST", "localhost:9092")
-	os.Setenv("KAFKA_GROUP", "test-kafka-consumer-go")
+	os.Setenv("KAFKA_GROUP", "test")
 	os.Setenv("KAFKA_SOURCE_TOPICS", "mainTopic")
 	os.Setenv("KAFKA_RETRY_INTERVALS", "1")
 
@@ -75,21 +75,24 @@ func publishMessageToKafka(b []byte, topic string) {
 
 func consumeFromKafkaUntil(done func(chan<- bool), handler consumer.Handler) {
 	doneCh := make(chan bool)
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second * 10)
+	defer cancel()
+
 	fch := make(chan consumer.Failure)
 	handlerMap := consumer.HandlerMap{
 		"mainTopic": handler,
 	}
 
-	go consumer.Start(cfg, ctx, fch, handlerMap, nil)
+	go func() {
+		defer cancel()
+		select {
+		case <-doneCh:
+			return
+		case <-ctx.Done():
+			return
+		}
+	}()
+
 	go done(doneCh)
-
-	select {
-	case <-time.After(10 * time.Second):
-		break
-	case <-doneCh:
-		break
-	}
-
-	cancel()
+	consumer.Start(cfg, ctx, fch, handlerMap, nil)
 }

@@ -14,7 +14,7 @@ import (
 
 func TestNewCollection(t *testing.T) {
 	cfg := &config.Config{}
-	fp := NewFailureProducer(context.Background(), test.NewMockSyncProducer(), make(chan Failure, 10), nil)
+	fp := NewFailureProducer(test.NewMockSyncProducer(), make(chan Failure, 10), nil)
 	fch := make(chan Failure)
 	scfg := config.NewSaramaConfig(false, false)
 	l := NullLogger{}

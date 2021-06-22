@@ -11,13 +11,13 @@ import (
 )
 
 func TestNewFailureProducer(t *testing.T) {
-	if NewFailureProducer(context.Background(), test.NewMockSyncProducer(), make(<-chan Failure), NullLogger{}) == nil {
+	if NewFailureProducer(test.NewMockSyncProducer(), make(<-chan Failure), NullLogger{}) == nil {
 		t.Errorf("expected a producer but got nil")
 	}
 }
 
 func TestNewFailureProducer_WithNilLogger(t *testing.T) {
-	if NewFailureProducer(context.Background(), test.NewMockSyncProducer(), make(<-chan Failure), nil) == nil {
+	if NewFailureProducer(test.NewMockSyncProducer(), make(<-chan Failure), nil) == nil {
 		t.Errorf("expected a producer but got nil")
 	}
 }
@@ -26,9 +26,9 @@ func TestFailureProducer_ListenForFailures(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	sp := test.NewMockSyncProducer()
 	fch := make(chan Failure, 10)
-	prod := NewFailureProducer(ctx, sp, fch, NullLogger{})
+	prod := NewFailureProducer(sp, fch, NullLogger{})
 
-	prod.ListenForFailures(&sync.WaitGroup{})
+	prod.ListenForFailures(ctx, &sync.WaitGroup{})
 
 	msg1 := []byte("hello")
 	msg2 := []byte("world")
@@ -64,9 +64,9 @@ func TestFailureProducer_ListenForFailuresWithProducerError(t *testing.T) {
 	sp := test.NewMockSyncProducer()
 	sp.ReturnErrorOnSend()
 	fch := make(chan Failure, 10)
-	prod := NewFailureProducer(ctx, sp, fch, NullLogger{})
+	prod := NewFailureProducer(sp, fch, NullLogger{})
 
-	prod.ListenForFailures(&sync.WaitGroup{})
+	prod.ListenForFailures(ctx, &sync.WaitGroup{})
 
 	failure := Failure{
 		Reason:        "something else happened",
