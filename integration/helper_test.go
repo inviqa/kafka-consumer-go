@@ -75,7 +75,7 @@ func publishMessageToKafka(b []byte, topic string) {
 
 func consumeFromKafkaUntil(done func(chan<- bool), handler consumer.Handler) {
 	doneCh := make(chan bool)
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second * 10)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
 	fch := make(chan consumer.Failure)
