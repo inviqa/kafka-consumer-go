@@ -7,24 +7,24 @@ import (
 	"testing"
 	"time"
 
-	"github.com/inviqa/kafka-consumer-go/test"
+	"github.com/inviqa/kafka-consumer-go/test/saramatest"
 )
 
 func TestNewFailureProducer(t *testing.T) {
-	if NewFailureProducer(test.NewMockSyncProducer(), make(<-chan Failure), NullLogger{}) == nil {
+	if NewFailureProducer(saramatest.NewMockSyncProducer(), make(<-chan Failure), NullLogger{}) == nil {
 		t.Errorf("expected a producer but got nil")
 	}
 }
 
 func TestNewFailureProducer_WithNilLogger(t *testing.T) {
-	if NewFailureProducer(test.NewMockSyncProducer(), make(<-chan Failure), nil) == nil {
+	if NewFailureProducer(saramatest.NewMockSyncProducer(), make(<-chan Failure), nil) == nil {
 		t.Errorf("expected a producer but got nil")
 	}
 }
 
 func TestFailureProducer_ListenForFailures(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
-	sp := test.NewMockSyncProducer()
+	sp := saramatest.NewMockSyncProducer()
 	fch := make(chan Failure, 10)
 	prod := NewFailureProducer(sp, fch, NullLogger{})
 
@@ -61,7 +61,7 @@ func TestFailureProducer_ListenForFailures(t *testing.T) {
 
 func TestFailureProducer_ListenForFailuresWithProducerError(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
-	sp := test.NewMockSyncProducer()
+	sp := saramatest.NewMockSyncProducer()
 	sp.ReturnErrorOnSend()
 	fch := make(chan Failure, 10)
 	prod := NewFailureProducer(sp, fch, NullLogger{})

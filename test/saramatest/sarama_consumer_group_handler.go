@@ -1,4 +1,4 @@
-package test
+package saramatest
 
 import "github.com/Shopify/sarama"
 

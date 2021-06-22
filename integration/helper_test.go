@@ -3,7 +3,6 @@
 package integration
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -15,6 +14,7 @@ import (
 	consumer "github.com/inviqa/kafka-consumer-go"
 	"github.com/inviqa/kafka-consumer-go/config"
 	"github.com/inviqa/kafka-consumer-go/integration/kafka"
+	"github.com/inviqa/kafka-consumer-go/test"
 )
 
 const (
@@ -74,25 +74,5 @@ func publishMessageToKafka(b []byte, topic string) {
 }
 
 func consumeFromKafkaUntil(done func(chan<- bool), handler consumer.Handler) {
-	doneCh := make(chan bool)
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
-	defer cancel()
-
-	fch := make(chan consumer.Failure)
-	handlerMap := consumer.HandlerMap{
-		"mainTopic": handler,
-	}
-
-	go func() {
-		defer cancel()
-		select {
-		case <-doneCh:
-			return
-		case <-ctx.Done():
-			return
-		}
-	}()
-
-	go done(doneCh)
-	consumer.Start(cfg, ctx, fch, handlerMap, nil)
+	test.ConsumeFromKafkaUntil(cfg, consumer.HandlerMap{"mainTopic": handler}, time.Second*10, done)
 }
