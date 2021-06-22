@@ -17,14 +17,14 @@ func TestEnvVarAsIntSlice(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name:    "valid comma-separated ints",
-			envVal:  "1,2,3",
-			want:    []int{1, 2, 3},
+			name:   "valid comma-separated ints",
+			envVal: "1,2,3",
+			want:   []int{1, 2, 3},
 		},
 		{
-			name:    "valid-comma-separated ints with spaces",
-			envVal:  "1, 2, 3",
-			want:    []int{1, 2, 3},
+			name:   "valid-comma-separated ints with spaces",
+			envVal: "1, 2, 3",
+			want:   []int{1, 2, 3},
 		},
 		{
 			name:    "invalid int values",
@@ -57,14 +57,14 @@ func TestEnvVarAsBool(t *testing.T) {
 	defer os.Clearenv()
 
 	tests := []struct {
-		name    string
-		envVal  string
-		want    bool
+		name   string
+		envVal string
+		want   bool
 	}{
 		{
-			name:    "true value",
-			envVal:  "true",
-			want:    true,
+			name:   "true value",
+			envVal: "true",
+			want:   true,
 		},
 		{
 			name:   "1 value",
