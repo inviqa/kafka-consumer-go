@@ -1,10 +1,10 @@
 # Testing
 
-You will likely want to write integration tests for your consumer service, and this document explains the process when using this module.
+You will likely want to write integration tests for your consumer service. This document explains how to do this.
 
 ## Configuration
 
-Configuration parsing for this module, as described in its [documentation](configuration.md), is done from environment variables that your application environment should set. However, this module provides a convenience method for creating configuration in your tests, where you can provide raw values for all options rather than setting env vars:
+Configuration parsing for this module, as described in its [documentation](/tools/docs/configuration.md), is done from environment variables that your application environment should set. However, this module provides a convenience method for creating configuration in your tests, where you can provide raw values for all options rather than setting env vars:
 
 ```go
 package integration
@@ -27,7 +27,7 @@ func init() {
 
 In your integration tests, you will want to run the consumer and wait until any messages have been processed. This module provides a convenience function for doing this in its `test` package.
 
-This example shows how an integration test might look for a common type of consumer: one that forwards on events as HTTP requests to a 3rd party REST API. Generally, we may approach this by using a [`httptest` server](https://pkg.go.dev/net/http/httptest#example-Server) to record requests that our app sends, and publishing Kafka messages to the broker and running the consumer until they have been pushed to the test server as expected.
+This example shows how an integration test might look for a common type of consumer: one that forwards on messages from Kafka as HTTP requests to a 3rd party REST API. Generally, we may approach this by using a [`httptest` server](https://pkg.go.dev/net/http/httptest#example-Server) to record requests that our app sends, publishing test Kafka messages to the broker, and then running the consumer until they have been pushed to the test server as expected.
 
 ```go
 package integration
