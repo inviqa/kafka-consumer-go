@@ -359,7 +359,6 @@ func TestConfig_FindTopicKey(t *testing.T) {
 }
 
 func TestNewConfig(t *testing.T) {
-	os.Args = nil
 	os.Setenv("KAFKA_SOURCE_TOPICS", "product,payment")
 	os.Setenv("KAFKA_RETRY_INTERVALS", "120,300")
 	os.Setenv("KAFKA_HOST", "broker1,broker2")
@@ -439,7 +438,6 @@ func TestNewConfig(t *testing.T) {
 }
 
 func TestNewConfig_WithEmptyRetryInternals(t *testing.T) {
-	os.Args = nil
 	os.Setenv("KAFKA_SOURCE_TOPICS", "product")
 	os.Setenv("KAFKA_HOST", "broker1,broker2")
 	os.Setenv("KAFKA_GROUP", "kafkaGroup")

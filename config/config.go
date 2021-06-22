@@ -2,20 +2,11 @@ package config
 
 import (
 	"fmt"
+	"os"
 	"strconv"
+	"strings"
 	"time"
-
-	"github.com/alexflint/go-arg"
 )
-
-type args struct {
-	KafkaHost           []string `arg:"--kafka-host,env:KAFKA_HOST,required"`
-	KafkaGroup          string   `arg:"--kafka-group,env:KAFKA_GROUP"`
-	KafkaSourceTopics   []string `arg:"--kafka-source-topics,env:KAFKA_SOURCE_TOPICS"`
-	KafkaRetryIntervals []int    `arg:"--kafka-retry-intervals,env:KAFKA_RETRY_INTERVALS"`
-	TLSEnable           bool     `arg:"--kafka-tls,env:TLS_ENABLE"`
-	TLSSkipVerifyPeer   bool     `arg:"--kafka-tls-skip-verify-peer,env:TLS_SKIP_VERIFY_PEER"`
-}
 
 type Config struct {
 	Host               []string
@@ -78,7 +69,7 @@ func (cfg *Config) FindTopicKey(topicName string) TopicKey {
 	return topic.Key
 }
 
-func (cfg *Config) addTopicsFromSource(group string, topics []string, retryIntervals []int) error {
+func (cfg *Config) addTopicsFromSource(topics []string, retryIntervals []int) error {
 	for _, topic := range topics {
 		// main topic
 		derivedTopics := []*KafkaTopic{
@@ -95,7 +86,7 @@ func (cfg *Config) addTopicsFromSource(group string, topics []string, retryInter
 				return fmt.Errorf("consumer/config: could not parse delay in seconds %d in KAFKA_RETRY_INTERVALS env var: %v", interval, topics)
 			}
 			rt := &KafkaTopic{
-				Name:  cfg.topicNameGenerator(group, topic, fmt.Sprintf("retry%d", i+1)),
+				Name:  cfg.topicNameGenerator(cfg.Group, topic, fmt.Sprintf("retry%d", i+1)),
 				Delay: d,
 				Key:   TopicKey(topic),
 			}
@@ -106,7 +97,7 @@ func (cfg *Config) addTopicsFromSource(group string, topics []string, retryInter
 
 		// deadLetter topic
 		dt := &KafkaTopic{
-			Name: cfg.topicNameGenerator(group, topic, "deadLetter"),
+			Name: cfg.topicNameGenerator(cfg.Group, topic, "deadLetter"),
 			Key:  TopicKey(topic),
 		}
 		derivedTopics[len(derivedTopics)-1].Next = dt
@@ -119,31 +110,37 @@ func (cfg *Config) addTopicsFromSource(group string, topics []string, retryInter
 	return nil
 }
 
+func (cfg *Config) loadFromEnvVars() error {
+	cfg.Host = strings.Split(os.Getenv("KAFKA_HOST"), ",")
+	cfg.Group = os.Getenv("KAFKA_GROUP")
+	cfg.TLSEnable = envVarAsBool("TLS_ENABLE")
+	cfg.TLSSkipVerifyPeer = envVarAsBool("TLS_SKIP_VERIFY_PEER")
+
+	sourceTopics := strings.Split(os.Getenv("KAFKA_SOURCE_TOPICS"), ",")
+	retryIntervals, err := envVarAsIntSlice("KAFKA_RETRY_INTERVALS")
+	if err != nil {
+		return fmt.Errorf("consumer/config: error parsing KAFKA_RETRY_INTERVALS: %w", err)
+	}
+
+	if cfg.Host == nil || len(cfg.Host) == 0 {
+		return fmt.Errorf("consumer/config: you must define a KAFKA_HOST value")
+	}
+
+	if strings.TrimSpace(cfg.Group) == "" {
+		return fmt.Errorf("consumer/config: you must define a KAFKA_GROUP value")
+	}
+
+	if err := cfg.addTopicsFromSource(sourceTopics, retryIntervals); err != nil {
+		return fmt.Errorf("consumer/config: error loading config with topic names from env vars: %w", err)
+	}
+
+	return nil
+}
+
 func buildConfig(base Config) (*Config, error) {
-	a := &args{
-		TLSEnable:         false,
-		TLSSkipVerifyPeer: false,
-	}
-
-	if err := arg.Parse(a); err != nil {
-		return nil, fmt.Errorf("consumer/config: error parsing configuration from env vars: %w", err)
-	}
-
-	base.Host = a.KafkaHost
-	base.Group = a.KafkaGroup
-	base.TLSEnable = a.TLSEnable
-	base.TLSSkipVerifyPeer = a.TLSSkipVerifyPeer
-
-	if a.KafkaSourceTopics != nil {
-		err := base.addTopicsFromSource(a.KafkaGroup, a.KafkaSourceTopics, a.KafkaRetryIntervals)
-		if err != nil {
-			return nil, fmt.Errorf("consumer/config: error decorating config with topic names: %w", err)
-		}
+	if err := base.loadFromEnvVars(); err != nil {
+		return nil, err
 	}
 
 	return &base, nil
-}
-
-func defaultTopicNameGenerator(group, topic, prefix string) string {
-	return fmt.Sprintf("%s.%s.%s", prefix, group, topic)
 }
