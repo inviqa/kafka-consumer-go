@@ -8,6 +8,15 @@ import (
 	"time"
 )
 
+const (
+	envVarHost           = "KAFKA_HOST"
+	envVarGroup          = "KAFKA_GROUP"
+	envVarSourceTopics   = "KAFKA_SOURCE_TOPICS"
+	envVarRetryIntervals = "KAFKA_RETRY_INTERVALS"
+	envVarTLSEnable      = "TLS_ENABLE"
+	envVarTLSSkipVerify  = "TLS_SKIP_VERIFY_PEER"
+)
+
 type Config struct {
 	Host               []string
 	Group              string
@@ -111,23 +120,23 @@ func (cfg *Config) addTopicsFromSource(topics []string, retryIntervals []int) er
 }
 
 func (cfg *Config) loadFromEnvVars() error {
-	cfg.Host = strings.Split(os.Getenv("KAFKA_HOST"), ",")
-	cfg.Group = os.Getenv("KAFKA_GROUP")
-	cfg.TLSEnable = envVarAsBool("TLS_ENABLE")
-	cfg.TLSSkipVerifyPeer = envVarAsBool("TLS_SKIP_VERIFY_PEER")
+	cfg.Host = strings.Split(os.Getenv(envVarHost), ",")
+	cfg.Group = os.Getenv(envVarGroup)
+	cfg.TLSEnable = envVarAsBool(envVarTLSEnable)
+	cfg.TLSSkipVerifyPeer = envVarAsBool(envVarTLSSkipVerify)
 
-	sourceTopics := strings.Split(os.Getenv("KAFKA_SOURCE_TOPICS"), ",")
-	retryIntervals, err := envVarAsIntSlice("KAFKA_RETRY_INTERVALS")
+	sourceTopics := strings.Split(os.Getenv(envVarSourceTopics), ",")
+	retryIntervals, err := envVarAsIntSlice(envVarRetryIntervals)
 	if err != nil {
-		return fmt.Errorf("consumer/config: error parsing KAFKA_RETRY_INTERVALS: %w", err)
+		return fmt.Errorf("consumer/config: error parsing %s: %w", envVarRetryIntervals, err)
 	}
 
 	if cfg.Host == nil || len(cfg.Host) == 0 {
-		return fmt.Errorf("consumer/config: you must define a KAFKA_HOST value")
+		return fmt.Errorf("consumer/config: you must define a %s value", envVarHost)
 	}
 
 	if strings.TrimSpace(cfg.Group) == "" {
-		return fmt.Errorf("consumer/config: you must define a KAFKA_GROUP value")
+		return fmt.Errorf("consumer/config: you must define a %s value", envVarGroup)
 	}
 
 	if err := cfg.addTopicsFromSource(sourceTopics, retryIntervals); err != nil {
