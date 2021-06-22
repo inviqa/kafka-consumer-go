@@ -359,13 +359,12 @@ func TestConfig_FindTopicKey(t *testing.T) {
 }
 
 func TestNewConfig(t *testing.T) {
-	os.Args = nil
 	os.Setenv("KAFKA_SOURCE_TOPICS", "product,payment")
 	os.Setenv("KAFKA_RETRY_INTERVALS", "120,300")
 	os.Setenv("KAFKA_HOST", "broker1,broker2")
 	os.Setenv("KAFKA_GROUP", "kafkaGroup")
 	os.Setenv("TLS_ENABLE", "false")
-	os.Setenv("TLS_VERIFY_PEER", "false")
+	os.Setenv("TLS_SKIP_VERIFY_PEER", "true")
 
 	expDeadLetterProduct := &KafkaTopic{
 		Name: "deadLetter.kafkaGroup.product",
@@ -424,6 +423,7 @@ func TestNewConfig(t *testing.T) {
 			"retry2.kafkaGroup.payment":     expRetry2Payment,
 			"deadLetter.kafkaGroup.payment": expDeadLetterPayment,
 		},
+		TLSSkipVerifyPeer: true,
 	}
 
 	c, err := NewConfig()
@@ -439,12 +439,11 @@ func TestNewConfig(t *testing.T) {
 }
 
 func TestNewConfig_WithEmptyRetryInternals(t *testing.T) {
-	os.Args = nil
 	os.Setenv("KAFKA_SOURCE_TOPICS", "product")
 	os.Setenv("KAFKA_HOST", "broker1,broker2")
 	os.Setenv("KAFKA_GROUP", "kafkaGroup")
-	os.Setenv("TLS_ENABLE", "false")
-	os.Setenv("TLS_VERIFY_PEER", "false")
+	os.Setenv("TLS_ENABLE", "true")
+	os.Setenv("TLS_SKIP_VERIFY_PEER", "true")
 
 	expDeadLetterProduct := &KafkaTopic{
 		Name: "deadLetter.kafkaGroup.product",
@@ -464,6 +463,8 @@ func TestNewConfig_WithEmptyRetryInternals(t *testing.T) {
 			"product":                       expMainProduct,
 			"deadLetter.kafkaGroup.product": expDeadLetterProduct,
 		},
+		TLSEnable:         true,
+		TLSSkipVerifyPeer: true,
 	}
 
 	c, err := NewConfig()

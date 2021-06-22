@@ -25,7 +25,6 @@ func TestNewBuilder(t *testing.T) {
 }
 
 func TestBuilder_Config(t *testing.T) {
-	os.Args = nil
 	os.Setenv("KAFKA_SOURCE_TOPICS", "product")
 	os.Setenv("KAFKA_RETRY_INTERVALS", "120")
 	os.Setenv("KAFKA_HOST", "broker1,broker2")
