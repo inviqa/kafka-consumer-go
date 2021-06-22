@@ -29,7 +29,7 @@ func envVarAsIntSlice(name string) ([]int, error) {
 
 	var i []int
 	for _, pt := range strings.Split(envVal, ",") {
-		val, err := strconv.Atoi(pt)
+		val, err := strconv.Atoi(strings.TrimSpace(pt))
 		if err != nil {
 			return nil, err
 		}
