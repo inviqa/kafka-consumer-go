@@ -8,16 +8,13 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"sync"
 	"time"
-
-	consumer "github.com/inviqa/kafka-consumer-go"
-
-	"github.com/inviqa/kafka-consumer-go/integration/kafka"
 
 	"github.com/Shopify/sarama"
 
+	consumer "github.com/inviqa/kafka-consumer-go"
 	"github.com/inviqa/kafka-consumer-go/config"
+	"github.com/inviqa/kafka-consumer-go/integration/kafka"
 )
 
 const (
@@ -87,9 +84,7 @@ func consumeFromKafkaUntil(done func(chan<- bool), handler consumer.Handler) {
 		"mainTopic": handler,
 	}
 
-	producer, _ := consumer.NewFailureProducerWithDefaults(cfg, ctx, fch, logger)
-	cons := consumer.NewCollection(cfg, producer, fch, handlerMap, config.NewSaramaConfig(false, false), logger)
-	cons.Start(ctx, &sync.WaitGroup{})
+	go consumer.Start(cfg, ctx, fch, handlerMap, logger)
 	go done(doneCh)
 
 	select {
@@ -100,5 +95,4 @@ func consumeFromKafkaUntil(done func(chan<- bool), handler consumer.Handler) {
 	}
 
 	cancel()
-	cons.Close()
 }
