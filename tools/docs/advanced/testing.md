@@ -49,8 +49,10 @@ func TestSomething(t *testing.T) {
 	handlerMap := consumer.HandlerMap{"test.order": MyOrderHandler} 
 	
 	kctest.ConsumeFromKafkaUntil(consumerCfg, handlerMap, time.Second * 5, func(donech chan<- bool) {
-		if myHttpTestServer.receivedCount == 1 {
-			donech<- true
+		for {
+			if myHttpTestServer.receivedCount == 1 {
+				donech <- true
+			}
 		}
 	})
 	
