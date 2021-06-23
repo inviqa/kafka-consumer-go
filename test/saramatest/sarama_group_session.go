@@ -2,16 +2,21 @@ package saramatest
 
 import (
 	"context"
+	"sync"
 
 	"github.com/Shopify/sarama"
 )
 
 type MockConsumerGroupSession struct {
+	sync.RWMutex
 	marked []*sarama.ConsumerMessage
+	ctx    context.Context
 }
 
 func NewMockConsumerGroupSession() *MockConsumerGroupSession {
-	return &MockConsumerGroupSession{}
+	return &MockConsumerGroupSession{
+		ctx: context.Background(),
+	}
 }
 
 func (gs *MockConsumerGroupSession) Claims() map[string][]int32 {
@@ -36,10 +41,15 @@ func (gs *MockConsumerGroupSession) ResetOffset(topic string, partition int32, o
 }
 
 func (gs *MockConsumerGroupSession) MarkMessage(msg *sarama.ConsumerMessage, metadata string) {
+	gs.Lock()
+	defer gs.Unlock()
 	gs.marked = append(gs.marked, msg)
 }
 
 func (gs *MockConsumerGroupSession) MessageWasMarked(msg *sarama.ConsumerMessage) bool {
+	gs.RLock()
+	defer gs.RUnlock()
+
 	for _, m := range gs.marked {
 		if m == msg {
 			return true
@@ -50,5 +60,13 @@ func (gs *MockConsumerGroupSession) MessageWasMarked(msg *sarama.ConsumerMessage
 }
 
 func (gs *MockConsumerGroupSession) Context() context.Context {
-	return context.Background()
+	gs.RLock()
+	defer gs.RUnlock()
+	return gs.ctx
+}
+
+func (gs *MockConsumerGroupSession) SetContext(ctx context.Context) {
+	gs.Lock()
+	defer gs.Unlock()
+	gs.ctx = ctx
 }
