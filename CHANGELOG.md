@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.2.0](https://github.com/inviqa/kafka-consumer-go/tree/0.2.0) (2021-08-06)
+
+[Full Changelog](https://github.com/inviqa/kafka-consumer-go/compare/0.1.0...0.2.0)
+
+**Implemented enhancements:**
+
+- Add full integration test suite [\#5](https://github.com/inviqa/kafka-consumer-go/issues/5)
+- Provide ability to set context on mock sarama session [\#13](https://github.com/inviqa/kafka-consumer-go/pull/13) ([jameshalsall](https://github.com/jameshalsall))
+- Improve testing DX [\#12](https://github.com/inviqa/kafka-consumer-go/pull/12) ([jameshalsall](https://github.com/jameshalsall))
+- Update config API, provide ability for custom topic naming [\#10](https://github.com/inviqa/kafka-consumer-go/pull/10) ([jameshalsall](https://github.com/jameshalsall))
+
+**Fixed bugs:**
+
+- Reuse timer and stop correctly to prevent memory leak [\#14](https://github.com/inviqa/kafka-consumer-go/pull/14) ([jameshalsall](https://github.com/jameshalsall))
+
+**Merged pull requests:**
+
+- Remove github.com/alexflint/go-arg [\#11](https://github.com/inviqa/kafka-consumer-go/pull/11) ([jameshalsall](https://github.com/jameshalsall))
+- Add integration tests [\#9](https://github.com/inviqa/kafka-consumer-go/pull/9) ([hgajjar](https://github.com/hgajjar))
+- Improve DX [\#3](https://github.com/inviqa/kafka-consumer-go/pull/3) ([hgajjar](https://github.com/hgajjar))
+
 ## [0.1.0](https://github.com/inviqa/kafka-consumer-go/tree/0.1.0) (2021-06-21)
 
 [Full Changelog](https://github.com/inviqa/kafka-consumer-go/compare/48d5d2dab678e327a3d9cfe87813f3d9ad665ef4...0.1.0)
@@ -11,7 +32,6 @@
 **Merged pull requests:**
 
 - Expand GitHub actions to cover linting and gosec [\#7](https://github.com/inviqa/kafka-consumer-go/pull/7) ([jameshalsall](https://github.com/jameshalsall))
-- Improve DX [\#3](https://github.com/inviqa/kafka-consumer-go/pull/3) ([hgajjar](https://github.com/hgajjar))
 - Add GitHub actions checks [\#1](https://github.com/inviqa/kafka-consumer-go/pull/1) ([jameshalsall](https://github.com/jameshalsall))
 
 
