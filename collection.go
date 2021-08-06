@@ -98,15 +98,22 @@ func (cc *Collection) startConsumer(cl sarama.ConsumerGroup, ctx context.Context
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
+		timer := time.NewTimer(topic.Delay)
 		for {
-			timer := time.NewTimer(topic.Delay)
 			select {
 			case <-timer.C:
 				if err := cl.Consume(ctx, []string{topic.Name}, cc.handler); err != nil {
-					cc.logger.Errorf("error when consuming from Kafka", err)
+					cc.logger.Errorf("error when consuming from Kafka: %s", err)
 				}
+				if ctx.Err() != nil {
+					timer.Stop()
+					return
+				}
+				timer.Reset(topic.Delay)
 			case <-ctx.Done():
-				timer.Stop()
+				if !timer.Stop() {
+					<-timer.C
+				}
 				return
 			}
 		}
