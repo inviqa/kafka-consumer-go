@@ -15,8 +15,8 @@ import (
 
 type kafkaFailureProducer struct {
 	producer sarama.SyncProducer
-	fch    <-chan data.Failure
-	logger log.Logger
+	fch      <-chan data.Failure
+	logger   log.Logger
 }
 
 func newKafkaFailureProducerWithDefaults(cfg *config.Config, fch <-chan data.Failure, logger log.Logger) (failureProducer, error) {
@@ -47,7 +47,7 @@ func newKafkaFailureProducerWithDefaults(cfg *config.Config, fch <-chan data.Fai
 	return newKafkaFailureProducer(sp, fch, logger), nil
 }
 
-func newKafkaFailureProducer(sp sarama.SyncProducer, fch <-chan data.Failure, logger log.Logger) (failureProducer) {
+func newKafkaFailureProducer(sp sarama.SyncProducer, fch <-chan data.Failure, logger log.Logger) failureProducer {
 	return &kafkaFailureProducer{
 		producer: sp,
 		fch:      fch,

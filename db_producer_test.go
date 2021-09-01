@@ -21,7 +21,7 @@ func TestNewDatabaseProducer(t *testing.T) {
 	repo := &mockRetriesRepository{}
 
 	exp := &databaseProducer{
-		repo: repo,
+		repo:   repo,
 		fch:    fch,
 		logger: logger,
 	}
@@ -31,7 +31,7 @@ func TestNewDatabaseProducer(t *testing.T) {
 	}
 }
 
-type mockRetriesRepository struct {}
+type mockRetriesRepository struct{}
 
 func (mr *mockRetriesRepository) PublishFailure(f data.Failure) error {
 	return errors.New("not implemented")

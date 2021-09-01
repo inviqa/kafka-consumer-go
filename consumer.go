@@ -13,8 +13,8 @@ import (
 type consumer struct {
 	failureCh chan<- data.Failure
 	cfg       *config.Config
-	handlers HandlerMap
-	logger   log.Logger
+	handlers  HandlerMap
+	logger    log.Logger
 }
 
 type Handler func(msg *sarama.ConsumerMessage) error
