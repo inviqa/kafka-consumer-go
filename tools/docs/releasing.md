@@ -8,7 +8,7 @@ When ready to tag a release, make a new branch from the `master` branch for the 
 1. Run the following docker command to generate the changelog, replacing `<nextReleaseTag>` with the version number you
    wish to release:
   ```bash
-  docker run -e CHANGELOG_GITHUB_TOKEN="$CHANGELOG_GITHUB_TOKEN" -it --rm -v "$(pwd)":/usr/local/src/your-app -v "$(pwd)/github-changelog-http-cache":/tmp/github-changelog-http-cache ferrarimarco/github-changelog-generator --user inviqa --project kafka-consumer-go --exclude-labels "duplicate,question,invalid,wontfix,skip-changelog" --release-branch master --future-release <nextReleaseTag>
+  docker run -e CHANGELOG_GITHUB_TOKEN="$CHANGELOG_GITHUB_TOKEN" -it --rm -v "$(pwd)":/usr/local/src/your-app -v "$(pwd)/github-changelog-http-cache":/tmp/github-changelog-http-cache githubchangeloggenerator/github-changelog-generator --user inviqa --project kafka-consumer-go --exclude-labels "duplicate,question,invalid,wontfix,skip-changelog" --release-branch master --future-release <nextReleaseTag>
   ```
 1. Examine the generated `CHANGELOG.md`, verify the changes make sense.
 1. Commit the resulting `CHANGELOG.md`, push and raise a pull request with the label `skip-changelog`.
