@@ -15,6 +15,12 @@ const (
 	EnvVarRetryIntervals = "KAFKA_RETRY_INTERVALS"
 	EnvVarTLSEnable      = "TLS_ENABLE"
 	EnvVarTLSSkipVerify  = "TLS_SKIP_VERIFY_PEER"
+	EnvVarDbRetryQueue   = "USE_DB_RETRY_QUEUE"
+	EnvVarDbHost         = "DB_HOST"
+	EnvVarDbPort         = "DB_PORT"
+	EnvVarDbPass         = "DB_PASS"
+	EnvVarDbUser         = "DB_USER"
+	EnvVarDbSchema       = "DB_SCHEMA"
 )
 
 type Config struct {
@@ -24,6 +30,8 @@ type Config struct {
 	TopicMap           map[TopicKey]*KafkaTopic
 	TLSEnable          bool
 	TLSSkipVerifyPeer  bool
+	DB                 Database
+	UseDBForRetryQueue bool
 	topicNameGenerator topicNameGenerator
 }
 
@@ -32,6 +40,14 @@ type KafkaTopic struct {
 	Delay time.Duration
 	Key   TopicKey
 	Next  *KafkaTopic
+}
+
+type Database struct {
+	Host   string
+	Port   int
+	Schema string
+	User   string
+	Pass   string
 }
 
 type TopicKey string
@@ -76,6 +92,15 @@ func (cfg *Config) FindTopicKey(topicName string) TopicKey {
 	}
 
 	return topic.Key
+}
+
+func (c Config) GetDBConnectionString() string {
+	sslMode := "disable"
+	if c.TLSEnable {
+		sslMode = "verify-full"
+	}
+
+	return fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=%s", c.DB.User, c.DB.Pass, c.DB.Host, c.DB.Port, c.DB.Schema, sslMode)
 }
 
 func (cfg *Config) addTopicsFromSource(topics []string, retryIntervals []int) error {
@@ -124,6 +149,12 @@ func (cfg *Config) loadFromEnvVars() error {
 	cfg.Group = os.Getenv(EnvVarGroup)
 	cfg.TLSEnable = envVarAsBool(EnvVarTLSEnable)
 	cfg.TLSSkipVerifyPeer = envVarAsBool(EnvVarTLSSkipVerify)
+	cfg.UseDBForRetryQueue = envVarAsBool(EnvVarDbRetryQueue)
+	cfg.DB.Host = os.Getenv(EnvVarDbHost)
+	cfg.DB.User = os.Getenv(EnvVarDbUser)
+	cfg.DB.Pass = os.Getenv(EnvVarDbPass)
+	cfg.DB.Schema = os.Getenv(EnvVarDbSchema)
+	cfg.DB.Port = envVarAsInt(EnvVarDbPort)
 
 	sourceTopics := strings.Split(os.Getenv(EnvVarSourceTopics), ",")
 	retryIntervals, err := envVarAsIntSlice(EnvVarRetryIntervals)

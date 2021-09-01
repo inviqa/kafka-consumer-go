@@ -2,35 +2,54 @@ package consumer
 
 import (
 	"context"
-	"log"
+	"database/sql"
 	"sync"
 
 	"github.com/inviqa/kafka-consumer-go/config"
+	"github.com/inviqa/kafka-consumer-go/data"
+	"github.com/inviqa/kafka-consumer-go/data/retries"
+	"github.com/inviqa/kafka-consumer-go/log"
 )
 
-func Start(kcfg *config.Config, ctx context.Context, fch chan Failure, hs HandlerMap, l Logger) {
-	if l == nil {
-		l = NullLogger{}
+func Start(cfg *config.Config, ctx context.Context, hs HandlerMap, logger log.Logger) {
+	if logger == nil {
+		logger = log.NullLogger{}
 	}
 
 	wg := &sync.WaitGroup{}
+	fch := make(chan data.Failure)
 
-	// create a failure producer
-	producer, err := NewFailureProducerWithDefaults(kcfg, fch, l)
-	if err != nil {
-		log.Panic("could not start Kafka failure producer")
+	var producer failureProducer
+	var err error
+	if cfg.UseDBForRetryQueue {
+		var db *sql.DB
+		db, err = data.NewDB(cfg.GetDBConnectionString(), logger)
+		if err != nil {
+			// todo: return error instead
+			logger.Panic("could not start DB producer")
+		}
+
+		retriesRepo := retries.NewRepository(db)
+
+		producer = newDatabaseProducer(retriesRepo, fch, logger)
+	} else {
+		producer, err = newKafkaFailureProducerWithDefaults(cfg, fch, logger)
+		if err != nil {
+			// todo: return error instead
+			logger.Panic("could not start Kafka failure producer")
+		}
 	}
 
-	// create a consumer collection
-	cons := NewCollection(kcfg, producer, fch, hs, config.NewSaramaConfig(kcfg.TLSEnable, kcfg.TLSSkipVerifyPeer), l)
-	err = cons.Start(ctx, wg)
-	if err != nil {
-		log.Panic("unable to start consumers")
+	// todo: address DB polling in the consumer collection??
+	cons := NewCollection(cfg, producer, fch, hs, config.NewSaramaConfig(cfg.TLSEnable, cfg.TLSSkipVerifyPeer), logger)
+
+	if err = cons.Start(ctx, wg); err != nil {
+		// todo: return error instead
+		logger.Panic("unable to start consumers")
 	}
 	defer cons.Close()
 
-	l.Info("kafka consumer started")
+	logger.Info("kafka consumer started")
 
-	// wait for the consumer to terminate
 	wg.Wait()
 }

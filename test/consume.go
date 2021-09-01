@@ -13,8 +13,6 @@ func ConsumeFromKafkaUntil(cfg *config.Config, hm consumer.HandlerMap, timeout t
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	fch := make(chan consumer.Failure)
-
 	go func() {
 		defer cancel()
 		select {
@@ -26,5 +24,5 @@ func ConsumeFromKafkaUntil(cfg *config.Config, hm consumer.HandlerMap, timeout t
 	}()
 
 	go done(doneCh)
-	consumer.Start(cfg, ctx, fch, hm, nil)
+	consumer.Start(cfg, ctx, hm, nil)
 }

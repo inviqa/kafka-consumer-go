@@ -1,4 +1,4 @@
-package consumer
+package data
 
 type Failure struct {
 	Reason        string

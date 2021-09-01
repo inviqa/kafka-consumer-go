@@ -7,17 +7,38 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-test/deep"
+
+	"github.com/inviqa/kafka-consumer-go/data"
+	"github.com/inviqa/kafka-consumer-go/log"
 	"github.com/inviqa/kafka-consumer-go/test/saramatest"
 )
 
-func TestNewFailureProducer(t *testing.T) {
-	if NewFailureProducer(saramatest.NewMockSyncProducer(), make(<-chan Failure), NullLogger{}) == nil {
-		t.Errorf("expected a producer but got nil")
+func TestNewKafkaFailureProducer(t *testing.T) {
+	deep.CompareUnexportedFields = true
+	defer func() {
+		deep.CompareUnexportedFields = false
+	}()
+
+	sp := saramatest.NewMockSyncProducer()
+	fch := make(<-chan data.Failure)
+	logger := log.NullLogger{}
+
+	exp := &kafkaFailureProducer{
+		producer: sp,
+		fch:      fch,
+		logger:   logger,
+	}
+
+	got := newKafkaFailureProducer(sp, fch, logger)
+
+	if diff := deep.Equal(exp, got); diff != nil {
+		t.Error(diff)
 	}
 }
 
 func TestNewFailureProducer_WithNilLogger(t *testing.T) {
-	if NewFailureProducer(saramatest.NewMockSyncProducer(), make(<-chan Failure), nil) == nil {
+	if newKafkaFailureProducer(saramatest.NewMockSyncProducer(), make(<-chan data.Failure), nil) == nil {
 		t.Errorf("expected a producer but got nil")
 	}
 }
@@ -25,20 +46,20 @@ func TestNewFailureProducer_WithNilLogger(t *testing.T) {
 func TestFailureProducer_ListenForFailures(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	sp := saramatest.NewMockSyncProducer()
-	fch := make(chan Failure, 10)
-	prod := NewFailureProducer(sp, fch, NullLogger{})
+	fch := make(chan data.Failure, 10)
+	prod := newKafkaFailureProducer(sp, fch, log.NullLogger{})
 
-	prod.ListenForFailures(ctx, &sync.WaitGroup{})
+	prod.listenForFailures(ctx, &sync.WaitGroup{})
 
 	msg1 := []byte("hello")
 	msg2 := []byte("world")
 
-	f1 := Failure{
+	f1 := data.Failure{
 		Reason:        "something bad happened",
 		Message:       msg1,
 		TopicToSendTo: "test",
 	}
-	f2 := Failure{
+	f2 := data.Failure{
 		Reason:        "something bad happened",
 		Message:       msg2,
 		TopicToSendTo: "test2",
@@ -63,12 +84,12 @@ func TestFailureProducer_ListenForFailuresWithProducerError(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	sp := saramatest.NewMockSyncProducer()
 	sp.ReturnErrorOnSend()
-	fch := make(chan Failure, 10)
-	prod := NewFailureProducer(sp, fch, NullLogger{})
+	fch := make(chan data.Failure, 10)
+	prod := newKafkaFailureProducer(sp, fch, log.NullLogger{})
 
-	prod.ListenForFailures(ctx, &sync.WaitGroup{})
+	prod.listenForFailures(ctx, &sync.WaitGroup{})
 
-	failure := Failure{
+	failure := data.Failure{
 		Reason:        "something else happened",
 		Message:       []byte{},
 		TopicToSendTo: "foo",

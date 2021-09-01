@@ -8,30 +8,33 @@ import (
 	"time"
 
 	"github.com/Shopify/sarama"
+
 	"github.com/inviqa/kafka-consumer-go/config"
+	"github.com/inviqa/kafka-consumer-go/data"
+	"github.com/inviqa/kafka-consumer-go/log"
 )
 
 type Collection struct {
 	cfg       *config.Config
 	consumers []sarama.ConsumerGroup
-	producer  FailureProducer
+	producer  failureProducer
 	handler   sarama.ConsumerGroupHandler
 	saramaCfg *sarama.Config
-	logger    Logger
+	logger    log.Logger
 }
 
-func NewCollection(cfg *config.Config, p FailureProducer, fch chan Failure, hm HandlerMap, scfg *sarama.Config, log Logger) *Collection {
-	if log == nil {
-		log = NullLogger{}
+func NewCollection(cfg *config.Config, p failureProducer, fch chan data.Failure, hm HandlerMap, scfg *sarama.Config, logger log.Logger) *Collection {
+	if logger == nil {
+		logger = log.NullLogger{}
 	}
 
 	return &Collection{
 		cfg:       cfg,
 		consumers: []sarama.ConsumerGroup{},
 		producer:  p,
-		handler:   NewConsumer(fch, cfg, hm, log),
+		handler:   NewConsumer(fch, cfg, hm, logger),
 		saramaCfg: scfg,
-		logger:    log,
+		logger:    logger,
 	}
 }
 
@@ -48,7 +51,7 @@ func (cc *Collection) Start(ctx context.Context, wg *sync.WaitGroup) error {
 		}
 		cc.consumers = append(cc.consumers, group)
 	}
-	cc.producer.ListenForFailures(ctx, wg)
+	cc.producer.listenForFailures(ctx, wg)
 
 	return nil
 }

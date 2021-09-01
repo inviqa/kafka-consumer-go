@@ -8,16 +8,19 @@ import (
 	"time"
 
 	"github.com/Shopify/sarama"
+
 	"github.com/inviqa/kafka-consumer-go/config"
+	"github.com/inviqa/kafka-consumer-go/data"
+	"github.com/inviqa/kafka-consumer-go/log"
 	"github.com/inviqa/kafka-consumer-go/test/saramatest"
 )
 
 func TestNewCollection(t *testing.T) {
 	cfg := &config.Config{}
-	fp := NewFailureProducer(saramatest.NewMockSyncProducer(), make(chan Failure, 10), nil)
-	fch := make(chan Failure)
+	fp := newKafkaFailureProducer(saramatest.NewMockSyncProducer(), make(chan data.Failure, 10), nil)
+	fch := make(chan data.Failure)
 	scfg := config.NewSaramaConfig(false, false)
-	l := NullLogger{}
+	l := log.NullLogger{}
 	hm := HandlerMap{}
 
 	exp := &Collection{
@@ -51,7 +54,7 @@ func TestCollection_CloseWithError(t *testing.T) {
 	mcg2 := saramatest.NewMockConsumerGroup()
 	mcg1.ErrorOnClose()
 
-	col := &Collection{consumers: []sarama.ConsumerGroup{mcg1, mcg2}, logger: NullLogger{}}
+	col := &Collection{consumers: []sarama.ConsumerGroup{mcg1, mcg2}, logger: log.NullLogger{}}
 	col.Close()
 
 	if !mcg2.WasClosed() || len(col.consumers) > 0 {

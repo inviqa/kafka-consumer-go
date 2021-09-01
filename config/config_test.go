@@ -365,6 +365,13 @@ func TestNewConfig(t *testing.T) {
 	os.Setenv("KAFKA_GROUP", "kafkaGroup")
 	os.Setenv("TLS_ENABLE", "false")
 	os.Setenv("TLS_SKIP_VERIFY_PEER", "true")
+	os.Setenv("DB_HOST", "localhost")
+	os.Setenv("DB_PORT", "3306")
+	os.Setenv("DB_USER", "user")
+	os.Setenv("DB_PASS", "pass123")
+	os.Setenv("DB_SCHEMA", "consumer")
+	os.Setenv("USE_DB_RETRY_QUEUE", "true")
+	defer os.Clearenv()
 
 	expDeadLetterProduct := &KafkaTopic{
 		Name: "deadLetter.kafkaGroup.product",
@@ -424,6 +431,14 @@ func TestNewConfig(t *testing.T) {
 			"deadLetter.kafkaGroup.payment": expDeadLetterPayment,
 		},
 		TLSSkipVerifyPeer: true,
+		DB: Database{
+			Host:   "localhost",
+			Port:   3306,
+			Schema: "consumer",
+			User:   "user",
+			Pass:   "pass123",
+		},
+		UseDBForRetryQueue: true,
 	}
 
 	c, err := NewConfig()
@@ -434,16 +449,15 @@ func TestNewConfig(t *testing.T) {
 	if diff := deep.Equal(c, exp); diff != nil {
 		t.Error(diff)
 	}
-
-	os.Clearenv()
 }
 
-func TestNewConfig_WithEmptyRetryInternals(t *testing.T) {
+func TestNewConfig_WithEmptyRetryIntervals(t *testing.T) {
 	os.Setenv("KAFKA_SOURCE_TOPICS", "product")
 	os.Setenv("KAFKA_HOST", "broker1,broker2")
 	os.Setenv("KAFKA_GROUP", "kafkaGroup")
 	os.Setenv("TLS_ENABLE", "true")
 	os.Setenv("TLS_SKIP_VERIFY_PEER", "true")
+	defer os.Clearenv()
 
 	expDeadLetterProduct := &KafkaTopic{
 		Name: "deadLetter.kafkaGroup.product",
@@ -474,8 +488,6 @@ func TestNewConfig_WithEmptyRetryInternals(t *testing.T) {
 	if diff := deep.Equal(c, exp); diff != nil {
 		t.Error(diff)
 	}
-
-	os.Clearenv()
 }
 
 func TestNewConfig_WithError(t *testing.T) {
@@ -499,4 +511,48 @@ func TestNewConfig_WithError(t *testing.T) {
 			t.Error("expected an error but got nil")
 		}
 	})
+}
+
+func TestConfig_GetDBConnectionString(t *testing.T) {
+	tests := []struct {
+		name string
+		cfg  Config
+		want string
+	}{
+		{
+			name: "without TLS enabled",
+			cfg: Config{
+				DB: Database{
+					Host:   "postgres-db",
+					Port:   5002,
+					Schema: "data",
+					User:   "root",
+					Pass:   "pass123",
+				},
+			},
+			want: "postgres://root:pass123@postgres-db:5002/data?sslmode=disable",
+		},
+		{
+			name: "with TLS enabled",
+			cfg: Config{
+				DB: Database{
+					Host:   "postgres-db",
+					Port:   5002,
+					Schema: "data",
+					User:   "root",
+					Pass:   "pass123",
+				},
+				TLSEnable: true,
+			},
+			want: "postgres://root:pass123@postgres-db:5002/data?sslmode=verify-full",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.cfg.GetDBConnectionString(); got != tt.want {
+				t.Errorf("GetDBConnectionString(): %s, want %s", got, tt.want)
+			}
+		})
+	}
 }

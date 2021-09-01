@@ -1,4 +1,4 @@
-package consumer
+package log
 
 type Logger interface {
 	Debug(args ...interface{})
@@ -7,6 +7,7 @@ type Logger interface {
 	Errorf(format string, args ...interface{})
 	Info(args ...interface{})
 	Infof(format string, args ...interface{})
+	Panic(args ...interface{})
 }
 
 type NullLogger struct{}
@@ -27,4 +28,7 @@ func (n NullLogger) Info(args ...interface{}) {
 }
 
 func (n NullLogger) Infof(format string, args ...interface{}) {
+}
+
+func (n NullLogger) Panic(args ...interface{}) {
 }
