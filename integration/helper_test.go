@@ -43,6 +43,11 @@ func createConfig() *config.Config {
 	os.Setenv("KAFKA_GROUP", "test")
 	os.Setenv("KAFKA_SOURCE_TOPICS", "mainTopic")
 	os.Setenv("KAFKA_RETRY_INTERVALS", "1")
+	os.Setenv("DB_HOST", "127.0.0.1")
+	os.Setenv("DB_PORT", "15432")
+	os.Setenv("DB_USER", "kafka-consumer")
+	os.Setenv("DB_PASS", "kafka-consumer")
+	os.Setenv("DB_SCHEMA", "kafka-consumer")
 
 	c, err := config.NewConfig()
 	if err != nil {
