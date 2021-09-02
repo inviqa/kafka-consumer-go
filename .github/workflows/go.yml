@@ -56,6 +56,15 @@ jobs:
           KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
         ports:
           - 9092:9092
+      postgres:
+        image: postgres:11.7
+        env:
+          POSTGRES_DB: kafka-consumer
+          POSTGRES_USER: kafka-consumer
+          PGDATA: /var/lib/postgresql/data/pgdata
+          POSTGRES_PASSWORD: kafka-consumer
+        ports:
+          - 15432:5432
     steps:
     - uses: actions/checkout@v2
     - name: Setup Go
