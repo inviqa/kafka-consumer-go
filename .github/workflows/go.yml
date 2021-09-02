@@ -73,7 +73,7 @@ jobs:
         go-version: ${{ matrix.go }}
 
     - run: go test -v ./...
-    - run: sleep 5 && LOG_LEVEL=error go test -count=1 -v --tags=integration ./integration/
+    - run: sleep 5 && LOG_LEVEL=error go test -timeout=100s -count=1 -v --tags=integration ./integration/
 
   security:
     runs-on: ubuntu-latest
