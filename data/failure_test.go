@@ -15,11 +15,11 @@ func TestFailureFromSaramaMessage(t *testing.T) {
 			Key:   []byte("foo"),
 			Value: []byte("buzz"),
 		}},
-		Key:            []byte("baz"),
-		Value:          []byte(`{"foo":"bar"}`),
-		Topic:          "product",
-		Partition:      21002,
-		Offset:         3048453957483304,
+		Key:       []byte("baz"),
+		Value:     []byte(`{"foo":"bar"}`),
+		Topic:     "product",
+		Partition: 21002,
+		Offset:    3048453957483304,
 	}
 
 	t.Run("failure created from sarama message", func(t *testing.T) {
@@ -35,7 +35,7 @@ func TestFailureFromSaramaMessage(t *testing.T) {
 		}
 
 		err := errors.New("something bad happened")
-		got := FailureFromSaramaMessage(err, "retry1.product", exampleMsg);
+		got := FailureFromSaramaMessage(err, "retry1.product", exampleMsg)
 		fmt.Printf("\n%s\n", got.MessageHeaders)
 		if diff := deep.Equal(exp, got); diff != nil {
 			t.Error(diff)
