@@ -2,21 +2,30 @@ package retries
 
 import (
 	"database/sql"
-	"errors"
+	"fmt"
 
+	"github.com/inviqa/kafka-consumer-go/config"
 	"github.com/inviqa/kafka-consumer-go/data"
 )
 
 type Repository struct {
-	db *sql.DB
+	// TODO: remove??
+	cfg *config.Config
+	db  *sql.DB
 }
 
-func NewRepository(db *sql.DB) Repository {
+func NewRepository(cfg *config.Config, db *sql.DB) Repository {
 	return Repository{
-		db: db,
+		cfg: cfg,
+		db:  db,
 	}
 }
 
 func (r Repository) PublishFailure(f data.Failure) error {
-	return errors.New("not yet implemented")
+	q := `INSERT INTO kafka_consumer_retries(topic, payload_json, payload_headers, kafka_offset, kafka_partition, payload_key) VALUES($1, $2, $3, $4, $5, $6);`
+	_, err := r.db.Exec(q, f.Topic, f.Message, f.MessageHeaders, f.KafkaOffset, f.KafkaPartition, f.MessageKey)
+	if err != nil {
+		return fmt.Errorf("data/retries: error publishing failure to the database: %w", err)
+	}
+	return nil
 }

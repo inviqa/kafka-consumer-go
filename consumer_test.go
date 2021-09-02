@@ -85,19 +85,22 @@ func TestConsumer_ConsumeClaim_WithFailure(t *testing.T) {
 	hs := HandlerMap{
 		"product": handler.handle,
 	}
-	l := log.NullLogger{}
-
-	con := NewConsumer(fch, cfg, hs, l)
 
 	gs := saramatest.NewMockConsumerGroupSession()
 	gc := saramatest.NewMockConsumerGroupClaim()
 
-	msg1 := &sarama.ConsumerMessage{Value: []byte(`{"type":"productCreated"}`), Topic: "product"}
+	msg1 := &sarama.ConsumerMessage{
+		Value:     []byte(`{"type":"productCreated"}`),
+		Topic:     "product",
+		Offset:    10001,
+		Partition: 2,
+		Key:       []byte("SKU-123"),
+	}
 	gc.PublishMessage(msg1)
 	gc.CloseChannel()
 
-	err := con.ConsumeClaim(gs, gc)
-	if err != nil {
+	con := NewConsumer(fch, cfg, hs, log.NullLogger{})
+	if err := con.ConsumeClaim(gs, gc); err != nil {
 		t.Fatalf("unexpected error occurred: %s", err)
 	}
 
@@ -121,7 +124,20 @@ func TestConsumer_ConsumeClaim_WithFailure(t *testing.T) {
 				t.Errorf("expected %d messages in failure channel, got %d", 1, failureCount)
 			}
 			return
-		case <-fch:
+		case got := <-fch:
+			exp := data.Failure{
+				Reason:         "oops",
+				Topic:          "product",
+				NextTopic:      "retry.kafkaGroup.product",
+				MessageHeaders: []byte(`{}`),
+				Message:        []byte(`{"type":"productCreated"}`),
+				MessageKey:     []byte("SKU-123"),
+				KafkaOffset:    10001,
+				KafkaPartition: 2,
+			}
+			if diff := deep.Equal(exp, got); diff != nil {
+				t.Error(diff)
+			}
 			failureCount++
 		}
 	}

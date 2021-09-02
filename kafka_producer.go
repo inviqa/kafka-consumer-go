@@ -13,6 +13,8 @@ import (
 	"github.com/inviqa/kafka-consumer-go/log"
 )
 
+// kafkaFailureProducer is a producer that listens for failed push attempts from kafka
+// on fch and then sends them to the next kafka retry topic in the chain for retry later
 type kafkaFailureProducer struct {
 	producer sarama.SyncProducer
 	fch      <-chan data.Failure
@@ -79,17 +81,17 @@ func (p kafkaFailureProducer) listenForFailures(ctx context.Context, wg *sync.Wa
 }
 
 func (p kafkaFailureProducer) publishFailure(f data.Failure) {
-	p.logger.Debugf("publishing retry to Kafka topic '%s'", f.TopicToSendTo)
+	p.logger.Debugf("publishing retry to Kafka topic '%s'", f.NextTopic)
 
 	_, _, err := p.producer.SendMessage(&sarama.ProducerMessage{
-		Topic: f.TopicToSendTo,
+		Topic: f.NextTopic,
 		Value: sarama.ByteEncoder(f.Message),
 	})
 
 	if err != nil {
-		p.logger.Errorf("error occurred publishing retry to Kafka topic '%s': %w", f.TopicToSendTo, err)
+		p.logger.Errorf("error occurred publishing retry to Kafka topic '%s': %w", f.NextTopic, err)
 		return
 	}
 
-	p.logger.Debugf("published Failure event message to Kafka retry topic '%s' successfully", f.TopicToSendTo)
+	p.logger.Debugf("published Failure event message to Kafka retry topic '%s' successfully", f.NextTopic)
 }

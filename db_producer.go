@@ -12,8 +12,8 @@ type repository interface {
 	PublishFailure(f data.Failure) error
 }
 
-// databaseProducer is a producer that listens for failures from kafka
-// publish attempts and then sends them to the database for retry later
+// databaseProducer is a producer that listens for failed push attempts to kafka
+// sent on fch and then sends them to the database for retry later
 type databaseProducer struct {
 	repo   repository
 	fch    <-chan data.Failure
@@ -29,5 +29,22 @@ func newDatabaseProducer(repo repository, fch <-chan data.Failure, logger log.Lo
 }
 
 func (d databaseProducer) listenForFailures(ctx context.Context, wg *sync.WaitGroup) {
-	panic("implement me")
+	d.logger.Info("starting database retry producer")
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+
+		for {
+			select {
+			case f := <-d.fch:
+				// TODO: move the publishing into a separate goroutine to increase throughput?
+				if err := d.repo.PublishFailure(f); err != nil {
+					d.logger.Errorf("error publishing a failure to database for retry: %s", err)
+				}
+			case <-ctx.Done():
+				return
+			}
+		}
+	}()
 }

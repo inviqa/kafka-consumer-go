@@ -3,6 +3,7 @@ package consumer
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"sync"
 
 	"github.com/inviqa/kafka-consumer-go/config"
@@ -11,7 +12,7 @@ import (
 	"github.com/inviqa/kafka-consumer-go/log"
 )
 
-func Start(cfg *config.Config, ctx context.Context, hs HandlerMap, logger log.Logger) {
+func Start(cfg *config.Config, ctx context.Context, hs HandlerMap, logger log.Logger) error {
 	if logger == nil {
 		logger = log.NullLogger{}
 	}
@@ -25,18 +26,16 @@ func Start(cfg *config.Config, ctx context.Context, hs HandlerMap, logger log.Lo
 		var db *sql.DB
 		db, err = data.NewDB(cfg.GetDBConnectionString(), logger)
 		if err != nil {
-			// todo: return error instead
-			logger.Panic("could not start DB producer")
+			return fmt.Errorf("could not start DB producer: %w", err)
 		}
 
-		retriesRepo := retries.NewRepository(db)
+		retriesRepo := retries.NewRepository(cfg, db)
 
 		producer = newDatabaseProducer(retriesRepo, fch, logger)
 	} else {
 		producer, err = newKafkaFailureProducerWithDefaults(cfg, fch, logger)
 		if err != nil {
-			// todo: return error instead
-			logger.Panic("could not start Kafka failure producer")
+			return fmt.Errorf("could not start Kafka failure producer: %w", err)
 		}
 	}
 
@@ -44,12 +43,13 @@ func Start(cfg *config.Config, ctx context.Context, hs HandlerMap, logger log.Lo
 	cons := NewCollection(cfg, producer, fch, hs, config.NewSaramaConfig(cfg.TLSEnable, cfg.TLSSkipVerifyPeer), logger)
 
 	if err = cons.Start(ctx, wg); err != nil {
-		// todo: return error instead
-		logger.Panic("unable to start consumers")
+		return fmt.Errorf("unable to start consumers: %w", err)
 	}
 	defer cons.Close()
 
 	logger.Info("kafka consumer started")
 
 	wg.Wait()
+
+	return nil
 }

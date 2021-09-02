@@ -55,14 +55,14 @@ func TestFailureProducer_ListenForFailures(t *testing.T) {
 	msg2 := []byte("world")
 
 	f1 := data.Failure{
-		Reason:        "something bad happened",
-		Message:       msg1,
-		TopicToSendTo: "test",
+		Reason:    "something bad happened",
+		Message:   msg1,
+		NextTopic: "test",
 	}
 	f2 := data.Failure{
-		Reason:        "something bad happened",
-		Message:       msg2,
-		TopicToSendTo: "test2",
+		Reason:    "something bad happened",
+		Message:   msg2,
+		NextTopic: "test2",
 	}
 
 	fch <- f1
@@ -90,9 +90,9 @@ func TestFailureProducer_ListenForFailuresWithProducerError(t *testing.T) {
 	prod.listenForFailures(ctx, &sync.WaitGroup{})
 
 	failure := data.Failure{
-		Reason:        "something else happened",
-		Message:       []byte{},
-		TopicToSendTo: "foo",
+		Reason:    "something else happened",
+		Message:   []byte{},
+		NextTopic: "foo",
 	}
 
 	fch <- failure

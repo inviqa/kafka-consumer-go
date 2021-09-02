@@ -8,7 +8,7 @@ import (
 	"github.com/inviqa/kafka-consumer-go/config"
 )
 
-func ConsumeFromKafkaUntil(cfg *config.Config, hm consumer.HandlerMap, timeout time.Duration, done func(chan<- bool)) {
+func ConsumeFromKafkaUntil(cfg *config.Config, hm consumer.HandlerMap, timeout time.Duration, done func(chan<- bool)) error {
 	doneCh := make(chan bool)
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -24,5 +24,8 @@ func ConsumeFromKafkaUntil(cfg *config.Config, hm consumer.HandlerMap, timeout t
 	}()
 
 	go done(doneCh)
-	consumer.Start(cfg, ctx, hm, nil)
+	if err := consumer.Start(cfg, ctx, hm, nil); err != nil {
+		return err
+	}
+	return nil
 }

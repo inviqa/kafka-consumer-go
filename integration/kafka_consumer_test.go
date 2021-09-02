@@ -13,13 +13,17 @@ func TestMessagesAreConsumedFromKafka(t *testing.T) {
 
 	handler := kafka.NewTestConsumerHandler()
 
-	consumeFromKafkaUntil(func(doneCh chan<- bool) {
+	err := consumeFromKafkaUntil(func(doneCh chan<- bool) {
 		for {
 			if len(handler.RecvdMessages) == 1 {
 				doneCh <- true
 			}
 		}
 	}, handler.Handle)
+
+	if err != nil {
+		t.Fatalf("unexpected error: %s", err)
+	}
 
 	if len(handler.RecvdMessages) != 1 {
 		t.Errorf("expected 1 message to be received by handler, received %d", len(handler.RecvdMessages))
@@ -32,13 +36,17 @@ func TestMessagesAreConsumedFromKafka_withError(t *testing.T) {
 	handler := kafka.NewTestConsumerHandler()
 	handler.WillFail()
 
-	consumeFromKafkaUntil(func(doneCh chan<- bool) {
+	err := consumeFromKafkaUntil(func(doneCh chan<- bool) {
 		for {
 			if len(handler.RecvdMessages) == 2 {
 				doneCh <- true
 			}
 		}
 	}, handler.Handle)
+
+	if err != nil {
+		t.Fatalf("unexpected error: %s", err)
+	}
 
 	if len(handler.RecvdMessages) != 2 {
 		t.Errorf("expected 2 messages to be received by handler, received %d", len(handler.RecvdMessages))

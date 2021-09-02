@@ -63,17 +63,13 @@ func (c *consumer) markMessageProcessed(session sarama.ConsumerGroupSession, msg
 }
 
 func (c *consumer) sendToFailureChannel(message *sarama.ConsumerMessage, err error) {
-	topic, nextErr := c.cfg.NextTopicNameInChain(message.Topic)
+	nextTopic, nextErr := c.cfg.NextTopicNameInChain(message.Topic)
 	if nextErr != nil {
 		c.logger.Errorf("no next topic to send failure to (deadletter topic being consumed?)")
 		return
 	}
 
-	c.failureCh <- data.Failure{
-		Reason:        err.Error(),
-		Message:       message.Value,
-		TopicToSendTo: topic,
-	}
+	c.failureCh <- data.FailureFromSaramaMessage(err, nextTopic, message)
 }
 
 func (c *consumer) Setup(session sarama.ConsumerGroupSession) error {

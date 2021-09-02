@@ -73,6 +73,6 @@ func publishMessageToKafka(b []byte, topic string) {
 	log.Printf("published message to kafka partition %d offset %d", partition, offset)
 }
 
-func consumeFromKafkaUntil(done func(chan<- bool), handler consumer.Handler) {
-	test.ConsumeFromKafkaUntil(cfg, consumer.HandlerMap{"mainTopic": handler}, time.Second*10, done)
+func consumeFromKafkaUntil(done func(chan<- bool), handler consumer.Handler) error {
+	return test.ConsumeFromKafkaUntil(cfg, consumer.HandlerMap{"mainTopic": handler}, time.Second*10, done)
 }
