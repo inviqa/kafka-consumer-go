@@ -24,10 +24,12 @@ const (
 )
 
 type Config struct {
-	Host               []string
-	Group              string
-	ConsumableTopics   []*KafkaTopic
-	TopicMap           map[TopicKey]*KafkaTopic
+	Host             []string
+	Group            string
+	ConsumableTopics []*KafkaTopic
+	TopicMap         map[TopicKey]*KafkaTopic
+	// DBRetries is indexed by the topic name, and represents retry intervals for processing retries in the DB
+	DBRetries          map[string][]*DBTopicRetry
 	TLSEnable          bool
 	TLSSkipVerifyPeer  bool
 	DB                 Database
@@ -40,6 +42,16 @@ type KafkaTopic struct {
 	Delay time.Duration
 	Key   TopicKey
 	Next  *KafkaTopic
+}
+
+// DBTopicRetry represents retry configuration for a topic when it is processed from the DB.
+type DBTopicRetry struct {
+	// Interval represents the minimum time that should elapse between the last processing attempt and the next one.
+	Interval time.Duration
+	// Sequence represents the sequence number of this retry attempt. This is used to find retries that are at the right
+	// sequence in the retry flow.
+	Sequence uint8
+	Key      TopicKey
 }
 
 type Database struct {
@@ -57,17 +69,6 @@ func NewConfig() (*Config, error) {
 	return buildConfig(Config{
 		topicNameGenerator: defaultTopicNameGenerator,
 	})
-}
-
-func (cfg *Config) AddTopics(topics []*KafkaTopic) {
-	cfg.ConsumableTopics = append(cfg.ConsumableTopics, topics[:len(topics)-1]...)
-
-	if cfg.TopicMap == nil {
-		cfg.TopicMap = map[TopicKey]*KafkaTopic{}
-	}
-	for _, topic := range topics {
-		cfg.TopicMap[TopicKey(topic.Name)] = topic
-	}
 }
 
 func (cfg *Config) NextTopicNameInChain(currentTopic string) (string, error) {
@@ -94,16 +95,32 @@ func (cfg *Config) FindTopicKey(topicName string) TopicKey {
 	return topic.Key
 }
 
-func (c Config) GetDBConnectionString() string {
+func (cfg *Config) GetDBConnectionString() string {
 	sslMode := "disable"
-	if c.TLSEnable {
+	if cfg.TLSEnable {
 		sslMode = "verify-full"
 	}
 
-	return fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=%s", c.DB.User, c.DB.Pass, c.DB.Host, c.DB.Port, c.DB.Schema, sslMode)
+	return fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=%s", cfg.DB.User, cfg.DB.Pass, cfg.DB.Host, cfg.DB.Port, cfg.DB.Schema, sslMode)
+}
+
+// MainTopics will return a slice containing the main topic names where
+// messaged are processed from in Kafka. It will not include any of the
+// retry or dead-letter topic names.
+// This is only used in DB retries.
+func (cfg *Config) MainTopics() []string {
+	var mainTopics []string
+	for _, t := range cfg.ConsumableTopics {
+		if t.Delay == time.Duration(0) {
+			mainTopics = append(mainTopics, t.Name)
+		}
+	}
+	return mainTopics
 }
 
 func (cfg *Config) addTopicsFromSource(topics []string, retryIntervals []int) error {
+	cfg.DBRetries = map[string][]*DBTopicRetry{}
+
 	for _, topic := range topics {
 		// main topic
 		derivedTopics := []*KafkaTopic{
@@ -112,8 +129,10 @@ func (cfg *Config) addTopicsFromSource(topics []string, retryIntervals []int) er
 				Key:  TopicKey(topic),
 			},
 		}
+		cfg.DBRetries[topic] = []*DBTopicRetry{}
 
 		// retry topics
+		sequence := uint8(1)
 		for i, interval := range retryIntervals {
 			d, err := time.ParseDuration(strconv.Itoa(interval) + "s")
 			if err != nil {
@@ -125,8 +144,16 @@ func (cfg *Config) addTopicsFromSource(topics []string, retryIntervals []int) er
 				Key:   TopicKey(topic),
 			}
 
+			dbRetry := &DBTopicRetry{
+				Interval: d,
+				Sequence: sequence,
+				Key:      rt.Key,
+			}
+
 			derivedTopics[i].Next = rt
 			derivedTopics = append(derivedTopics, rt)
+			cfg.DBRetries[topic] = append(cfg.DBRetries[topic], dbRetry)
+			sequence++
 		}
 
 		// deadLetter topic
@@ -138,10 +165,21 @@ func (cfg *Config) addTopicsFromSource(topics []string, retryIntervals []int) er
 
 		derivedTopics = append(derivedTopics, dt)
 
-		cfg.AddTopics(derivedTopics)
+		cfg.addTopics(derivedTopics)
 	}
 
 	return nil
+}
+
+func (cfg *Config) addTopics(topics []*KafkaTopic) {
+	cfg.ConsumableTopics = append(cfg.ConsumableTopics, topics[:len(topics)-1]...)
+
+	if cfg.TopicMap == nil {
+		cfg.TopicMap = map[TopicKey]*KafkaTopic{}
+	}
+	for _, topic := range topics {
+		cfg.TopicMap[TopicKey(topic.Name)] = topic
+	}
 }
 
 func (cfg *Config) loadFromEnvVars() error {

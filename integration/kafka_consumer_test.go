@@ -17,6 +17,7 @@ func TestMessagesAreConsumedFromKafka(t *testing.T) {
 		for {
 			if len(handler.RecvdMessages) == 1 {
 				doneCh <- true
+				return
 			}
 		}
 	}, handler.Handle)
@@ -30,7 +31,7 @@ func TestMessagesAreConsumedFromKafka(t *testing.T) {
 	}
 }
 
-func TestMessagesAreConsumedFromKafka_withError(t *testing.T) {
+func TestMessagesAreConsumedFromKafka_WithError(t *testing.T) {
 	publishTestMessageToKafka(kafka.TestMessage{})
 
 	handler := kafka.NewTestConsumerHandler()
@@ -40,6 +41,7 @@ func TestMessagesAreConsumedFromKafka_withError(t *testing.T) {
 		for {
 			if len(handler.RecvdMessages) == 2 {
 				doneCh <- true
+				return
 			}
 		}
 	}, handler.Handle)

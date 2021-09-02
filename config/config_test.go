@@ -268,7 +268,7 @@ func TestConfig_AddTopics(t *testing.T) {
 				ConsumableTopics: tt.fields.ConsumableTopics,
 				TopicMap:         tt.fields.TopicMap,
 			}
-			cfg.AddTopics(tt.args.topics)
+			cfg.addTopics(tt.args.topics)
 
 			if diff := deep.Equal(cfg.ConsumableTopics, tt.expConsumableTopics); diff != nil {
 				t.Error(diff)
@@ -430,6 +430,32 @@ func TestNewConfig(t *testing.T) {
 			"retry2.kafkaGroup.payment":     expRetry2Payment,
 			"deadLetter.kafkaGroup.payment": expDeadLetterPayment,
 		},
+		DBRetries: map[string][]*DBTopicRetry{
+			"product": {
+				{
+					Interval: time.Duration(120000000000),
+					Sequence: 1,
+					Key:      "product",
+				},
+				{
+					Interval: time.Duration(300000000000),
+					Sequence: 2,
+					Key:      "product",
+				},
+			},
+			"payment": {
+				{
+					Interval: time.Duration(120000000000),
+					Sequence: 1,
+					Key:      "payment",
+				},
+				{
+					Interval: time.Duration(300000000000),
+					Sequence: 2,
+					Key:      "payment",
+				},
+			},
+		},
 		TLSSkipVerifyPeer: true,
 		DB: Database{
 			Host:   "localhost",
@@ -479,13 +505,16 @@ func TestNewConfig_WithEmptyRetryIntervals(t *testing.T) {
 		},
 		TLSEnable:         true,
 		TLSSkipVerifyPeer: true,
+		DBRetries: map[string][]*DBTopicRetry{
+			"product": {},
+		},
 	}
 
 	c, err := NewConfig()
 	if err != nil {
 		t.Fatalf("unexpected error: %s", err)
 	}
-	if diff := deep.Equal(c, exp); diff != nil {
+	if diff := deep.Equal(exp, c); diff != nil {
 		t.Error(diff)
 	}
 }
@@ -555,4 +584,23 @@ func TestConfig_GetDBConnectionString(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestConfig_MainTopics(t *testing.T) {
+	os.Setenv("KAFKA_SOURCE_TOPICS", "product,payment")
+	os.Setenv("KAFKA_RETRY_INTERVALS", "120,300")
+	os.Setenv("KAFKA_GROUP", "foo")
+	defer os.Clearenv()
+
+	t.Run("main topics returned", func(t *testing.T) {
+		cfg, err := NewConfig()
+		if err != nil {
+			t.Fatalf("unexpected error: %s", err)
+		}
+		got := cfg.MainTopics()
+		exp := []string{"product", "payment"}
+		if diff := deep.Equal(exp, got); diff != nil {
+			t.Error(diff)
+		}
+	})
 }

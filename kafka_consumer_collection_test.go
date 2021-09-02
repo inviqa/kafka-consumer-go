@@ -23,7 +23,7 @@ func TestNewCollection(t *testing.T) {
 	l := log.NullLogger{}
 	hm := HandlerMap{}
 
-	exp := &Collection{
+	exp := &kafkaConsumerCollection{
 		cfg:       cfg,
 		consumers: []sarama.ConsumerGroup{},
 		producer:  fp,
@@ -31,7 +31,7 @@ func TestNewCollection(t *testing.T) {
 		saramaCfg: scfg,
 		logger:    l,
 	}
-	col := NewCollection(cfg, fp, fch, hm, scfg, nil)
+	col := newKafkaConsumerCollection(cfg, fp, fch, hm, scfg, nil)
 	if !reflect.DeepEqual(exp, col) {
 		t.Errorf("expected %v, but got %v", exp, col)
 	}
@@ -40,7 +40,7 @@ func TestNewCollection(t *testing.T) {
 func TestCollection_Close(t *testing.T) {
 	mcg1 := saramatest.NewMockConsumerGroup()
 	mcg2 := saramatest.NewMockConsumerGroup()
-	col := &Collection{consumers: []sarama.ConsumerGroup{mcg1, mcg2}}
+	col := &kafkaConsumerCollection{consumers: []sarama.ConsumerGroup{mcg1, mcg2}}
 
 	col.Close()
 
@@ -54,7 +54,7 @@ func TestCollection_CloseWithError(t *testing.T) {
 	mcg2 := saramatest.NewMockConsumerGroup()
 	mcg1.ErrorOnClose()
 
-	col := &Collection{consumers: []sarama.ConsumerGroup{mcg1, mcg2}, logger: log.NullLogger{}}
+	col := &kafkaConsumerCollection{consumers: []sarama.ConsumerGroup{mcg1, mcg2}, logger: log.NullLogger{}}
 	col.Close()
 
 	if !mcg2.WasClosed() || len(col.consumers) > 0 {
@@ -67,7 +67,7 @@ func TestCollection_StartConsumer(t *testing.T) {
 	ctx := context.Background()
 	cfg := &config.Config{}
 
-	col := &Collection{consumers: []sarama.ConsumerGroup{mcg}, cfg: cfg}
+	col := &kafkaConsumerCollection{consumers: []sarama.ConsumerGroup{mcg}, cfg: cfg}
 
 	col.startConsumer(mcg, ctx, &sync.WaitGroup{}, &config.KafkaTopic{
 		Name:  "retry",
@@ -87,7 +87,7 @@ func TestCollection_StartConsumerWithError(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cfg := &config.Config{}
 
-	col := &Collection{consumers: []sarama.ConsumerGroup{mcg}, cfg: cfg}
+	col := &kafkaConsumerCollection{consumers: []sarama.ConsumerGroup{mcg}, cfg: cfg}
 
 	col.startConsumer(mcg, ctx, &sync.WaitGroup{}, &config.KafkaTopic{
 		Name:  "retry",

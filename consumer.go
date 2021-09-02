@@ -17,9 +17,6 @@ type consumer struct {
 	logger    log.Logger
 }
 
-type Handler func(msg *sarama.ConsumerMessage) error
-type HandlerMap map[config.TopicKey]Handler
-
 func NewConsumer(fch chan<- data.Failure, cfg *config.Config, hs HandlerMap, l log.Logger) sarama.ConsumerGroupHandler {
 	return &consumer{
 		failureCh: fch,

@@ -8,19 +8,19 @@ import (
 	"github.com/inviqa/kafka-consumer-go/log"
 )
 
-type repository interface {
+type producerRepository interface {
 	PublishFailure(f data.Failure) error
 }
 
 // databaseProducer is a producer that listens for failed push attempts to kafka
 // sent on fch and then sends them to the database for retry later
 type databaseProducer struct {
-	repo   repository
+	repo   producerRepository
 	fch    <-chan data.Failure
 	logger log.Logger
 }
 
-func newDatabaseProducer(repo repository, fch <-chan data.Failure, logger log.Logger) failureProducer {
+func newDatabaseProducer(repo producerRepository, fch <-chan data.Failure, logger log.Logger) failureProducer {
 	return &databaseProducer{
 		repo:   repo,
 		fch:    fch,

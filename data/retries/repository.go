@@ -3,6 +3,7 @@ package retries
 import (
 	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/inviqa/kafka-consumer-go/config"
 	"github.com/inviqa/kafka-consumer-go/data"
@@ -28,4 +29,16 @@ func (r Repository) PublishFailure(f data.Failure) error {
 		return fmt.Errorf("data/retries: error publishing failure to the database: %w", err)
 	}
 	return nil
+}
+
+func (r Repository) GetMessagesForRetry(topic string, sequence uint8, interval time.Duration) ([]Retry, error) {
+	panic("implement me")
+}
+
+func (r Repository) MarkRetrySuccessful(id int64) error {
+	panic("implement me")
+}
+
+func (r Repository) MarkRetryErrored(retry Retry) error {
+	panic("implement me")
 }

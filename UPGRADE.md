@@ -7,6 +7,7 @@ This document highlights breaking changes in releases that will require some mig
 * `test.ConsumeFromKafkaUntil()` now returns an error if the consuming failed, you will need to handle it if you are using this test helper in your integration test suite
 * `consumer.Start()`'s parameters have now changed, there is no need to provide a channel for failures as this is now managed internally
 * `consumer.Start()` now returns an error if the consuming failed, you will need to handle this error, likely by logging it and exiting
+* `consumer.NewCollection()` has been renamed to `consumer.newKafkaConsumerCollection()`, and is now no longer part of the public API of this module
 
 ## `0.1.x` -> `0.2.0`
 

@@ -2,7 +2,6 @@ package consumer
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"sync"
 
@@ -19,28 +18,27 @@ func Start(cfg *config.Config, ctx context.Context, hs HandlerMap, logger log.Lo
 
 	wg := &sync.WaitGroup{}
 	fch := make(chan data.Failure)
+	srmCfg := config.NewSaramaConfig(cfg.TLSEnable, cfg.TLSSkipVerifyPeer)
 
 	var producer failureProducer
+	var cons ConsumerCollection
 	var err error
+
 	if cfg.UseDBForRetryQueue {
-		var db *sql.DB
-		db, err = data.NewDB(cfg.GetDBConnectionString(), logger)
+		db, err := data.NewDB(cfg.GetDBConnectionString(), logger)
 		if err != nil {
-			return fmt.Errorf("could not start DB producer: %w", err)
+			return fmt.Errorf("could not connect to DB: %w", err)
 		}
-
-		retriesRepo := retries.NewRepository(cfg, db)
-
-		producer = newDatabaseProducer(retriesRepo, fch, logger)
+		repo := retries.NewRepository(cfg, db)
+		producer = newDatabaseProducer(repo, fch, logger)
+		cons = newKafkaConsumerDbCollection(cfg, producer, repo, fch, hs, srmCfg, logger)
 	} else {
 		producer, err = newKafkaFailureProducerWithDefaults(cfg, fch, logger)
 		if err != nil {
 			return fmt.Errorf("could not start Kafka failure producer: %w", err)
 		}
+		cons = newKafkaConsumerCollection(cfg, producer, fch, hs, srmCfg, logger)
 	}
-
-	// todo: address DB polling in the consumer collection??
-	cons := NewCollection(cfg, producer, fch, hs, config.NewSaramaConfig(cfg.TLSEnable, cfg.TLSSkipVerifyPeer), logger)
 
 	if err = cons.Start(ctx, wg); err != nil {
 		return fmt.Errorf("unable to start consumers: %w", err)

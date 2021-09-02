@@ -59,6 +59,15 @@ func TestBuilder_Config(t *testing.T) {
 			"retry1.fixedTopic":     expRetry1Product,
 			"deadLetter.fixedTopic": expDeadLetterProduct,
 		},
+		DBRetries: map[string][]*DBTopicRetry{
+			"product": {
+				{
+					Interval: time.Duration(120000000000),
+					Sequence: 1,
+					Key:      "product",
+				},
+			},
+		},
 	}
 
 	c, err := NewBuilder().SetTopicNameDecorator(dummyGenerator).Config()

@@ -2,7 +2,6 @@ package data
 
 import (
 	"errors"
-	"fmt"
 	"testing"
 
 	"github.com/Shopify/sarama"
@@ -36,7 +35,6 @@ func TestFailureFromSaramaMessage(t *testing.T) {
 
 		err := errors.New("something bad happened")
 		got := FailureFromSaramaMessage(err, "retry1.product", exampleMsg)
-		fmt.Printf("\n%s\n", got.MessageHeaders)
 		if diff := deep.Equal(exp, got); diff != nil {
 			t.Error(diff)
 		}

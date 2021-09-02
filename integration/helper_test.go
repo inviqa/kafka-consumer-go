@@ -79,5 +79,14 @@ func publishMessageToKafka(b []byte, topic string) {
 }
 
 func consumeFromKafkaUntil(done func(chan<- bool), handler consumer.Handler) error {
-	return test.ConsumeFromKafkaUntil(cfg, consumer.HandlerMap{"mainTopic": handler}, time.Second*10, done)
+	return test.ConsumeFromKafkaUntil(cfg, consumer.HandlerMap{"mainTopic": handler}, time.Second*5, done)
+}
+
+func consumeFromKafkaUsingDbRetriesUntil(done func(chan<- bool), handler consumer.Handler) error {
+	cfg.UseDBForRetryQueue = true
+	defer func() {
+		cfg.UseDBForRetryQueue = false
+	}()
+
+	return test.ConsumeFromKafkaUntil(cfg, consumer.HandlerMap{"mainTopic": handler}, time.Second*5, done)
 }
