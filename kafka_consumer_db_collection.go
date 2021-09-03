@@ -171,7 +171,6 @@ func (cc *kafkaConsumerDbCollection) processMessagesForRetry(topic string, rc *c
 }
 
 func (cc *kafkaConsumerDbCollection) Close() {
-	// TODO: extract to remove duplication??
 	for _, c := range cc.kafkaConsumers {
 		if err := c.Close(); err != nil {
 			cc.logger.Errorf("error occurred closing a Kafka consumer: %w", err)

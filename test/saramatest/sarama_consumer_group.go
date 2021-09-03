@@ -12,7 +12,7 @@ type MockConsumerGroup struct {
 	// consumed will mark the consumer group as having been consumed, which makes
 	// our tests easier to implement as we do not need to cater for an ongoing-consume
 	// as under normal operation
-	consumed bool
+	consumed           bool
 	closed             bool
 	errorOnClose       bool
 	consumedTopicCount map[string]int

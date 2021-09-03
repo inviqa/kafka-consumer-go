@@ -10,14 +10,19 @@ import (
 
 type mockRetriesRepository struct {
 	// indexed by topic name
-	recvdFailures   map[string][]data.Failure
-	willError       bool
-	retryErrored    bool
-	retrySuccessful bool
+	recvdFailures                  map[string][]data.Failure
+	willErrorOnPublishFailure      bool
+	willErrorOnGetMessagesForRetry bool
+	retryErrored                   bool
+	retrySuccessful                bool
 }
 
 // GetMessagesForRetry will return in-memory received failures as retries
 func (mr *mockRetriesRepository) GetMessagesForRetry(topic string, sequence uint8, interval time.Duration) ([]retries.Retry, error) {
+	if mr.willErrorOnGetMessagesForRetry {
+		return nil, errors.New("oops")
+	}
+
 	failures, ok := mr.recvdFailures[topic]
 	if !ok {
 		return []retries.Retry{}, nil
@@ -50,13 +55,13 @@ func (mr *mockRetriesRepository) MarkRetryErrored(retry retries.Retry) error {
 
 func newMockRetriesRepository(willError bool) *mockRetriesRepository {
 	return &mockRetriesRepository{
-		recvdFailures: map[string][]data.Failure{},
-		willError:     willError,
+		recvdFailures:             map[string][]data.Failure{},
+		willErrorOnPublishFailure: willError,
 	}
 }
 
 func (mr *mockRetriesRepository) PublishFailure(f data.Failure) error {
-	if mr.willError {
+	if mr.willErrorOnPublishFailure {
 		return errors.New("oops")
 	}
 	mr.recvdFailures[f.Topic] = append(mr.recvdFailures[f.Topic], f)
