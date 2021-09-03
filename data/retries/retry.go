@@ -16,11 +16,9 @@ type Retry struct {
 	KafkaOffset    int64
 	KafkaPartition int32
 	Attempts       uint8
-	DeadLettered   bool
-	Successful     bool
-	LastError      error
-	CreatedAt      time.Time
-	Updated        time.Time
+	LastError      string
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }
 
 type recordHeaders map[string]string

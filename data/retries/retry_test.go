@@ -1,7 +1,6 @@
 package retries
 
 import (
-	"errors"
 	"testing"
 
 	"github.com/Shopify/sarama"
@@ -20,7 +19,7 @@ func TestRetry_ToSaramaConsumerMessage(t *testing.T) {
 		Attempts:       1,
 		DeadLettered:   true,
 		Successful:     false,
-		LastError:      errors.New("something bad"),
+		LastError:      "something bad",
 	}
 
 	t.Run("retry converts to consumer message", func(t *testing.T) {
