@@ -167,6 +167,16 @@ func newTestConfig() *config.Config {
 			"retry.kafkaGroup.product":      retryProduct,
 			"deadLetter.kafkaGroup.product": deadLetterProduct,
 		},
+		ConsumableTopics: []*config.KafkaTopic{product, retryProduct},
+		DBRetries: map[string][]*config.DBTopicRetry{
+			"product": {
+				{
+					Interval: time.Millisecond * 10,
+					Sequence: 1,
+					Key:      "product",
+				},
+			},
+		},
 	}
 }
 

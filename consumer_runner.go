@@ -21,9 +21,10 @@ func Start(cfg *config.Config, ctx context.Context, hs HandlerMap, logger log.Lo
 	srmCfg := config.NewSaramaConfig(cfg.TLSEnable, cfg.TLSSkipVerifyPeer)
 
 	var producer failureProducer
-	var cons ConsumerCollection
+	var cons collection
 	var err error
 
+	// TODO: clean this up
 	if cfg.UseDBForRetryQueue {
 		db, err := data.NewDB(cfg.GetDBConnectionString(), logger)
 		if err != nil {
@@ -31,7 +32,7 @@ func Start(cfg *config.Config, ctx context.Context, hs HandlerMap, logger log.Lo
 		}
 		repo := retries.NewRepository(cfg, db)
 		producer = newDatabaseProducer(repo, fch, logger)
-		cons = newKafkaConsumerDbCollection(cfg, producer, repo, fch, hs, srmCfg, logger)
+		cons = newKafkaConsumerDbCollection(cfg, producer, repo, fch, hs, srmCfg, logger, defaultKafkaConnector)
 	} else {
 		producer, err = newKafkaFailureProducerWithDefaults(cfg, fch, logger)
 		if err != nil {

@@ -22,7 +22,14 @@ type kafkaConsumerCollection struct {
 	logger    log.Logger
 }
 
-func newKafkaConsumerCollection(cfg *config.Config, p failureProducer, fch chan data.Failure, hm HandlerMap, scfg *sarama.Config, logger log.Logger) ConsumerCollection {
+func newKafkaConsumerCollection(
+	cfg *config.Config,
+	p failureProducer,
+	fch chan data.Failure,
+	hm HandlerMap,
+	scfg *sarama.Config,
+	logger log.Logger,
+) *kafkaConsumerCollection {
 	if logger == nil {
 		logger = log.NullLogger{}
 	}

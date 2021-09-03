@@ -2,7 +2,6 @@ package consumer
 
 import (
 	"context"
-	"errors"
 	"sync"
 	"testing"
 	"time"
@@ -58,11 +57,11 @@ func TestDatabaseProducer_ListenForFailures(t *testing.T) {
 		time.Sleep(time.Millisecond * 5)
 		cancel()
 
-		act1 := repo.getPublishedFailureByTopic("test")
+		act1 := repo.getFirstPublishedFailureByTopic("test")
 		if diff := deep.Equal(f1, *act1); diff != nil {
 			t.Error(diff)
 		}
-		act2 := repo.getPublishedFailureByTopic("test2")
+		act2 := repo.getFirstPublishedFailureByTopic("test2")
 		if diff := deep.Equal(f2, *act2); diff != nil {
 			t.Error(diff)
 		}
@@ -82,33 +81,4 @@ func TestDatabaseProducer_ListenForFailures(t *testing.T) {
 		time.Sleep(time.Millisecond * 5)
 		cancel()
 	})
-}
-
-type mockRetriesRepository struct {
-	// indexed by topic name, as we only send 1 message per topic in our tests
-	recvdFailures map[string]data.Failure
-	willError     bool
-}
-
-func newMockRetriesRepository(willError bool) *mockRetriesRepository {
-	return &mockRetriesRepository{
-		recvdFailures: map[string]data.Failure{},
-		willError:     willError,
-	}
-}
-
-func (mr *mockRetriesRepository) PublishFailure(f data.Failure) error {
-	if mr.willError {
-		return errors.New("oops")
-	}
-	mr.recvdFailures[f.Topic] = f
-	return nil
-}
-
-func (mr *mockRetriesRepository) getPublishedFailureByTopic(topic string) *data.Failure {
-	f, ok := mr.recvdFailures[topic]
-	if !ok {
-		return nil
-	}
-	return &f
 }

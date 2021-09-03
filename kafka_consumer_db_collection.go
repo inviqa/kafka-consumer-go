@@ -26,7 +26,10 @@ type kafkaConsumerDbCollection struct {
 	handlerMap     HandlerMap
 	saramaCfg      *sarama.Config
 	logger         log.Logger
+	connectToKafka kafkaConnector
 }
+
+type kafkaConnector func(cfg *config.Config, saramaCfg *sarama.Config, logger log.Logger) (sarama.ConsumerGroup, error)
 
 type retryRepository interface {
 	GetMessagesForRetry(topic string, sequence uint8, interval time.Duration) ([]retries.Retry, error)
@@ -42,7 +45,8 @@ func newKafkaConsumerDbCollection(
 	hm HandlerMap,
 	scfg *sarama.Config,
 	logger log.Logger,
-) ConsumerCollection {
+	connector kafkaConnector,
+) *kafkaConsumerDbCollection {
 	if logger == nil {
 		logger = log.NullLogger{}
 	}
@@ -56,6 +60,7 @@ func newKafkaConsumerDbCollection(
 		handlerMap:     hm,
 		saramaCfg:      scfg,
 		logger:         logger,
+		connectToKafka: connector,
 	}
 }
 
@@ -66,7 +71,7 @@ func (cc *kafkaConsumerDbCollection) Start(ctx context.Context, wg *sync.WaitGro
 	}
 
 	for _, t := range topics {
-		group, err := cc.startConsumerGroup(ctx, wg, t)
+		group, err := cc.startMainTopicConsumer(ctx, wg, t)
 		if err != nil {
 			return err
 		}
@@ -78,21 +83,15 @@ func (cc *kafkaConsumerDbCollection) Start(ctx context.Context, wg *sync.WaitGro
 	return nil
 }
 
-func (cc *kafkaConsumerDbCollection) startConsumerGroup(ctx context.Context, wg *sync.WaitGroup, topic string) (sarama.ConsumerGroup, error) {
+// startMainTopicConsumer starts a sarama.ConsumerGroup to consume messages from Kafka for the given main topic name
+func (cc *kafkaConsumerDbCollection) startMainTopicConsumer(ctx context.Context, wg *sync.WaitGroup, topic string) (sarama.ConsumerGroup, error) {
 	cc.logger.Infof("starting Kafka consumer group for '%s'", topic)
 
-	cl, err := connectToKafka(cc.cfg, cc.saramaCfg, cc.logger)
+	cl, err := cc.connectToKafka(cc.cfg, cc.saramaCfg, cc.logger)
 	if err != nil {
 		return nil, err
 	}
 
-	cc.startConsumer(cl, ctx, wg, topic)
-
-	return cl, nil
-}
-
-// startConsumer starts a sarama.ConsumerGroup to consume messages from Kafka for each main topic that is configured
-func (cc *kafkaConsumerDbCollection) startConsumer(cl sarama.ConsumerGroup, ctx context.Context, wg *sync.WaitGroup, topic string) {
 	go func() {
 		for err := range cl.Errors() {
 			cc.logger.Errorf("error occurred in consumer group Handler: %w", err)
@@ -116,6 +115,8 @@ func (cc *kafkaConsumerDbCollection) startConsumer(cl sarama.ConsumerGroup, ctx 
 			}
 		}
 	}()
+
+	return cl, nil
 }
 
 func (cc *kafkaConsumerDbCollection) startDbRetryProcessorsForTopic(ctx context.Context, topic string, retryConfig []*config.DBTopicRetry, wg *sync.WaitGroup) {

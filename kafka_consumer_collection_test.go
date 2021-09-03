@@ -62,7 +62,7 @@ func TestCollection_CloseWithError(t *testing.T) {
 	}
 }
 
-func TestCollection_StartConsumer(t *testing.T) {
+func TestCollection_startConsumer(t *testing.T) {
 	mcg := saramatest.NewMockConsumerGroup()
 	ctx := context.Background()
 	cfg := &config.Config{}
@@ -81,7 +81,7 @@ func TestCollection_StartConsumer(t *testing.T) {
 	}
 }
 
-func TestCollection_StartConsumerWithError(t *testing.T) {
+func TestCollection_startConsumerWithError(t *testing.T) {
 	mcg := saramatest.NewMockConsumerGroup()
 	mcg.ErrorOnConsume()
 	ctx, cancel := context.WithCancel(context.Background())

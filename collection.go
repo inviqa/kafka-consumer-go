@@ -12,7 +12,7 @@ import (
 	"github.com/inviqa/kafka-consumer-go/log"
 )
 
-type ConsumerCollection interface {
+type collection interface {
 	Start(ctx context.Context, wg *sync.WaitGroup) error
 	Close()
 }
