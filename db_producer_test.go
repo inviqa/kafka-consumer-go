@@ -20,15 +20,15 @@ func TestNewDatabaseProducer(t *testing.T) {
 
 	fch := make(chan data.Failure)
 	logger := log.NullLogger{}
-	repo := newMockRetriesRepository(false)
+	rm := newMockRetryManager(false)
 
 	exp := &databaseProducer{
-		repo:   repo,
-		fch:    fch,
-		logger: logger,
+		retryManager: rm,
+		fch:          fch,
+		logger:       logger,
 	}
 
-	if diff := deep.Equal(exp, newDatabaseProducer(repo, fch, logger)); diff != nil {
+	if diff := deep.Equal(exp, newDatabaseProducer(rm, fch, logger)); diff != nil {
 		t.Error(diff)
 	}
 }
@@ -48,7 +48,7 @@ func TestDatabaseProducer_ListenForFailures(t *testing.T) {
 	t.Run("failure is pushed to repository", func(t *testing.T) {
 		t.Parallel()
 		ctx, cancel := context.WithCancel(context.Background())
-		repo := newMockRetriesRepository(false)
+		repo := newMockRetryManager(false)
 		fch := make(chan data.Failure, 1)
 
 		newDatabaseProducer(repo, fch, log.NullLogger{}).listenForFailures(ctx, &sync.WaitGroup{})
@@ -72,7 +72,7 @@ func TestDatabaseProducer_ListenForFailures(t *testing.T) {
 	t.Run("error publishing failure to DB", func(t *testing.T) {
 		t.Parallel()
 		ctx, cancel := context.WithCancel(context.Background())
-		repo := newMockRetriesRepository(true)
+		repo := newMockRetryManager(true)
 		fch := make(chan data.Failure, 1)
 
 		newDatabaseProducer(repo, fch, log.NullLogger{}).listenForFailures(ctx, &sync.WaitGroup{})

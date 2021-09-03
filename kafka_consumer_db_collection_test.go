@@ -23,7 +23,7 @@ func TestNewKafkaConsumerDbCollection(t *testing.T) {
 	}()
 
 	cfg := &config.Config{}
-	repo := newMockRetriesRepository(false)
+	repo := newMockRetryManager(false)
 	fch := make(chan data.Failure)
 	dp := newDatabaseProducer(repo, fch, nil)
 	hm := HandlerMap{}
@@ -34,7 +34,7 @@ func TestNewKafkaConsumerDbCollection(t *testing.T) {
 		kafkaConsumers: []sarama.ConsumerGroup{},
 		cfg:            cfg,
 		producer:       dp,
-		repo:           repo,
+		retryManager:   repo,
 		handler:        NewConsumer(fch, cfg, hm, logger),
 		handlerMap:     hm,
 		saramaCfg:      scfg,
@@ -267,9 +267,9 @@ func TestKafkaConsumerDbCollection_Close(t *testing.T) {
 	})
 }
 
-func kafkaConsumerDbCollectionForTests(mcg *saramatest.MockConsumerGroup, msgHandler Handler, errorOnConnect bool) (*kafkaConsumerDbCollection, *mockRetriesRepository) {
+func kafkaConsumerDbCollectionForTests(mcg *saramatest.MockConsumerGroup, msgHandler Handler, errorOnConnect bool) (*kafkaConsumerDbCollection, *mockRetryManager) {
 	fch := make(chan data.Failure, 10)
-	repo := newMockRetriesRepository(false)
+	repo := newMockRetryManager(false)
 	dp := newDatabaseProducer(repo, fch, log.NullLogger{})
 
 	hm := HandlerMap{"product": msgHandler}

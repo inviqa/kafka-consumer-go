@@ -5,10 +5,10 @@ import (
 	"time"
 
 	"github.com/inviqa/kafka-consumer-go/data"
-	"github.com/inviqa/kafka-consumer-go/data/retries"
+	"github.com/inviqa/kafka-consumer-go/data/retries/model"
 )
 
-type mockRetriesRepository struct {
+type mockRetryManager struct {
 	// indexed by topic name
 	recvdFailures                  map[string][]data.Failure
 	willErrorOnPublishFailure      bool
@@ -17,20 +17,20 @@ type mockRetriesRepository struct {
 	retrySuccessful                bool
 }
 
-// GetMessagesForRetry will return in-memory received failures as retries
-func (mr *mockRetriesRepository) GetMessagesForRetry(topic string, sequence uint8, interval time.Duration) ([]retries.Retry, error) {
+// GetBatch will return in-memory received failures as retries
+func (mr *mockRetryManager) GetBatch(topic string, sequence uint8, interval time.Duration) ([]model.Retry, error) {
 	if mr.willErrorOnGetMessagesForRetry {
 		return nil, errors.New("oops")
 	}
 
 	failures, ok := mr.recvdFailures[topic]
 	if !ok {
-		return []retries.Retry{}, nil
+		return []model.Retry{}, nil
 	}
 
-	var rts []retries.Retry
+	var rts []model.Retry
 	for _, failure := range failures {
-		rts = append(rts, retries.Retry{
+		rts = append(rts, model.Retry{
 			PayloadJSON:    failure.Message,
 			PayloadHeaders: failure.MessageHeaders,
 			PayloadKey:     failure.MessageKey,
@@ -43,24 +43,24 @@ func (mr *mockRetriesRepository) GetMessagesForRetry(topic string, sequence uint
 	return rts, nil
 }
 
-func (mr *mockRetriesRepository) MarkRetrySuccessful(id int64) error {
+func (mr *mockRetryManager) MarkSuccessful(id int64) error {
 	mr.retrySuccessful = true
 	return nil
 }
 
-func (mr *mockRetriesRepository) MarkRetryErrored(retry retries.Retry) error {
+func (mr *mockRetryManager) MarkErrored(retry model.Retry, err error) error {
 	mr.retryErrored = true
 	return nil
 }
 
-func newMockRetriesRepository(willError bool) *mockRetriesRepository {
-	return &mockRetriesRepository{
+func newMockRetryManager(willError bool) *mockRetryManager {
+	return &mockRetryManager{
 		recvdFailures:             map[string][]data.Failure{},
 		willErrorOnPublishFailure: willError,
 	}
 }
 
-func (mr *mockRetriesRepository) PublishFailure(f data.Failure) error {
+func (mr *mockRetryManager) PublishFailure(f data.Failure) error {
 	if mr.willErrorOnPublishFailure {
 		return errors.New("oops")
 	}
@@ -68,7 +68,7 @@ func (mr *mockRetriesRepository) PublishFailure(f data.Failure) error {
 	return nil
 }
 
-func (mr *mockRetriesRepository) getPublishedFailureCountByTopic(topic string) int {
+func (mr *mockRetryManager) getPublishedFailureCountByTopic(topic string) int {
 	f, ok := mr.recvdFailures[topic]
 	if !ok {
 		return 0
@@ -76,7 +76,7 @@ func (mr *mockRetriesRepository) getPublishedFailureCountByTopic(topic string) i
 	return len(f)
 }
 
-func (mr *mockRetriesRepository) getFirstPublishedFailureByTopic(topic string) *data.Failure {
+func (mr *mockRetryManager) getFirstPublishedFailureByTopic(topic string) *data.Failure {
 	f, ok := mr.recvdFailures[topic]
 	if !ok {
 		return nil

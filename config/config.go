@@ -23,13 +23,15 @@ const (
 	EnvVarDbSchema       = "DB_SCHEMA"
 )
 
+type DBRetries map[string][]*DBTopicRetry
+
 type Config struct {
 	Host             []string
 	Group            string
 	ConsumableTopics []*KafkaTopic
 	TopicMap         map[TopicKey]*KafkaTopic
 	// DBRetries is indexed by the topic name, and represents retry intervals for processing retries in the DB
-	DBRetries          map[string][]*DBTopicRetry
+	DBRetries          DBRetries
 	TLSEnable          bool
 	TLSSkipVerifyPeer  bool
 	DB                 Database

@@ -20,9 +20,7 @@ func Start(cfg *config.Config, ctx context.Context, hs HandlerMap, logger log.Lo
 	fch := make(chan data.Failure)
 	srmCfg := config.NewSaramaConfig(cfg.TLSEnable, cfg.TLSSkipVerifyPeer)
 
-	var producer failureProducer
 	var cons collection
-	var err error
 
 	// TODO: clean this up
 	if cfg.UseDBForRetryQueue {
@@ -30,18 +28,18 @@ func Start(cfg *config.Config, ctx context.Context, hs HandlerMap, logger log.Lo
 		if err != nil {
 			return fmt.Errorf("could not connect to DB: %w", err)
 		}
-		repo := retries.NewRepository(cfg, db)
-		producer = newDatabaseProducer(repo, fch, logger)
-		cons = newKafkaConsumerDbCollection(cfg, producer, repo, fch, hs, srmCfg, logger, defaultKafkaConnector)
+		repo := retries.NewManagerWithDefaults(cfg.DBRetries, db)
+		dbProducer := newDatabaseProducer(repo, fch, logger)
+		cons = newKafkaConsumerDbCollection(cfg, dbProducer, repo, fch, hs, srmCfg, logger, defaultKafkaConnector)
 	} else {
-		producer, err = newKafkaFailureProducerWithDefaults(cfg, fch, logger)
+		kafkaProducer, err := newKafkaFailureProducerWithDefaults(cfg, fch, logger)
 		if err != nil {
 			return fmt.Errorf("could not start Kafka failure producer: %w", err)
 		}
-		cons = newKafkaConsumerCollection(cfg, producer, fch, hs, srmCfg, logger)
+		cons = newKafkaConsumerCollection(cfg, kafkaProducer, fch, hs, srmCfg, logger)
 	}
 
-	if err = cons.Start(ctx, wg); err != nil {
+	if err := cons.Start(ctx, wg); err != nil {
 		return fmt.Errorf("unable to start consumers: %w", err)
 	}
 	defer cons.Close()

@@ -1,4 +1,4 @@
-package retries
+package model
 
 import (
 	"encoding/json"
@@ -17,7 +17,8 @@ type Retry struct {
 	KafkaPartition int32
 	Attempts       uint8
 	LastError      string
-	CreatedAt time.Time
+	CreatedAt      time.Time
+	//TODO: rename to LastAttemptedAt?
 	UpdatedAt time.Time
 }
 

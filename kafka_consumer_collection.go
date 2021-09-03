@@ -16,7 +16,7 @@ import (
 type kafkaConsumerCollection struct {
 	cfg       *config.Config
 	consumers []sarama.ConsumerGroup
-	producer  failureProducer
+	producer  *kafkaFailureProducer
 	handler   sarama.ConsumerGroupHandler
 	saramaCfg *sarama.Config
 	logger    log.Logger
@@ -24,7 +24,7 @@ type kafkaConsumerCollection struct {
 
 func newKafkaConsumerCollection(
 	cfg *config.Config,
-	p failureProducer,
+	p *kafkaFailureProducer,
 	fch chan data.Failure,
 	hm HandlerMap,
 	scfg *sarama.Config,

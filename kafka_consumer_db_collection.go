@@ -10,7 +10,7 @@ import (
 
 	"github.com/inviqa/kafka-consumer-go/config"
 	"github.com/inviqa/kafka-consumer-go/data"
-	"github.com/inviqa/kafka-consumer-go/data/retries"
+	"github.com/inviqa/kafka-consumer-go/data/retries/model"
 	"github.com/inviqa/kafka-consumer-go/log"
 )
 
@@ -20,8 +20,8 @@ import (
 type kafkaConsumerDbCollection struct {
 	cfg            *config.Config
 	kafkaConsumers []sarama.ConsumerGroup
-	producer       failureProducer
-	repo           retryRepository
+	producer       *databaseProducer
+	retryManager   retryManager
 	handler        sarama.ConsumerGroupHandler
 	handlerMap     HandlerMap
 	saramaCfg      *sarama.Config
@@ -31,16 +31,17 @@ type kafkaConsumerDbCollection struct {
 
 type kafkaConnector func(cfg *config.Config, saramaCfg *sarama.Config, logger log.Logger) (sarama.ConsumerGroup, error)
 
-type retryRepository interface {
-	GetMessagesForRetry(topic string, sequence uint8, interval time.Duration) ([]retries.Retry, error)
-	MarkRetrySuccessful(id int64) error
-	MarkRetryErrored(retry retries.Retry) error
+type retryManager interface {
+	GetBatch(topic string, sequence uint8, interval time.Duration) ([]model.Retry, error)
+	MarkSuccessful(id int64) error
+	MarkErrored(retry model.Retry, err error) error
+	PublishFailure(f data.Failure) error
 }
 
 func newKafkaConsumerDbCollection(
 	cfg *config.Config,
-	p failureProducer,
-	repo retryRepository,
+	p *databaseProducer,
+	rm retryManager,
 	fch chan data.Failure,
 	hm HandlerMap,
 	scfg *sarama.Config,
@@ -55,7 +56,7 @@ func newKafkaConsumerDbCollection(
 		cfg:            cfg,
 		kafkaConsumers: []sarama.ConsumerGroup{},
 		producer:       p,
-		repo:           repo,
+		retryManager:   rm,
 		handler:        NewConsumer(fch, cfg, hm, logger),
 		handlerMap:     hm,
 		saramaCfg:      scfg,
@@ -143,27 +144,30 @@ func (cc *kafkaConsumerDbCollection) startDbRetryProcessorsForTopic(ctx context.
 }
 
 func (cc *kafkaConsumerDbCollection) processMessagesForRetry(topic string, rc *config.DBTopicRetry) {
-	msgsForRetry, err := cc.repo.GetMessagesForRetry(topic, rc.Sequence, rc.Interval)
+	msgsForRetry, err := cc.retryManager.GetBatch(topic, rc.Sequence, rc.Interval)
 	if err != nil {
 		cc.logger.Errorf("error when fetching messages from the DB for retry: %s", err)
 		return
 	}
 
+	// TODO: check msgForRetry len before proceeding
+
 	h, ok := cc.handlerMap[rc.Key]
 	if !ok {
 		cc.logger.Errorf("no handler found for topic key '%s'", rc.Key)
+		return
 	}
 
 	for _, msg := range msgsForRetry {
 		saramaMsg := msg.ToSaramaConsumerMessage()
 		if err = h(saramaMsg); err != nil {
 			cc.logger.Errorf("error processing retried message from DB: %s", err)
-			if err = cc.repo.MarkRetryErrored(msg); err != nil {
-				cc.logger.Errorf("error marking retried message as errored in the DB: %s", err)
+			if repoErr := cc.retryManager.MarkErrored(msg, err); repoErr != nil {
+				cc.logger.Errorf("error marking retried message as errored in the DB: %s", repoErr)
 			}
 		} else {
 			cc.logger.Infof("successfully processed retried message from topic '%s' with original partition %d and offset %d", topic, msg.KafkaPartition, msg.KafkaOffset)
-			if err = cc.repo.MarkRetrySuccessful(msg.ID); err != nil {
+			if err = cc.retryManager.MarkSuccessful(msg.ID); err != nil {
 				cc.logger.Errorf("error marking retried message as successful in the DB: %s", err)
 			}
 		}

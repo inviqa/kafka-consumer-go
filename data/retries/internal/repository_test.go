@@ -1,4 +1,4 @@
-package retries
+package internal
 
 import (
 	"errors"
@@ -8,8 +8,8 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/go-test/deep"
 
-	"github.com/inviqa/kafka-consumer-go/config"
 	"github.com/inviqa/kafka-consumer-go/data"
+	"github.com/inviqa/kafka-consumer-go/data/retries/model"
 )
 
 func TestNewRepository(t *testing.T) {
@@ -19,20 +19,16 @@ func TestNewRepository(t *testing.T) {
 	}()
 
 	db, _, _ := sqlmock.New()
-	cfg := &config.Config{}
-	exp := Repository{
-		db:  db,
-		cfg: cfg,
-	}
+	exp := Repository{db: db}
 
-	if diff := deep.Equal(exp, NewRepository(cfg, db)); diff != nil {
+	if diff := deep.Equal(exp, NewRepository(db)); diff != nil {
 		t.Error(diff)
 	}
 }
 
 func TestRepository_PublishFailure(t *testing.T) {
 	db, mock, _ := sqlmock.New()
-	repo := NewRepository(&config.Config{}, db)
+	repo := NewRepository(db)
 	f := data.Failure{
 		Reason:         "something bad happened",
 		Topic:          "product",
@@ -70,7 +66,7 @@ func TestRepository_PublishFailure(t *testing.T) {
 
 func TestRepository_GetMessagesForRetry(t *testing.T) {
 	db, mock, _ := sqlmock.New()
-	repo := NewRepository(&config.Config{}, db)
+	repo := NewRepository(db)
 
 	t.Run("successfully fetches messages for retry", func(t *testing.T) {
 		times := exampleCreatedUpdatedTimes()
@@ -107,10 +103,38 @@ func TestRepository_GetMessagesForRetry(t *testing.T) {
 	})
 }
 
-func expectedRetriesForTests() []Retry {
+func TestRepository_MarkRetryErrored(t *testing.T) {
+	db, mock, _ := sqlmock.New()
+	repo := NewRepository(db)
+
+	now := time.Now()
+
+	t.Run("retry marked as errored successfully", func(t *testing.T) {
+		mock.ExpectExec("UPDATE kafka_consumer_retries SET .* WHERE .*").
+			WithArgs(2, "something bad", now, 10).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+
+		retry := model.Retry{
+			ID:        10,
+			Attempts:  2,
+			LastError: "something bad",
+			UpdatedAt: now,
+		}
+
+		if err := repo.MarkRetryErrored(retry, errors.New("something bad")); err != nil {
+			t.Errorf("unexpected error: %s", err)
+		}
+
+		if err := mock.ExpectationsWereMet(); err != nil {
+			t.Errorf("unexpected error: %s", err)
+		}
+	})
+}
+
+func expectedRetriesForTests() []model.Retry {
 	times := exampleCreatedUpdatedTimes()
 
-	retry1 := Retry{
+	retry1 := model.Retry{
 		ID:             1,
 		Topic:          "product",
 		PayloadJSON:    []byte(`{"foo":"bar"}`),
@@ -122,7 +146,7 @@ func expectedRetriesForTests() []Retry {
 		CreatedAt:      times["created"],
 		UpdatedAt:      times["updated"],
 	}
-	retry2 := Retry{
+	retry2 := model.Retry{
 		ID:             2,
 		Topic:          "product",
 		PayloadJSON:    []byte(`{"foo":"bazz"}`),
@@ -136,7 +160,7 @@ func expectedRetriesForTests() []Retry {
 		UpdatedAt:      times["updated"],
 	}
 
-	return []Retry{retry1, retry2}
+	return []model.Retry{retry1, retry2}
 }
 
 func exampleCreatedUpdatedTimes() map[string]time.Time {

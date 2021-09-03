@@ -1,4 +1,4 @@
-package retries
+package model
 
 import (
 	"testing"
@@ -17,8 +17,6 @@ func TestRetry_ToSaramaConsumerMessage(t *testing.T) {
 		KafkaOffset:    100,
 		KafkaPartition: 101,
 		Attempts:       1,
-		DeadLettered:   true,
-		Successful:     false,
 		LastError:      "something bad",
 	}
 

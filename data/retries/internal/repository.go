@@ -1,12 +1,13 @@
-package retries
+package internal
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 
-	"github.com/inviqa/kafka-consumer-go/config"
 	"github.com/inviqa/kafka-consumer-go/data"
+	"github.com/inviqa/kafka-consumer-go/data/retries/model"
 )
 
 var (
@@ -15,15 +16,12 @@ var (
 )
 
 type Repository struct {
-	// TODO: remove??
-	cfg *config.Config
-	db  *sql.DB
+	db *sql.DB
 }
 
-func NewRepository(cfg *config.Config, db *sql.DB) Repository {
+func NewRepository(db *sql.DB) Repository {
 	return Repository{
-		cfg: cfg,
-		db:  db,
+		db: db,
 	}
 }
 
@@ -36,7 +34,7 @@ func (r Repository) PublishFailure(f data.Failure) error {
 	return nil
 }
 
-func (r Repository) GetMessagesForRetry(topic string, sequence uint8, interval time.Duration) ([]Retry, error) {
+func (r Repository) GetMessagesForRetry(topic string, sequence uint8, interval time.Duration) ([]model.Retry, error) {
 	// TODO: should we add batch creation so that multiple consumers can run safely and not process the same message twice??
 
 	before := time.Now().Add(interval * -1)
@@ -49,9 +47,9 @@ func (r Repository) GetMessagesForRetry(topic string, sequence uint8, interval t
 	}
 	defer rows.Close()
 
-	var retries []Retry
+	var retries []model.Retry
 	for rows.Next() {
-		retry := Retry{}
+		retry := model.Retry{}
 		err := rows.Scan(&retry.ID, &retry.Topic, &retry.PayloadJSON, &retry.PayloadHeaders, &retry.PayloadKey, &retry.KafkaOffset, &retry.KafkaPartition, &retry.Attempts, &retry.LastError, &retry.CreatedAt, &retry.UpdatedAt)
 		if err != nil {
 			return nil, fmt.Errorf("data/retries: error scanning result into memory: %w", err)
@@ -66,6 +64,12 @@ func (r Repository) MarkRetrySuccessful(id int64) error {
 	panic("implement me")
 }
 
-func (r Repository) MarkRetryErrored(retry Retry) error {
-	panic("implement me")
+func (r Repository) MarkRetryErrored(retry model.Retry, err error) error {
+	//q := `UPDATE kafka_consumer_retries SET attempts = $1, last_error = $2`
+
+	return errors.New("not implemented")
+}
+
+func (r Repository) MarkRetryDeadLettered(retry model.Retry, err error) error {
+	return errors.New("not implemented")
 }

@@ -7,6 +7,7 @@ import (
 	"github.com/Shopify/sarama"
 )
 
+// todo: move to data/faiures/model
 type Failure struct {
 	Reason         string
 	Topic          string
