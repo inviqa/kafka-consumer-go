@@ -61,7 +61,7 @@ func (r Repository) GetMessagesForRetry(topic string, sequence uint8, interval t
 }
 
 func (r Repository) MarkRetrySuccessful(id int64) error {
-	panic("implement me")
+	return errors.New("not implemented")
 }
 
 func (r Repository) MarkRetryErrored(retry model.Retry, err error) error {
