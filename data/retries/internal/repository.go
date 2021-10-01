@@ -12,6 +12,10 @@ import (
 	"github.com/inviqa/kafka-consumer-go/data/retries/model"
 )
 
+const (
+	consideredStaleAfter = time.Minute * 10
+)
+
 var (
 	// TODO: any columns (and struct fields) that can be removed from app code?
 	columns = []string{"id", "topic", "payload_json", "payload_headers", "payload_key", "kafka_offset", "kafka_partition", "attempts"}
@@ -38,7 +42,7 @@ func (r Repository) PublishFailure(ctx context.Context, f data.Failure) error {
 
 func (r Repository) GetMessagesForRetry(ctx context.Context, topic string, sequence uint8, interval time.Duration) ([]model.Retry, error) {
 	batchId := uuid.New()
-	stale := time.Now().Add(time.Duration(-10) * time.Minute) // TODO: make this configurable??
+	stale := time.Now().Add(consideredStaleAfter * -1)
 	before := time.Now().Add(interval * -1)
 
 	// TODO: add an index for this WHERE condition
