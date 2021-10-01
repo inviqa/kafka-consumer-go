@@ -50,7 +50,7 @@ func saramaRecordHeadersToJson(headers []*sarama.RecordHeader) []byte {
 
 	// we silence the error if the marshalling fails, as the data is likely not valid
 	// anyway and there is nothing else we can do at this stage, in the future we may
-	// look at bubbling up a special error to the caller, but it would need to logged
+	// look at bubbling up a special error to the caller, but it would need to be logged
 	// and the message would still need to be sent for retry anyway
 	headerJson, _ := json.Marshal(headerMap)
 
