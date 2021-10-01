@@ -44,7 +44,7 @@ func (mr *mockRetryManager) GetBatch(ctx context.Context, topic string, sequence
 	return rts, nil
 }
 
-func (mr *mockRetryManager) MarkSuccessful(ctx context.Context, id int64) error {
+func (mr *mockRetryManager) MarkSuccessful(ctx context.Context, retry model.Retry) error {
 	mr.retrySuccessful = true
 	return nil
 }

@@ -3,7 +3,6 @@ package internal
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
 	"time"
 
@@ -15,7 +14,7 @@ import (
 
 var (
 	// TODO: any columns (and struct fields) that can be removed from app code?
-	columns = []string{"id", "topic", "payload_json", "payload_headers", "payload_key", "kafka_offset", "kafka_partition", "attempts", "last_error", "created_at", "updated_at"}
+	columns = []string{"id", "topic", "payload_json", "payload_headers", "payload_key", "kafka_offset", "kafka_partition", "attempts"}
 )
 
 type Repository struct {
@@ -38,8 +37,6 @@ func (r Repository) PublishFailure(ctx context.Context, f data.Failure) error {
 }
 
 func (r Repository) GetMessagesForRetry(ctx context.Context, topic string, sequence uint8, interval time.Duration) ([]model.Retry, error) {
-	// TODO: should we add batch creation so that multiple consumers can run safely and not process the same message twice??
-
 	batchId := uuid.New()
 	stale := time.Now().Add(time.Duration(-10) * time.Minute) // TODO: make this configurable??
 	before := time.Now().Add(interval * -1)
@@ -51,7 +48,7 @@ func (r Repository) GetMessagesForRetry(ctx context.Context, topic string, seque
 			WHERE topic = $2
 		    AND (
 				(batch_id IS NULL AND retry_started_at IS NULL) OR 
-				(batch_id IS NOT NULL AND retry_completed_at IS NULL AND retry_started_at < $3)
+				(batch_id IS NOT NULL AND retry_finished_at IS NULL AND retry_started_at < $3)
 			)
 			AND attempts = $4 AND deadlettered = false AND successful = false AND updated_at <= $5
 			LIMIT 250
@@ -73,7 +70,7 @@ func (r Repository) GetMessagesForRetry(ctx context.Context, topic string, seque
 	var retries []model.Retry
 	for rows.Next() {
 		retry := model.Retry{}
-		err := rows.Scan(&retry.ID, &retry.Topic, &retry.PayloadJSON, &retry.PayloadHeaders, &retry.PayloadKey, &retry.KafkaOffset, &retry.KafkaPartition, &retry.Attempts, &retry.LastError, &retry.CreatedAt, &retry.UpdatedAt)
+		err := rows.Scan(&retry.ID, &retry.Topic, &retry.PayloadJSON, &retry.PayloadHeaders, &retry.PayloadKey, &retry.KafkaOffset, &retry.KafkaPartition, &retry.Attempts)
 		if err != nil {
 			return nil, fmt.Errorf("data/retries: error scanning result into memory: %w", err)
 		}
@@ -83,16 +80,28 @@ func (r Repository) GetMessagesForRetry(ctx context.Context, topic string, seque
 	return retries, nil
 }
 
-func (r Repository) MarkRetrySuccessful(ctx context.Context, id int64) error {
-	return errors.New("not implemented")
+func (r Repository) MarkRetrySuccessful(ctx context.Context, retry model.Retry) error {
+	q := `UPDATE kafka_consumer_retries
+		SET attempts = $1, last_error = '', retry_finished_at = NOW(), errored = false, successful = true, updated_at = NOW()
+		WHERE id = $2;`
+
+	_, err := r.db.ExecContext(ctx, q, retry.Attempts, retry.ID)
+	if err != nil {
+		return fmt.Errorf("data/retries: error marking a retry as successful: %w", err)
+	}
+
+	return nil
 }
 
-func (r Repository) MarkRetryErrored(ctx context.Context, retry model.Retry, err error) error {
-	//q := `UPDATE kafka_consumer_retries SET attempts = $1, last_error = $2`
+func (r Repository) MarkRetryErrored(ctx context.Context, retry model.Retry, retryErr error) error {
+	q := `UPDATE kafka_consumer_retries
+		SET batch_id = NULL, attempts = $1, last_error = $2, retry_finished_at = NOW(), errored = $3, deadlettered = $4, updated_at = NOW()
+		WHERE id = $5;`
 
-	return errors.New("not implemented")
-}
+	_, err := r.db.ExecContext(ctx, q, retry.Attempts, retryErr.Error(), retry.Errored, retry.Deadlettered, retry.ID)
+	if err != nil {
+		return fmt.Errorf("data/retries: error marking a retry as errored: %w", err)
+	}
 
-func (r Repository) MarkRetryDeadLettered(ctx context.Context, retry model.Retry, err error) error {
-	return errors.New("not implemented")
+	return nil
 }

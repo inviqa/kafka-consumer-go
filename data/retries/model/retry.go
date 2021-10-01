@@ -2,7 +2,6 @@ package model
 
 import (
 	"encoding/json"
-	"time"
 
 	"github.com/Shopify/sarama"
 )
@@ -16,10 +15,8 @@ type Retry struct {
 	KafkaOffset    int64
 	KafkaPartition int32
 	Attempts       uint8
-	LastError      string
-	CreatedAt      time.Time
-	//TODO: rename to LastAttemptedAt?
-	UpdatedAt time.Time
+	Deadlettered   bool
+	Errored        bool
 }
 
 type recordHeaders map[string]string

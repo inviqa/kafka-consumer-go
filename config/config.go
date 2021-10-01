@@ -106,8 +106,8 @@ func (cfg *Config) GetDBConnectionString() string {
 	return fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=%s", cfg.DB.User, cfg.DB.Pass, cfg.DB.Host, cfg.DB.Port, cfg.DB.Schema, sslMode)
 }
 
-// MainTopics will return a slice containing the main topic names where
-// messaged are processed from in Kafka. It will not include any of the
+// MainTopics will return a slice containing the main topic names from
+// where messages are processed in Kafka. It will not include any of the
 // retry or dead-letter topic names.
 // This is only used in DB retries.
 func (cfg *Config) MainTopics() []string {

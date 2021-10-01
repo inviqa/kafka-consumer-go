@@ -72,10 +72,9 @@ func TestRepository_GetMessagesForRetry(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("successfully fetches messages for retry", func(t *testing.T) {
-		times := exampleCreatedUpdatedTimes()
 		rows := sqlmock.NewRows(columns).
-			AddRow(1, "product", `{"foo":"bar"}`, `{"buzz":"bar"}`, "foo", 100, 200, 1, "", times["created"], times["updated"]).
-			AddRow(2, "product", `{"foo":"bazz"}`, "{}", "", 200, 300, 10, "something bad", times["created"], times["updated"])
+			AddRow(1, "product", `{"foo":"bar"}`, `{"buzz":"bar"}`, "foo", 100, 200, 1).
+			AddRow(2, "product", `{"foo":"bazz"}`, "{}", "", 200, 300, 10)
 
 		mock.ExpectExec("UPDATE kafka_consumer_retries.*").
 			WithArgs(sqlmock.AnyArg(), "product", sqlmock.AnyArg(), 1, sqlmock.AnyArg()).
@@ -130,18 +129,16 @@ func TestRepository_MarkRetryErrored(t *testing.T) {
 	db, mock, _ := sqlmock.New()
 	repo := NewRepository(db)
 	ctx := context.Background()
-	now := time.Now()
 
 	t.Run("retry marked as errored successfully", func(t *testing.T) {
 		mock.ExpectExec("UPDATE kafka_consumer_retries SET .* WHERE .*").
-			WithArgs(2, "something bad", now, 10).
+			WithArgs(2, "something bad", true, false, 10).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		retry := model.Retry{
-			ID:        10,
-			Attempts:  2,
-			LastError: "something bad",
-			UpdatedAt: now,
+			ID:       10,
+			Attempts: 2,
+			Errored:  true,
 		}
 
 		if err := repo.MarkRetryErrored(ctx, retry, errors.New("something bad")); err != nil {
@@ -152,15 +149,91 @@ func TestRepository_MarkRetryErrored(t *testing.T) {
 			t.Errorf("unexpected error: %s", err)
 		}
 	})
+
+	t.Run("retry marked as deadlettered successfully", func(t *testing.T) {
+		mock.ExpectExec("UPDATE kafka_consumer_retries SET .* WHERE .*").
+			WithArgs(2, "something bad", true, true, 10).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+
+		retry := model.Retry{
+			ID:           10,
+			Attempts:     2,
+			Errored:      true,
+			Deadlettered: true,
+		}
+
+		if err := repo.MarkRetryErrored(ctx, retry, errors.New("something bad")); err != nil {
+			t.Errorf("unexpected error: %s", err)
+		}
+
+		if err := mock.ExpectationsWereMet(); err != nil {
+			t.Errorf("unexpected error: %s", err)
+		}
+	})
+
+	t.Run("error from database update is returned", func(t *testing.T) {
+		mock.ExpectExec("UPDATE kafka_consumer_retries SET .* WHERE .*").
+			WillReturnError(errors.New("oops"))
+
+		retry := model.Retry{
+			ID:       11,
+			Attempts: 3,
+		}
+
+		if err := repo.MarkRetryErrored(ctx, retry, errors.New("something bad")); err == nil {
+			t.Error("expected an error but got nil")
+		}
+
+		if err := mock.ExpectationsWereMet(); err != nil {
+			t.Errorf("unexpected error: %s", err)
+		}
+	})
 }
 
-func TestRepository_MarkRetryDeadLettered(t *testing.T) {
-	t.Skip()
+func TestRepository_MarkRetrySuccessful(t *testing.T) {
+	db, mock, _ := sqlmock.New()
+	repo := NewRepository(db)
+	ctx := context.Background()
+
+	t.Run("retry marked as successful successfully", func(t *testing.T) {
+		mock.ExpectExec("UPDATE kafka_consumer_retries SET .* WHERE .*").
+			WithArgs(3, 11).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+
+		retry := model.Retry{
+			ID:       11,
+			Attempts: 3,
+		}
+
+		if err := repo.MarkRetrySuccessful(ctx, retry); err != nil {
+			t.Errorf("unexpected error: %s", err)
+		}
+
+		if err := mock.ExpectationsWereMet(); err != nil {
+			t.Errorf("unexpected error: %s", err)
+		}
+	})
+
+	t.Run("error from database is returned", func(t *testing.T) {
+		mock.ExpectExec("UPDATE kafka_consumer_retries SET .* WHERE .*").
+			WillReturnError(errors.New("oops"))
+
+		retry := model.Retry{
+			ID:       12,
+			Attempts: 4,
+		}
+
+		if err := repo.MarkRetrySuccessful(ctx, retry); err == nil {
+			t.Error("expected an error but got nil")
+		}
+
+		if err := mock.ExpectationsWereMet(); err != nil {
+			t.Errorf("unexpected error: %s", err)
+		}
+	})
 }
 
 func expectedRetriesForTests() []model.Retry {
-	times := exampleCreatedUpdatedTimes()
-
 	retry1 := model.Retry{
 		ID:             1,
 		Topic:          "product",
@@ -170,8 +243,6 @@ func expectedRetriesForTests() []model.Retry {
 		KafkaOffset:    100,
 		KafkaPartition: 200,
 		Attempts:       1,
-		CreatedAt:      times["created"],
-		UpdatedAt:      times["updated"],
 	}
 	retry2 := model.Retry{
 		ID:             2,
@@ -182,20 +253,7 @@ func expectedRetriesForTests() []model.Retry {
 		KafkaOffset:    200,
 		KafkaPartition: 300,
 		Attempts:       10,
-		LastError:      "something bad",
-		CreatedAt:      times["created"],
-		UpdatedAt:      times["updated"],
 	}
 
 	return []model.Retry{retry1, retry2}
-}
-
-func exampleCreatedUpdatedTimes() map[string]time.Time {
-	createdAt, _ := time.Parse(time.RFC3339, "2010-01-01T10:00:00Z")
-	updatedAt, _ := time.Parse(time.RFC3339, "2010-01-01T11:00:00Z")
-
-	return map[string]time.Time{
-		"created": createdAt,
-		"updated": updatedAt,
-	}
 }

@@ -17,7 +17,6 @@ func TestRetry_ToSaramaConsumerMessage(t *testing.T) {
 		KafkaOffset:    100,
 		KafkaPartition: 101,
 		Attempts:       1,
-		LastError:      "something bad",
 	}
 
 	t.Run("retry converts to consumer message", func(t *testing.T) {

@@ -11,6 +11,7 @@ import (
 	"github.com/inviqa/kafka-consumer-go/data/retries/model"
 )
 
+// TODO: write tests for this
 type Manager struct {
 	dbRetries config.DBRetries
 	repo      repository
@@ -18,9 +19,8 @@ type Manager struct {
 
 type repository interface {
 	GetMessagesForRetry(ctx context.Context, topic string, sequence uint8, interval time.Duration) ([]model.Retry, error)
-	MarkRetrySuccessful(ctx context.Context, id int64) error
+	MarkRetrySuccessful(ctx context.Context, retry model.Retry) error
 	MarkRetryErrored(ctx context.Context, retry model.Retry, err error) error
-	MarkRetryDeadLettered(ctx context.Context, retry model.Retry, err error) error
 	PublishFailure(ctx context.Context, failure data.Failure) error
 }
 
@@ -35,12 +35,11 @@ func (m Manager) GetBatch(ctx context.Context, topic string, sequence uint8, int
 	return m.repo.GetMessagesForRetry(ctx, topic, sequence, interval)
 }
 
-func (m Manager) MarkSuccessful(ctx context.Context, id int64) error {
-	return m.repo.MarkRetrySuccessful(ctx, id)
+func (m Manager) MarkSuccessful(ctx context.Context, retry model.Retry) error {
+	return m.repo.MarkRetrySuccessful(ctx, retry)
 }
 
 func (m Manager) MarkErrored(ctx context.Context, retry model.Retry, err error) error {
-	// TODO: call repo.MarkDeadLettered() if necessary
 	return m.repo.MarkRetryErrored(ctx, retry, err)
 }
 

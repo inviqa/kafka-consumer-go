@@ -33,7 +33,7 @@ type kafkaConnector func(cfg *config.Config, saramaCfg *sarama.Config, logger lo
 
 type retryManager interface {
 	GetBatch(ctx context.Context, topic string, sequence uint8, interval time.Duration) ([]model.Retry, error)
-	MarkSuccessful(ctx context.Context, id int64) error
+	MarkSuccessful(ctx context.Context, retry model.Retry) error
 	MarkErrored(ctx context.Context, retry model.Retry, err error) error
 	PublishFailure(ctx context.Context, f data.Failure) error
 }
@@ -176,7 +176,7 @@ func (cc *kafkaConsumerDbCollection) processMessagesForRetry(topic string, rc *c
 			}
 		} else {
 			cc.logger.Infof("successfully processed retried message from topic '%s' with original partition %d and offset %d", topic, msg.KafkaPartition, msg.KafkaOffset)
-			if err = cc.retryManager.MarkSuccessful(ctx, msg.ID); err != nil {
+			if err = cc.retryManager.MarkSuccessful(ctx, msg); err != nil {
 				cc.logger.Errorf("error marking retried message as successful in the DB: %s", err)
 			}
 		}
