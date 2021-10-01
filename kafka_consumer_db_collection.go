@@ -32,10 +32,10 @@ type kafkaConsumerDbCollection struct {
 type kafkaConnector func(cfg *config.Config, saramaCfg *sarama.Config, logger log.Logger) (sarama.ConsumerGroup, error)
 
 type retryManager interface {
-	GetBatch(topic string, sequence uint8, interval time.Duration) ([]model.Retry, error)
-	MarkSuccessful(id int64) error
-	MarkErrored(retry model.Retry, err error) error
-	PublishFailure(f data.Failure) error
+	GetBatch(ctx context.Context, topic string, sequence uint8, interval time.Duration) ([]model.Retry, error)
+	MarkSuccessful(ctx context.Context, id int64) error
+	MarkErrored(ctx context.Context, retry model.Retry, err error) error
+	PublishFailure(ctx context.Context, f data.Failure) error
 }
 
 func newKafkaConsumerDbCollection(
@@ -144,7 +144,16 @@ func (cc *kafkaConsumerDbCollection) startDbRetryProcessorsForTopic(ctx context.
 }
 
 func (cc *kafkaConsumerDbCollection) processMessagesForRetry(topic string, rc *config.DBTopicRetry) {
-	msgsForRetry, err := cc.retryManager.GetBatch(topic, rc.Sequence, rc.Interval)
+	// We use a standalone context here, with a timeout, this is to allow the current retry
+	// processing to complete before we exit from the kafka consumer collection (see the
+	// startDbRetryProcessorsForTopic method for the handling of the main context cancellation).
+	// At the worst, the context timeout would be exceeded and cancelled, stopping the retry
+	// batch from being processed, but it's here to prevent the whole process from becoming
+	// completely locked.
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
+	defer cancel()
+
+	msgsForRetry, err := cc.retryManager.GetBatch(ctx, topic, rc.Sequence, rc.Interval)
 	if err != nil {
 		cc.logger.Errorf("error when fetching messages from the DB for retry: %s", err)
 		return
@@ -162,12 +171,12 @@ func (cc *kafkaConsumerDbCollection) processMessagesForRetry(topic string, rc *c
 		saramaMsg := msg.ToSaramaConsumerMessage()
 		if err = h(saramaMsg); err != nil {
 			cc.logger.Errorf("error processing retried message from DB: %s", err)
-			if repoErr := cc.retryManager.MarkErrored(msg, err); repoErr != nil {
+			if repoErr := cc.retryManager.MarkErrored(ctx, msg, err); repoErr != nil {
 				cc.logger.Errorf("error marking retried message as errored in the DB: %s", repoErr)
 			}
 		} else {
 			cc.logger.Infof("successfully processed retried message from topic '%s' with original partition %d and offset %d", topic, msg.KafkaPartition, msg.KafkaOffset)
-			if err = cc.retryManager.MarkSuccessful(msg.ID); err != nil {
+			if err = cc.retryManager.MarkSuccessful(ctx, msg.ID); err != nil {
 				cc.logger.Errorf("error marking retried message as successful in the DB: %s", err)
 			}
 		}

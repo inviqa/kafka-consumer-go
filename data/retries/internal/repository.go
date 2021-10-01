@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -27,16 +28,16 @@ func NewRepository(db *sql.DB) Repository {
 	}
 }
 
-func (r Repository) PublishFailure(f data.Failure) error {
+func (r Repository) PublishFailure(ctx context.Context, f data.Failure) error {
 	q := `INSERT INTO kafka_consumer_retries(topic, payload_json, payload_headers, kafka_offset, kafka_partition, payload_key) VALUES($1, $2, $3, $4, $5, $6);`
-	_, err := r.db.Exec(q, f.Topic, f.Message, f.MessageHeaders, f.KafkaOffset, f.KafkaPartition, f.MessageKey)
+	_, err := r.db.ExecContext(ctx, q, f.Topic, f.Message, f.MessageHeaders, f.KafkaOffset, f.KafkaPartition, f.MessageKey)
 	if err != nil {
 		return fmt.Errorf("data/retries: error publishing failure to the database: %w", err)
 	}
 	return nil
 }
 
-func (r Repository) GetMessagesForRetry(topic string, sequence uint8, interval time.Duration) ([]model.Retry, error) {
+func (r Repository) GetMessagesForRetry(ctx context.Context, topic string, sequence uint8, interval time.Duration) ([]model.Retry, error) {
 	// TODO: should we add batch creation so that multiple consumers can run safely and not process the same message twice??
 
 	batchId := uuid.New()
@@ -56,15 +57,14 @@ func (r Repository) GetMessagesForRetry(topic string, sequence uint8, interval t
 			LIMIT 250
 		);`
 
-
-	_, err := r.db.Exec(upSql, batchId, topic, stale, sequence, before)
+	_, err := r.db.ExecContext(ctx, upSql, batchId, topic, stale, sequence, before)
 	if err != nil {
 		return nil, fmt.Errorf("data/retries: error updating retries records when creating a batch: %w", err)
 	}
 
 	q := fmt.Sprintf(`SELECT %s FROM kafka_consumer_retries WHERE batch_id = $1`, columns)
 
-	rows, err := r.db.Query(q, batchId)
+	rows, err := r.db.QueryContext(ctx, q, batchId)
 	if err != nil {
 		return nil, fmt.Errorf("data/retries: error getting messages for retry: %w", err)
 	}
@@ -83,16 +83,16 @@ func (r Repository) GetMessagesForRetry(topic string, sequence uint8, interval t
 	return retries, nil
 }
 
-func (r Repository) MarkRetrySuccessful(id int64) error {
+func (r Repository) MarkRetrySuccessful(ctx context.Context, id int64) error {
 	return errors.New("not implemented")
 }
 
-func (r Repository) MarkRetryErrored(retry model.Retry, err error) error {
+func (r Repository) MarkRetryErrored(ctx context.Context, retry model.Retry, err error) error {
 	//q := `UPDATE kafka_consumer_retries SET attempts = $1, last_error = $2`
 
 	return errors.New("not implemented")
 }
 
-func (r Repository) MarkRetryDeadLettered(retry model.Retry, err error) error {
+func (r Repository) MarkRetryDeadLettered(ctx context.Context, retry model.Retry, err error) error {
 	return errors.New("not implemented")
 }

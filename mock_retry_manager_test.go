@@ -1,6 +1,7 @@
 package consumer
 
 import (
+	"context"
 	"errors"
 	"time"
 
@@ -18,7 +19,7 @@ type mockRetryManager struct {
 }
 
 // GetBatch will return in-memory received failures as retries
-func (mr *mockRetryManager) GetBatch(topic string, sequence uint8, interval time.Duration) ([]model.Retry, error) {
+func (mr *mockRetryManager) GetBatch(ctx context.Context, topic string, sequence uint8, interval time.Duration) ([]model.Retry, error) {
 	if mr.willErrorOnGetMessagesForRetry {
 		return nil, errors.New("oops")
 	}
@@ -43,13 +44,21 @@ func (mr *mockRetryManager) GetBatch(topic string, sequence uint8, interval time
 	return rts, nil
 }
 
-func (mr *mockRetryManager) MarkSuccessful(id int64) error {
+func (mr *mockRetryManager) MarkSuccessful(ctx context.Context, id int64) error {
 	mr.retrySuccessful = true
 	return nil
 }
 
-func (mr *mockRetryManager) MarkErrored(retry model.Retry, err error) error {
+func (mr *mockRetryManager) MarkErrored(ctx context.Context, retry model.Retry, err error) error {
 	mr.retryErrored = true
+	return nil
+}
+
+func (mr *mockRetryManager) PublishFailure(ctx context.Context, f data.Failure) error {
+	if mr.willErrorOnPublishFailure {
+		return errors.New("oops")
+	}
+	mr.recvdFailures[f.Topic] = append(mr.recvdFailures[f.Topic], f)
 	return nil
 }
 
@@ -58,14 +67,6 @@ func newMockRetryManager(willError bool) *mockRetryManager {
 		recvdFailures:             map[string][]data.Failure{},
 		willErrorOnPublishFailure: willError,
 	}
-}
-
-func (mr *mockRetryManager) PublishFailure(f data.Failure) error {
-	if mr.willErrorOnPublishFailure {
-		return errors.New("oops")
-	}
-	mr.recvdFailures[f.Topic] = append(mr.recvdFailures[f.Topic], f)
-	return nil
 }
 
 func (mr *mockRetryManager) getPublishedFailureCountByTopic(topic string) int {

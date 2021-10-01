@@ -1,6 +1,7 @@
 package retries
 
 import (
+	"context"
 	"database/sql"
 	"time"
 
@@ -16,11 +17,11 @@ type Manager struct {
 }
 
 type repository interface {
-	GetMessagesForRetry(topic string, sequence uint8, interval time.Duration) ([]model.Retry, error)
-	MarkRetrySuccessful(id int64) error
-	MarkRetryErrored(retry model.Retry, err error) error
-	MarkRetryDeadLettered(retry model.Retry, err error) error
-	PublishFailure(failure data.Failure) error
+	GetMessagesForRetry(ctx context.Context, topic string, sequence uint8, interval time.Duration) ([]model.Retry, error)
+	MarkRetrySuccessful(ctx context.Context, id int64) error
+	MarkRetryErrored(ctx context.Context, retry model.Retry, err error) error
+	MarkRetryDeadLettered(ctx context.Context, retry model.Retry, err error) error
+	PublishFailure(ctx context.Context, failure data.Failure) error
 }
 
 func NewManagerWithDefaults(dbRetries config.DBRetries, db *sql.DB) *Manager {
@@ -30,19 +31,19 @@ func NewManagerWithDefaults(dbRetries config.DBRetries, db *sql.DB) *Manager {
 	}
 }
 
-func (m Manager) GetBatch(topic string, sequence uint8, interval time.Duration) ([]model.Retry, error) {
-	return m.repo.GetMessagesForRetry(topic, sequence, interval)
+func (m Manager) GetBatch(ctx context.Context, topic string, sequence uint8, interval time.Duration) ([]model.Retry, error) {
+	return m.repo.GetMessagesForRetry(ctx, topic, sequence, interval)
 }
 
-func (m Manager) MarkSuccessful(id int64) error {
-	return m.repo.MarkRetrySuccessful(id)
+func (m Manager) MarkSuccessful(ctx context.Context, id int64) error {
+	return m.repo.MarkRetrySuccessful(ctx, id)
 }
 
-func (m Manager) MarkErrored(retry model.Retry, err error) error {
+func (m Manager) MarkErrored(ctx context.Context, retry model.Retry, err error) error {
 	// TODO: call repo.MarkDeadLettered() if necessary
-	return m.repo.MarkRetryErrored(retry, err)
+	return m.repo.MarkRetryErrored(ctx, retry, err)
 }
 
-func (m Manager) PublishFailure(failure data.Failure) error {
-	return m.repo.PublishFailure(failure)
+func (m Manager) PublishFailure(ctx context.Context, failure data.Failure) error {
+	return m.repo.PublishFailure(ctx, failure)
 }

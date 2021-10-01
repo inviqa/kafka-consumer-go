@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"context"
 	"errors"
 	"testing"
 	"time"
@@ -29,6 +30,7 @@ func TestNewRepository(t *testing.T) {
 func TestRepository_PublishFailure(t *testing.T) {
 	db, mock, _ := sqlmock.New()
 	repo := NewRepository(db)
+	ctx := context.Background()
 	f := data.Failure{
 		Reason:         "something bad happened",
 		Topic:          "product",
@@ -45,7 +47,7 @@ func TestRepository_PublishFailure(t *testing.T) {
 			WithArgs("product", []byte(`{"foo":"bar"}`), []byte(`{"buzz":"bazz"}`), 200, 100, []byte("SKU-123")).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
-		if err := repo.PublishFailure(f); err != nil {
+		if err := repo.PublishFailure(ctx, f); err != nil {
 			t.Fatalf("unexpected error: %s", err)
 		}
 
@@ -58,7 +60,7 @@ func TestRepository_PublishFailure(t *testing.T) {
 		mock.ExpectExec(`INSERT INTO kafka_consumer_retries.*`).
 			WillReturnError(errors.New("oops"))
 
-		if err := repo.PublishFailure(f); err == nil {
+		if err := repo.PublishFailure(ctx, f); err == nil {
 			t.Error("expected an error but got nil")
 		}
 	})
@@ -67,6 +69,7 @@ func TestRepository_PublishFailure(t *testing.T) {
 func TestRepository_GetMessagesForRetry(t *testing.T) {
 	db, mock, _ := sqlmock.New()
 	repo := NewRepository(db)
+	ctx := context.Background()
 
 	t.Run("successfully fetches messages for retry", func(t *testing.T) {
 		times := exampleCreatedUpdatedTimes()
@@ -82,7 +85,7 @@ func TestRepository_GetMessagesForRetry(t *testing.T) {
 			WithArgs(sqlmock.AnyArg()).
 			WillReturnRows(rows)
 
-		got, err := repo.GetMessagesForRetry("product", 1, time.Second*10)
+		got, err := repo.GetMessagesForRetry(ctx, "product", 1, time.Second*10)
 		if err != nil {
 			t.Fatalf("unexpected error: %s", err)
 		}
@@ -101,7 +104,7 @@ func TestRepository_GetMessagesForRetry(t *testing.T) {
 		mock.ExpectExec("UPDATE kafka_consumer_retries .*").
 			WillReturnError(expErr)
 
-		_, err := repo.GetMessagesForRetry("product", 1, time.Second*10)
+		_, err := repo.GetMessagesForRetry(ctx, "product", 1, time.Second*10)
 		if !errors.Is(err, expErr) {
 			t.Errorf("expected error from update but got '%v'", err)
 		}
@@ -116,7 +119,7 @@ func TestRepository_GetMessagesForRetry(t *testing.T) {
 		mock.ExpectQuery("SELECT .* FROM kafka_consumer_retries WHERE .*").
 			WillReturnError(expErr)
 
-		_, err := repo.GetMessagesForRetry("product", 1, time.Second*10)
+		_, err := repo.GetMessagesForRetry(ctx, "product", 1, time.Second*10)
 		if !errors.Is(err, expErr) {
 			t.Errorf("expected error from select but got '%v'", err)
 		}
@@ -126,7 +129,7 @@ func TestRepository_GetMessagesForRetry(t *testing.T) {
 func TestRepository_MarkRetryErrored(t *testing.T) {
 	db, mock, _ := sqlmock.New()
 	repo := NewRepository(db)
-
+	ctx := context.Background()
 	now := time.Now()
 
 	t.Run("retry marked as errored successfully", func(t *testing.T) {
@@ -141,7 +144,7 @@ func TestRepository_MarkRetryErrored(t *testing.T) {
 			UpdatedAt: now,
 		}
 
-		if err := repo.MarkRetryErrored(retry, errors.New("something bad")); err != nil {
+		if err := repo.MarkRetryErrored(ctx, retry, errors.New("something bad")); err != nil {
 			t.Errorf("unexpected error: %s", err)
 		}
 
@@ -149,6 +152,10 @@ func TestRepository_MarkRetryErrored(t *testing.T) {
 			t.Errorf("unexpected error: %s", err)
 		}
 	})
+}
+
+func TestRepository_MarkRetryDeadLettered(t *testing.T) {
+	t.Skip()
 }
 
 func expectedRetriesForTests() []model.Retry {

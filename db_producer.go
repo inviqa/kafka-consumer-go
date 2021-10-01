@@ -34,7 +34,7 @@ func (d databaseProducer) listenForFailures(ctx context.Context, wg *sync.WaitGr
 		for {
 			select {
 			case f := <-d.fch:
-				if err := d.retryManager.PublishFailure(f); err != nil {
+				if err := d.retryManager.PublishFailure(context.Background(), f); err != nil {
 					d.logger.Errorf("error publishing a failure to database for retry: %s", err)
 				}
 			case <-ctx.Done():
