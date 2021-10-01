@@ -11,16 +11,16 @@ import (
 
 type mockRetryManager struct {
 	// indexed by topic name
-	recvdFailures                  map[string][]data.Failure
-	willErrorOnPublishFailure      bool
-	willErrorOnGetMessagesForRetry bool
-	retryErrored                   bool
-	retrySuccessful                bool
+	recvdFailures             map[string][]data.Failure
+	willErrorOnPublishFailure bool
+	willErrorOnGetBatch       bool
+	retryErrored              bool
+	retrySuccessful           bool
 }
 
 // GetBatch will return in-memory received failures as retries
 func (mr *mockRetryManager) GetBatch(ctx context.Context, topic string, sequence uint8, interval time.Duration) ([]model.Retry, error) {
-	if mr.willErrorOnGetMessagesForRetry {
+	if mr.willErrorOnGetBatch {
 		return nil, errors.New("oops")
 	}
 

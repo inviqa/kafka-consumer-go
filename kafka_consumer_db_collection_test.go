@@ -176,7 +176,7 @@ func TestKafkaConsumerDbCollection_Start(t *testing.T) {
 		col, repo := kafkaConsumerDbCollectionForTests(mcg, func(msg *sarama.ConsumerMessage) error {
 			return errors.New("something bad happened")
 		}, false)
-		repo.willErrorOnGetMessagesForRetry = true
+		repo.willErrorOnGetBatch = true
 
 		ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*50)
 		defer cancel()

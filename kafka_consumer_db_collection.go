@@ -159,8 +159,6 @@ func (cc *kafkaConsumerDbCollection) processMessagesForRetry(topic string, rc *c
 		return
 	}
 
-	// TODO: check msgForRetry len before proceeding
-
 	h, ok := cc.handlerMap[rc.Key]
 	if !ok {
 		cc.logger.Errorf("no handler found for topic key '%s'", rc.Key)
