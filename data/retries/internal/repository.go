@@ -46,7 +46,7 @@ func (r Repository) GetMessagesForRetry(ctx context.Context, topic string, seque
 	before := time.Now().Add(interval * -1)
 
 	// TODO: add an index for this WHERE condition
-	upSql := `UPDATE kafka_consumer_retries SET batch_id = $1, push_started_at = NOW()
+	upSql := `UPDATE kafka_consumer_retries SET batch_id = $1, retry_started_at = NOW()
 		WHERE id IN(
 			SELECT id FROM kafka_consumer_retries
 			WHERE topic = $2
@@ -65,6 +65,7 @@ func (r Repository) GetMessagesForRetry(ctx context.Context, topic string, seque
 
 	q := fmt.Sprintf(`SELECT %s FROM kafka_consumer_retries WHERE batch_id = $1`, columns)
 
+	// #nosec G201
 	rows, err := r.db.QueryContext(ctx, q, batchId)
 	if err != nil {
 		return nil, fmt.Errorf("data/retries: error getting messages for retry: %w", err)
