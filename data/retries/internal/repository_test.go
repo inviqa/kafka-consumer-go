@@ -74,8 +74,12 @@ func TestRepository_GetMessagesForRetry(t *testing.T) {
 			AddRow(1, "product", `{"foo":"bar"}`, `{"buzz":"bar"}`, "foo", 100, 200, 1, "", times["created"], times["updated"]).
 			AddRow(2, "product", `{"foo":"bazz"}`, "{}", "", 200, 300, 10, "something bad", times["created"], times["updated"])
 
+		mock.ExpectExec("UPDATE kafka_consumer_retries.*").
+			WithArgs(sqlmock.AnyArg(), "product", sqlmock.AnyArg(), 1, sqlmock.AnyArg()).
+			WillReturnResult(sqlmock.NewResult(0, 250))
+
 		mock.ExpectQuery("SELECT .* FROM kafka_consumer_retries WHERE .*").
-			WithArgs("product", 1, sqlmock.AnyArg()).
+			WithArgs(sqlmock.AnyArg()).
 			WillReturnRows(rows)
 
 		got, err := repo.GetMessagesForRetry("product", 1, time.Second*10)
@@ -92,13 +96,29 @@ func TestRepository_GetMessagesForRetry(t *testing.T) {
 		}
 	})
 
-	t.Run("error from database is returned", func(t *testing.T) {
-		mock.ExpectQuery("SELECT .* FROM kafka_consumer_retries WHERE .*").
-			WillReturnError(errors.New("oops"))
+	t.Run("error when creating batch is returned", func(t *testing.T) {
+		expErr := errors.New("oops 1")
+		mock.ExpectExec("UPDATE kafka_consumer_retries .*").
+			WillReturnError(expErr)
 
 		_, err := repo.GetMessagesForRetry("product", 1, time.Second*10)
-		if err == nil {
-			t.Error("expected an error but got nil")
+		if !errors.Is(err, expErr) {
+			t.Errorf("expected error from update but got '%v'", err)
+		}
+	})
+
+	t.Run("error when fetching batch is returned", func(t *testing.T) {
+		expErr := errors.New("oops")
+
+		mock.ExpectExec("UPDATE kafka_consumer_retries .*").
+			WillReturnResult(sqlmock.NewResult(0, 250))
+
+		mock.ExpectQuery("SELECT .* FROM kafka_consumer_retries WHERE .*").
+			WillReturnError(expErr)
+
+		_, err := repo.GetMessagesForRetry("product", 1, time.Second*10)
+		if !errors.Is(err, expErr) {
+			t.Errorf("expected error from select but got '%v'", err)
 		}
 	})
 }

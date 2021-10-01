@@ -222,7 +222,7 @@ func TestKafkaConsumerDbCollection_Start(t *testing.T) {
 		col, repo := kafkaConsumerDbCollectionForTests(mcg, func(msg *sarama.ConsumerMessage) error {
 			return errors.New("something bad happened")
 		}, false)
-		// remove "product" key in the handler map
+
 		delete(col.handlerMap, "product")
 
 		ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*50)

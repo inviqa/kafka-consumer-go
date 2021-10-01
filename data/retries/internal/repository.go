@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/google/uuid"
+
 	"github.com/inviqa/kafka-consumer-go/data"
 	"github.com/inviqa/kafka-consumer-go/data/retries/model"
 )
@@ -37,11 +39,32 @@ func (r Repository) PublishFailure(f data.Failure) error {
 func (r Repository) GetMessagesForRetry(topic string, sequence uint8, interval time.Duration) ([]model.Retry, error) {
 	// TODO: should we add batch creation so that multiple consumers can run safely and not process the same message twice??
 
+	batchId := uuid.New()
+	stale := time.Now().Add(time.Duration(-10) * time.Minute) // TODO: make this configurable??
 	before := time.Now().Add(interval * -1)
-	// TODO: add an index for this WHERE condition
-	q := fmt.Sprintf(`SELECT %s FROM kafka_consumer_retries WHERE topic = $1 AND attempts = $2 AND deadlettered = false AND successful = false AND updated_at <= $3`, columns)
 
-	rows, err := r.db.Query(q, topic, sequence, before)
+	// TODO: add an index for this WHERE condition
+	upSql := `UPDATE kafka_consumer_retries SET batch_id = $1, push_started_at = NOW()
+		WHERE id IN(
+			SELECT id FROM kafka_consumer_retries
+			WHERE topic = $2
+		    AND (
+				(batch_id IS NULL AND retry_started_at IS NULL) OR 
+				(batch_id IS NOT NULL AND retry_completed_at IS NULL AND retry_started_at < $3)
+			)
+			AND attempts = $4 AND deadlettered = false AND successful = false AND updated_at <= $5
+			LIMIT 250
+		);`
+
+
+	_, err := r.db.Exec(upSql, batchId, topic, stale, sequence, before)
+	if err != nil {
+		return nil, fmt.Errorf("data/retries: error updating retries records when creating a batch: %w", err)
+	}
+
+	q := fmt.Sprintf(`SELECT %s FROM kafka_consumer_retries WHERE batch_id = $1`, columns)
+
+	rows, err := r.db.Query(q, batchId)
 	if err != nil {
 		return nil, fmt.Errorf("data/retries: error getting messages for retry: %w", err)
 	}
