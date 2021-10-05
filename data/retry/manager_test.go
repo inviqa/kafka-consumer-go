@@ -1,4 +1,4 @@
-package retries
+package retry
 
 import (
 	"context"
@@ -9,8 +9,8 @@ import (
 	"github.com/go-test/deep"
 
 	"github.com/inviqa/kafka-consumer-go/config"
-	"github.com/inviqa/kafka-consumer-go/data/retries/internal"
-	"github.com/inviqa/kafka-consumer-go/data/retries/model"
+	"github.com/inviqa/kafka-consumer-go/data/retry/internal"
+	"github.com/inviqa/kafka-consumer-go/data/retry/model"
 )
 
 func TestNewManagerWithDefaults(t *testing.T) {

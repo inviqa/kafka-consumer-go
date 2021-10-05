@@ -1,4 +1,4 @@
-package data
+package failure
 
 import (
 	"encoding/base64"
@@ -7,7 +7,6 @@ import (
 	"github.com/Shopify/sarama"
 )
 
-// todo: move to data/faiures/model
 type Failure struct {
 	Reason         string
 	Topic          string

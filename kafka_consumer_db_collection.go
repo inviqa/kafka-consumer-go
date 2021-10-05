@@ -9,8 +9,8 @@ import (
 	"github.com/Shopify/sarama"
 
 	"github.com/inviqa/kafka-consumer-go/config"
-	"github.com/inviqa/kafka-consumer-go/data"
-	"github.com/inviqa/kafka-consumer-go/data/retries/model"
+	"github.com/inviqa/kafka-consumer-go/data/failure"
+	"github.com/inviqa/kafka-consumer-go/data/retry/model"
 	"github.com/inviqa/kafka-consumer-go/log"
 )
 
@@ -35,14 +35,14 @@ type retryManager interface {
 	GetBatch(ctx context.Context, topic string, sequence uint8, interval time.Duration) ([]model.Retry, error)
 	MarkSuccessful(ctx context.Context, retry model.Retry) error
 	MarkErrored(ctx context.Context, retry model.Retry, err error) error
-	PublishFailure(ctx context.Context, f data.Failure) error
+	PublishFailure(ctx context.Context, f failure.Failure) error
 }
 
 func newKafkaConsumerDbCollection(
 	cfg *config.Config,
 	p *databaseProducer,
 	rm retryManager,
-	fch chan data.Failure,
+	fch chan failure.Failure,
 	hm HandlerMap,
 	scfg *sarama.Config,
 	logger log.Logger,

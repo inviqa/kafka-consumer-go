@@ -7,7 +7,8 @@ import (
 
 	"github.com/inviqa/kafka-consumer-go/config"
 	"github.com/inviqa/kafka-consumer-go/data"
-	"github.com/inviqa/kafka-consumer-go/data/retries"
+	"github.com/inviqa/kafka-consumer-go/data/failure"
+	"github.com/inviqa/kafka-consumer-go/data/retry"
 	"github.com/inviqa/kafka-consumer-go/log"
 )
 
@@ -17,7 +18,7 @@ func Start(cfg *config.Config, ctx context.Context, hs HandlerMap, logger log.Lo
 	}
 
 	wg := &sync.WaitGroup{}
-	fch := make(chan data.Failure)
+	fch := make(chan failure.Failure)
 	srmCfg := config.NewSaramaConfig(cfg.TLSEnable, cfg.TLSSkipVerifyPeer)
 
 	var cons collection
@@ -28,7 +29,7 @@ func Start(cfg *config.Config, ctx context.Context, hs HandlerMap, logger log.Lo
 		if err != nil {
 			return fmt.Errorf("could not connect to DB: %w", err)
 		}
-		repo := retries.NewManagerWithDefaults(cfg.DBRetries, db)
+		repo := retry.NewManagerWithDefaults(cfg.DBRetries, db)
 		dbProducer := newDatabaseProducer(repo, fch, logger)
 		cons = newKafkaConsumerDbCollection(cfg, dbProducer, repo, fch, hs, srmCfg, logger, defaultKafkaConnector)
 	} else {

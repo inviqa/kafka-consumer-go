@@ -11,7 +11,7 @@ import (
 	"github.com/go-test/deep"
 
 	"github.com/inviqa/kafka-consumer-go/config"
-	"github.com/inviqa/kafka-consumer-go/data"
+	"github.com/inviqa/kafka-consumer-go/data/failure"
 	"github.com/inviqa/kafka-consumer-go/log"
 	"github.com/inviqa/kafka-consumer-go/test/saramatest"
 )
@@ -24,7 +24,7 @@ func TestNewKafkaConsumerDbCollection(t *testing.T) {
 
 	cfg := &config.Config{}
 	repo := newMockRetryManager(false)
-	fch := make(chan data.Failure)
+	fch := make(chan failure.Failure)
 	dp := newDatabaseProducer(repo, fch, nil)
 	hm := HandlerMap{}
 	scfg := config.NewSaramaConfig(false, false)
@@ -268,7 +268,7 @@ func TestKafkaConsumerDbCollection_Close(t *testing.T) {
 }
 
 func kafkaConsumerDbCollectionForTests(mcg *saramatest.MockConsumerGroup, msgHandler Handler, errorOnConnect bool) (*kafkaConsumerDbCollection, *mockRetryManager) {
-	fch := make(chan data.Failure, 10)
+	fch := make(chan failure.Failure, 10)
 	repo := newMockRetryManager(false)
 	dp := newDatabaseProducer(repo, fch, log.NullLogger{})
 

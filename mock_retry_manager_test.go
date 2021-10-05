@@ -5,13 +5,13 @@ import (
 	"errors"
 	"time"
 
-	"github.com/inviqa/kafka-consumer-go/data"
-	"github.com/inviqa/kafka-consumer-go/data/retries/model"
+	"github.com/inviqa/kafka-consumer-go/data/failure"
+	"github.com/inviqa/kafka-consumer-go/data/retry/model"
 )
 
 type mockRetryManager struct {
 	// indexed by topic name
-	recvdFailures             map[string][]data.Failure
+	recvdFailures             map[string][]failure.Failure
 	willErrorOnPublishFailure bool
 	willErrorOnGetBatch       bool
 	retryErrored              bool
@@ -54,7 +54,7 @@ func (mr *mockRetryManager) MarkErrored(ctx context.Context, retry model.Retry, 
 	return nil
 }
 
-func (mr *mockRetryManager) PublishFailure(ctx context.Context, f data.Failure) error {
+func (mr *mockRetryManager) PublishFailure(ctx context.Context, f failure.Failure) error {
 	if mr.willErrorOnPublishFailure {
 		return errors.New("oops")
 	}
@@ -64,7 +64,7 @@ func (mr *mockRetryManager) PublishFailure(ctx context.Context, f data.Failure) 
 
 func newMockRetryManager(willError bool) *mockRetryManager {
 	return &mockRetryManager{
-		recvdFailures:             map[string][]data.Failure{},
+		recvdFailures:             map[string][]failure.Failure{},
 		willErrorOnPublishFailure: willError,
 	}
 }
@@ -77,7 +77,7 @@ func (mr *mockRetryManager) getPublishedFailureCountByTopic(topic string) int {
 	return len(f)
 }
 
-func (mr *mockRetryManager) getFirstPublishedFailureByTopic(topic string) *data.Failure {
+func (mr *mockRetryManager) getFirstPublishedFailureByTopic(topic string) *failure.Failure {
 	f, ok := mr.recvdFailures[topic]
 	if !ok {
 		return nil

@@ -1,12 +1,12 @@
-package retries
+package retry
 
 import (
 	"context"
 	"errors"
 	"time"
 
-	"github.com/inviqa/kafka-consumer-go/data"
-	"github.com/inviqa/kafka-consumer-go/data/retries/model"
+	"github.com/inviqa/kafka-consumer-go/data/failure"
+	"github.com/inviqa/kafka-consumer-go/data/retry/model"
 )
 
 type mockRepository struct {
@@ -33,6 +33,6 @@ func (m mockRepository) MarkRetryErrored(ctx context.Context, retry model.Retry,
 	panic("implement me")
 }
 
-func (m mockRepository) PublishFailure(ctx context.Context, failure data.Failure) error {
+func (m mockRepository) PublishFailure(ctx context.Context, failure failure.Failure) error {
 	panic("implement me")
 }

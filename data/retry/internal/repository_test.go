@@ -9,8 +9,8 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/go-test/deep"
 
-	"github.com/inviqa/kafka-consumer-go/data"
-	"github.com/inviqa/kafka-consumer-go/data/retries/model"
+	"github.com/inviqa/kafka-consumer-go/data/failure"
+	"github.com/inviqa/kafka-consumer-go/data/retry/model"
 )
 
 func TestNewRepository(t *testing.T) {
@@ -31,7 +31,7 @@ func TestRepository_PublishFailure(t *testing.T) {
 	db, mock, _ := sqlmock.New()
 	repo := NewRepository(db)
 	ctx := context.Background()
-	f := data.Failure{
+	f := failure.Failure{
 		Reason:         "something bad happened",
 		Topic:          "product",
 		NextTopic:      "retry1.payment.product",
@@ -44,7 +44,7 @@ func TestRepository_PublishFailure(t *testing.T) {
 
 	t.Run("failure successfully published to DB", func(t *testing.T) {
 		mock.ExpectExec(`INSERT INTO kafka_consumer_retries.*`).
-			WithArgs("product", []byte(`{"foo":"bar"}`), []byte(`{"buzz":"bazz"}`), 200, 100, []byte("SKU-123")).
+			WithArgs("product", []byte(`{"foo":"bar"}`), []byte(`{"buzz":"bazz"}`), 200, 100, "SKU-123").
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		if err := repo.PublishFailure(ctx, f); err != nil {

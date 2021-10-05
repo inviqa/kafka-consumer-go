@@ -1,4 +1,4 @@
-package data
+package failure
 
 import (
 	"errors"

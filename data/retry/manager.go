@@ -1,4 +1,4 @@
-package retries
+package retry
 
 import (
 	"context"
@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/inviqa/kafka-consumer-go/config"
-	"github.com/inviqa/kafka-consumer-go/data"
-	"github.com/inviqa/kafka-consumer-go/data/retries/internal"
-	"github.com/inviqa/kafka-consumer-go/data/retries/model"
+	"github.com/inviqa/kafka-consumer-go/data/failure"
+	"github.com/inviqa/kafka-consumer-go/data/retry/internal"
+	"github.com/inviqa/kafka-consumer-go/data/retry/model"
 )
 
 // TODO: write tests for this
@@ -21,7 +21,7 @@ type repository interface {
 	GetMessagesForRetry(ctx context.Context, topic string, sequence uint8, interval time.Duration) ([]model.Retry, error)
 	MarkRetrySuccessful(ctx context.Context, retry model.Retry) error
 	MarkRetryErrored(ctx context.Context, retry model.Retry, err error) error
-	PublishFailure(ctx context.Context, failure data.Failure) error
+	PublishFailure(ctx context.Context, failure failure.Failure) error
 }
 
 func NewManagerWithDefaults(dbRetries config.DBRetries, db *sql.DB) *Manager {
@@ -43,6 +43,6 @@ func (m Manager) MarkErrored(ctx context.Context, retry model.Retry, err error) 
 	return m.repo.MarkRetryErrored(ctx, retry, err)
 }
 
-func (m Manager) PublishFailure(ctx context.Context, failure data.Failure) error {
+func (m Manager) PublishFailure(ctx context.Context, failure failure.Failure) error {
 	return m.repo.PublishFailure(ctx, failure)
 }

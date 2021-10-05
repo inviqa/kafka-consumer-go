@@ -3,6 +3,7 @@
 package integration
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -13,7 +14,9 @@ import (
 
 	consumer "github.com/inviqa/kafka-consumer-go"
 	"github.com/inviqa/kafka-consumer-go/config"
+	"github.com/inviqa/kafka-consumer-go/data"
 	"github.com/inviqa/kafka-consumer-go/integration/kafka"
+	ourlog "github.com/inviqa/kafka-consumer-go/log"
 	"github.com/inviqa/kafka-consumer-go/test"
 )
 
@@ -22,6 +25,7 @@ const (
 )
 
 var (
+	db       *sql.DB
 	cfg      *config.Config
 	producer sarama.SyncProducer
 )
@@ -34,7 +38,18 @@ func init() {
 	var err error
 	producer, err = sarama.NewSyncProducer(cfg.Host, srmcfg)
 	if err != nil {
-		log.Fatal(fmt.Sprintf("Failed to start Sarama producer: %s", err))
+		log.Fatalf("failed to start Sarama producer: %s", err)
+	}
+
+	db, err = data.NewDB(cfg.GetDBConnectionString(), ourlog.NullLogger{})
+	if err != nil {
+		log.Fatalf("failed to connect to the DB: %s", err)
+	}
+
+	purgeDatabase()
+
+	if err = data.MigrateDatabase(db, cfg); err != nil {
+		log.Fatalf("failed to migrate the database: %s", err)
 	}
 }
 
@@ -59,6 +74,13 @@ func createConfig() *config.Config {
 	}
 
 	return c
+}
+
+func purgeDatabase() {
+	_, err := db.Exec("TRUNCATE TABLE kafka_consumer_retries;")
+	if err != nil {
+		panic(fmt.Sprintf("an error occurred cleaning the consumer retries table for tests: %s", err))
+	}
 }
 
 func publishTestMessageToKafka(msg kafka.TestMessage) {
@@ -88,5 +110,5 @@ func consumeFromKafkaUsingDbRetriesUntil(done func(chan<- bool), handler consume
 		cfg.UseDBForRetryQueue = false
 	}()
 
-	return test.ConsumeFromKafkaUntil(cfg, consumer.HandlerMap{"mainTopic": handler}, time.Second*5, done)
+	return test.ConsumeFromKafkaUntil(cfg, consumer.HandlerMap{"mainTopic": handler}, time.Second*10, done)
 }
