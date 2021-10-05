@@ -10,7 +10,7 @@ import (
 	"github.com/go-test/deep"
 
 	"github.com/inviqa/kafka-consumer-go/config"
-	"github.com/inviqa/kafka-consumer-go/data/failure"
+	failuremodel "github.com/inviqa/kafka-consumer-go/data/failure/model"
 	"github.com/inviqa/kafka-consumer-go/data/retry/internal"
 	"github.com/inviqa/kafka-consumer-go/data/retry/model"
 )
@@ -176,7 +176,7 @@ func TestManager_PublishFailure(t *testing.T) {
 
 	t.Run("publishes failure", func(t *testing.T) {
 		manager, repo := newManagerForTests(false)
-		f := failure.Failure{
+		f := failuremodel.Failure{
 			Topic: "foo",
 		}
 
@@ -192,7 +192,7 @@ func TestManager_PublishFailure(t *testing.T) {
 	t.Run("returns error from repository", func(t *testing.T) {
 		manager, _ := newManagerForTests(true)
 
-		if err := manager.PublishFailure(ctx, failure.Failure{}); err == nil {
+		if err := manager.PublishFailure(ctx, failuremodel.Failure{}); err == nil {
 			t.Error("expected an error but got nil")
 		}
 	})

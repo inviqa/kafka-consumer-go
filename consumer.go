@@ -6,18 +6,18 @@ import (
 	"github.com/Shopify/sarama"
 
 	"github.com/inviqa/kafka-consumer-go/config"
-	"github.com/inviqa/kafka-consumer-go/data/failure"
+	"github.com/inviqa/kafka-consumer-go/data/failure/model"
 	"github.com/inviqa/kafka-consumer-go/log"
 )
 
 type consumer struct {
-	failureCh chan<- failure.Failure
+	failureCh chan<- model.Failure
 	cfg       *config.Config
 	handlers  HandlerMap
 	logger    log.Logger
 }
 
-func NewConsumer(fch chan<- failure.Failure, cfg *config.Config, hs HandlerMap, l log.Logger) sarama.ConsumerGroupHandler {
+func NewConsumer(fch chan<- model.Failure, cfg *config.Config, hs HandlerMap, l log.Logger) sarama.ConsumerGroupHandler {
 	return &consumer{
 		failureCh: fch,
 		cfg:       cfg,
@@ -66,7 +66,7 @@ func (c *consumer) sendToFailureChannel(message *sarama.ConsumerMessage, err err
 		return
 	}
 
-	c.failureCh <- failure.FailureFromSaramaMessage(err, nextTopic, message)
+	c.failureCh <- model.FailureFromSaramaMessage(err, nextTopic, message)
 }
 
 func (c *consumer) Setup(session sarama.ConsumerGroupSession) error {

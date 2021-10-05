@@ -9,7 +9,7 @@ import (
 	"github.com/Shopify/sarama"
 
 	"github.com/inviqa/kafka-consumer-go/config"
-	"github.com/inviqa/kafka-consumer-go/data/failure"
+	"github.com/inviqa/kafka-consumer-go/data/failure/model"
 	"github.com/inviqa/kafka-consumer-go/log"
 )
 
@@ -17,11 +17,11 @@ import (
 // on fch and then sends them to the next kafka retry topic in the chain for retry later
 type kafkaFailureProducer struct {
 	producer sarama.SyncProducer
-	fch      <-chan failure.Failure
+	fch      <-chan model.Failure
 	logger   log.Logger
 }
 
-func newKafkaFailureProducerWithDefaults(cfg *config.Config, fch <-chan failure.Failure, logger log.Logger) (*kafkaFailureProducer, error) {
+func newKafkaFailureProducerWithDefaults(cfg *config.Config, fch <-chan model.Failure, logger log.Logger) (*kafkaFailureProducer, error) {
 	if logger == nil {
 		logger = log.NullLogger{}
 	}
@@ -49,7 +49,7 @@ func newKafkaFailureProducerWithDefaults(cfg *config.Config, fch <-chan failure.
 	return newKafkaFailureProducer(sp, fch, logger), nil
 }
 
-func newKafkaFailureProducer(sp sarama.SyncProducer, fch <-chan failure.Failure, logger log.Logger) *kafkaFailureProducer {
+func newKafkaFailureProducer(sp sarama.SyncProducer, fch <-chan model.Failure, logger log.Logger) *kafkaFailureProducer {
 	return &kafkaFailureProducer{
 		producer: sp,
 		fch:      fch,
@@ -80,7 +80,7 @@ func (p kafkaFailureProducer) listenForFailures(ctx context.Context, wg *sync.Wa
 	}()
 }
 
-func (p kafkaFailureProducer) publishFailure(f failure.Failure) {
+func (p kafkaFailureProducer) publishFailure(f model.Failure) {
 	p.logger.Debugf("publishing retry to Kafka topic '%s'", f.NextTopic)
 
 	_, _, err := p.producer.SendMessage(&sarama.ProducerMessage{

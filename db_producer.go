@@ -4,7 +4,7 @@ import (
 	"context"
 	"sync"
 
-	"github.com/inviqa/kafka-consumer-go/data/failure"
+	"github.com/inviqa/kafka-consumer-go/data/failure/model"
 	"github.com/inviqa/kafka-consumer-go/log"
 )
 
@@ -12,11 +12,11 @@ import (
 // sent on fch and then sends them to the database for retry later
 type databaseProducer struct {
 	retryManager retryManager
-	fch          <-chan failure.Failure
+	fch          <-chan model.Failure
 	logger       log.Logger
 }
 
-func newDatabaseProducer(rm retryManager, fch <-chan failure.Failure, logger log.Logger) *databaseProducer {
+func newDatabaseProducer(rm retryManager, fch <-chan model.Failure, logger log.Logger) *databaseProducer {
 	return &databaseProducer{
 		retryManager: rm,
 		fch:          fch,

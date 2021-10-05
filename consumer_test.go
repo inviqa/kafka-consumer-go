@@ -9,7 +9,7 @@ import (
 	"github.com/go-test/deep"
 
 	"github.com/inviqa/kafka-consumer-go/config"
-	"github.com/inviqa/kafka-consumer-go/data/failure"
+	"github.com/inviqa/kafka-consumer-go/data/failure/model"
 	"github.com/inviqa/kafka-consumer-go/log"
 	"github.com/inviqa/kafka-consumer-go/test/saramatest"
 )
@@ -22,7 +22,7 @@ func TestNewConsumer(t *testing.T) {
 		deep.MaxDepth = 0
 	}()
 
-	fch := make(chan failure.Failure)
+	fch := make(chan model.Failure)
 	cfg := &config.Config{}
 	hs := HandlerMap{
 		"product": func(msg *sarama.ConsumerMessage) error { return nil },
@@ -42,7 +42,7 @@ func TestNewConsumer(t *testing.T) {
 }
 
 func TestConsumer_ConsumeClaim(t *testing.T) {
-	fch := make(chan failure.Failure)
+	fch := make(chan model.Failure)
 	cfg := newTestConfig()
 	handler := &mockConsumerHandler{}
 	hs := HandlerMap{
@@ -78,7 +78,7 @@ func TestConsumer_ConsumeClaim(t *testing.T) {
 }
 
 func TestConsumer_ConsumeClaim_WithFailure(t *testing.T) {
-	fch := make(chan failure.Failure, 1)
+	fch := make(chan model.Failure, 1)
 	cfg := newTestConfig()
 	handler := &mockConsumerHandler{}
 	handler.willFail()
@@ -125,7 +125,7 @@ func TestConsumer_ConsumeClaim_WithFailure(t *testing.T) {
 			}
 			return
 		case got := <-fch:
-			exp := failure.Failure{
+			exp := model.Failure{
 				Reason:         "oops",
 				Topic:          "product",
 				NextTopic:      "retry.kafkaGroup.product",

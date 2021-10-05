@@ -8,7 +8,7 @@ import (
 
 	"github.com/go-test/deep"
 
-	"github.com/inviqa/kafka-consumer-go/data/failure"
+	"github.com/inviqa/kafka-consumer-go/data/failure/model"
 	"github.com/inviqa/kafka-consumer-go/log"
 )
 
@@ -18,7 +18,7 @@ func TestNewDatabaseProducer(t *testing.T) {
 		deep.CompareUnexportedFields = false
 	}()
 
-	fch := make(chan failure.Failure)
+	fch := make(chan model.Failure)
 	logger := log.NullLogger{}
 	rm := newMockRetryManager(false)
 
@@ -34,12 +34,12 @@ func TestNewDatabaseProducer(t *testing.T) {
 }
 
 func TestDatabaseProducer_ListenForFailures(t *testing.T) {
-	f1 := failure.Failure{
+	f1 := model.Failure{
 		Reason:  "something bad happened",
 		Message: []byte("hello"),
 		Topic:   "test",
 	}
-	f2 := failure.Failure{
+	f2 := model.Failure{
 		Reason:  "something bad happened",
 		Message: []byte("world"),
 		Topic:   "test2",
@@ -49,7 +49,7 @@ func TestDatabaseProducer_ListenForFailures(t *testing.T) {
 		t.Parallel()
 		ctx, cancel := context.WithCancel(context.Background())
 		repo := newMockRetryManager(false)
-		fch := make(chan failure.Failure, 1)
+		fch := make(chan model.Failure, 1)
 
 		newDatabaseProducer(repo, fch, log.NullLogger{}).listenForFailures(ctx, &sync.WaitGroup{})
 		fch <- f1
@@ -73,7 +73,7 @@ func TestDatabaseProducer_ListenForFailures(t *testing.T) {
 		t.Parallel()
 		ctx, cancel := context.WithCancel(context.Background())
 		repo := newMockRetryManager(true)
-		fch := make(chan failure.Failure, 1)
+		fch := make(chan model.Failure, 1)
 
 		newDatabaseProducer(repo, fch, log.NullLogger{}).listenForFailures(ctx, &sync.WaitGroup{})
 		fch <- f1

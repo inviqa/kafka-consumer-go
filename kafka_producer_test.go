@@ -9,7 +9,7 @@ import (
 
 	"github.com/go-test/deep"
 
-	"github.com/inviqa/kafka-consumer-go/data/failure"
+	"github.com/inviqa/kafka-consumer-go/data/failure/model"
 	"github.com/inviqa/kafka-consumer-go/log"
 	"github.com/inviqa/kafka-consumer-go/test/saramatest"
 )
@@ -21,7 +21,7 @@ func TestNewKafkaFailureProducer(t *testing.T) {
 	}()
 
 	sp := saramatest.NewMockSyncProducer()
-	fch := make(<-chan failure.Failure)
+	fch := make(<-chan model.Failure)
 	logger := log.NullLogger{}
 
 	exp := &kafkaFailureProducer{
@@ -38,7 +38,7 @@ func TestNewKafkaFailureProducer(t *testing.T) {
 }
 
 func TestNewFailureProducer_WithNilLogger(t *testing.T) {
-	if newKafkaFailureProducer(saramatest.NewMockSyncProducer(), make(<-chan failure.Failure), nil) == nil {
+	if newKafkaFailureProducer(saramatest.NewMockSyncProducer(), make(<-chan model.Failure), nil) == nil {
 		t.Errorf("expected a producer but got nil")
 	}
 }
@@ -46,7 +46,7 @@ func TestNewFailureProducer_WithNilLogger(t *testing.T) {
 func TestFailureProducer_ListenForFailures(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	sp := saramatest.NewMockSyncProducer()
-	fch := make(chan failure.Failure, 10)
+	fch := make(chan model.Failure, 10)
 	prod := newKafkaFailureProducer(sp, fch, log.NullLogger{})
 
 	prod.listenForFailures(ctx, &sync.WaitGroup{})
@@ -54,12 +54,12 @@ func TestFailureProducer_ListenForFailures(t *testing.T) {
 	msg1 := []byte("hello")
 	msg2 := []byte("world")
 
-	f1 := failure.Failure{
+	f1 := model.Failure{
 		Reason:    "something bad happened",
 		Message:   msg1,
 		NextTopic: "test",
 	}
-	f2 := failure.Failure{
+	f2 := model.Failure{
 		Reason:    "something bad happened",
 		Message:   msg2,
 		NextTopic: "test2",
@@ -84,12 +84,12 @@ func TestFailureProducer_ListenForFailuresWithProducerError(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	sp := saramatest.NewMockSyncProducer()
 	sp.ReturnErrorOnSend()
-	fch := make(chan failure.Failure, 10)
+	fch := make(chan model.Failure, 10)
 	prod := newKafkaFailureProducer(sp, fch, log.NullLogger{})
 
 	prod.listenForFailures(ctx, &sync.WaitGroup{})
 
-	failure := failure.Failure{
+	failure := model.Failure{
 		Reason:    "something else happened",
 		Message:   []byte{},
 		NextTopic: "foo",

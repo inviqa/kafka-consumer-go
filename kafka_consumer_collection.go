@@ -9,7 +9,7 @@ import (
 	"github.com/Shopify/sarama"
 
 	"github.com/inviqa/kafka-consumer-go/config"
-	"github.com/inviqa/kafka-consumer-go/data/failure"
+	"github.com/inviqa/kafka-consumer-go/data/failure/model"
 	"github.com/inviqa/kafka-consumer-go/log"
 )
 
@@ -25,7 +25,7 @@ type kafkaConsumerCollection struct {
 func newKafkaConsumerCollection(
 	cfg *config.Config,
 	p *kafkaFailureProducer,
-	fch chan failure.Failure,
+	fch chan model.Failure,
 	hm HandlerMap,
 	scfg *sarama.Config,
 	logger log.Logger,

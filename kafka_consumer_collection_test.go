@@ -10,15 +10,15 @@ import (
 	"github.com/Shopify/sarama"
 
 	"github.com/inviqa/kafka-consumer-go/config"
-	"github.com/inviqa/kafka-consumer-go/data/failure"
+	"github.com/inviqa/kafka-consumer-go/data/failure/model"
 	"github.com/inviqa/kafka-consumer-go/log"
 	"github.com/inviqa/kafka-consumer-go/test/saramatest"
 )
 
 func TestNewCollection(t *testing.T) {
 	cfg := &config.Config{}
-	fp := newKafkaFailureProducer(saramatest.NewMockSyncProducer(), make(chan failure.Failure, 10), nil)
-	fch := make(chan failure.Failure)
+	fp := newKafkaFailureProducer(saramatest.NewMockSyncProducer(), make(chan model.Failure, 10), nil)
+	fch := make(chan model.Failure)
 	scfg := config.NewSaramaConfig(false, false)
 	l := log.NullLogger{}
 	hm := HandlerMap{}

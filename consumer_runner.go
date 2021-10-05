@@ -7,7 +7,7 @@ import (
 
 	"github.com/inviqa/kafka-consumer-go/config"
 	"github.com/inviqa/kafka-consumer-go/data"
-	"github.com/inviqa/kafka-consumer-go/data/failure"
+	"github.com/inviqa/kafka-consumer-go/data/failure/model"
 	"github.com/inviqa/kafka-consumer-go/data/retry"
 	"github.com/inviqa/kafka-consumer-go/log"
 )
@@ -18,7 +18,7 @@ func Start(cfg *config.Config, ctx context.Context, hs HandlerMap, logger log.Lo
 	}
 
 	wg := &sync.WaitGroup{}
-	fch := make(chan failure.Failure)
+	fch := make(chan model.Failure)
 	srmCfg := config.NewSaramaConfig(cfg.TLSEnable, cfg.TLSSkipVerifyPeer)
 
 	var cons collection

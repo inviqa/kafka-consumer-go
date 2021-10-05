@@ -9,7 +9,7 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/go-test/deep"
 
-	"github.com/inviqa/kafka-consumer-go/data/failure"
+	failuremodel "github.com/inviqa/kafka-consumer-go/data/failure/model"
 	"github.com/inviqa/kafka-consumer-go/data/retry/model"
 )
 
@@ -31,7 +31,7 @@ func TestRepository_PublishFailure(t *testing.T) {
 	db, mock, _ := sqlmock.New()
 	repo := NewRepository(db)
 	ctx := context.Background()
-	f := failure.Failure{
+	f := failuremodel.Failure{
 		Reason:         "something bad happened",
 		Topic:          "product",
 		NextTopic:      "retry1.payment.product",

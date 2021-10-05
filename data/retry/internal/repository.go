@@ -9,7 +9,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/inviqa/kafka-consumer-go/data/failure"
+	failuremodel "github.com/inviqa/kafka-consumer-go/data/failure/model"
 	"github.com/inviqa/kafka-consumer-go/data/retry/model"
 )
 
@@ -33,7 +33,7 @@ func NewRepository(db *sql.DB) Repository {
 	}
 }
 
-func (r Repository) PublishFailure(ctx context.Context, f failure.Failure) error {
+func (r Repository) PublishFailure(ctx context.Context, f failuremodel.Failure) error {
 	q := `INSERT INTO kafka_consumer_retries(topic, payload_json, payload_headers, kafka_offset, kafka_partition, payload_key) VALUES($1, $2, $3, $4, $5, $6);`
 	_, err := r.db.ExecContext(ctx, q, f.Topic, f.Message, f.MessageHeaders, f.KafkaOffset, f.KafkaPartition, string(f.MessageKey))
 	if err != nil {

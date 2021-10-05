@@ -5,14 +5,14 @@ import (
 	"errors"
 	"time"
 
-	"github.com/inviqa/kafka-consumer-go/data/failure"
+	failuremodel "github.com/inviqa/kafka-consumer-go/data/failure/model"
 	"github.com/inviqa/kafka-consumer-go/data/retry/model"
 )
 
 type mockRepository struct {
 	RetryMarkedSuccessful *model.Retry
 	RetryMarkedErrored *model.Retry
-	PublishedFailure   *failure.Failure
+	PublishedFailure   *failuremodel.Failure
 	retriesToReturn       []model.Retry
 	willError          bool
 }
@@ -44,7 +44,7 @@ func (m *mockRepository) MarkRetryErrored(ctx context.Context, retry model.Retry
 	return nil
 }
 
-func (m *mockRepository) PublishFailure(ctx context.Context, failure failure.Failure) error {
+func (m *mockRepository) PublishFailure(ctx context.Context, failure failuremodel.Failure) error {
 	if m.willError {
 		return errors.New("oops")
 	}

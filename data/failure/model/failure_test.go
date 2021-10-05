@@ -1,4 +1,4 @@
-package failure
+package model
 
 import (
 	"errors"
