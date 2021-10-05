@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -64,7 +65,7 @@ func (r Repository) GetMessagesForRetry(ctx context.Context, topic string, seque
 		return nil, fmt.Errorf("data/retries: error updating retries records when creating a batch: %w", err)
 	}
 
-	q := fmt.Sprintf(`SELECT %s FROM kafka_consumer_retries WHERE batch_id = $1`, columns)
+	q := fmt.Sprintf(`SELECT %s FROM kafka_consumer_retries WHERE batch_id = $1`, r.columnsAsString())
 
 	// #nosec G201
 	rows, err := r.db.QueryContext(ctx, q, batchId)
@@ -110,4 +111,8 @@ func (r Repository) MarkRetryErrored(ctx context.Context, retry model.Retry, ret
 	}
 
 	return nil
+}
+
+func (r Repository) columnsAsString() string {
+	return strings.Join(columns, ", ")
 }
