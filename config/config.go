@@ -23,8 +23,6 @@ const (
 	EnvVarDbSchema       = "DB_SCHEMA"
 )
 
-type DBRetries map[string][]*DBTopicRetry
-
 type Config struct {
 	Host             []string
 	Group            string
@@ -44,16 +42,6 @@ type KafkaTopic struct {
 	Delay time.Duration
 	Key   TopicKey
 	Next  *KafkaTopic
-}
-
-// DBTopicRetry represents retry configuration for a topic when it is processed from the DB.
-type DBTopicRetry struct {
-	// Interval represents the minimum time that should elapse between the last processing attempt and the next one.
-	Interval time.Duration
-	// Sequence represents the sequence number of this retry attempt. This is used to find retries that are at the right
-	// sequence in the retry flow.
-	Sequence uint8
-	Key      TopicKey
 }
 
 type Database struct {
