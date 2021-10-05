@@ -9,6 +9,7 @@ This document highlights breaking changes in releases that will require some mig
 * `consumer.Start()` now returns an error if the consuming failed, you will need to handle this error, likely by logging it and exiting
 * `consumer.NewCollection()` has been renamed to `consumer.newKafkaConsumerCollection()`, and is now no longer part of the public API of this module
 * The `consumer.ConsumerCollection` interface has been renamed to `consumer.collection`, and is now no longer part of the public API of this module
+* The `Failure` struct type has been moved to `data/failure/model` package, previously it was in the module root
 
 ## `0.1.x` -> `0.2.0`
 
