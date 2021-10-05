@@ -11,10 +11,10 @@ import (
 
 type mockRepository struct {
 	RetryMarkedSuccessful *model.Retry
-	RetryMarkedErrored *model.Retry
-	PublishedFailure   *failuremodel.Failure
+	RetryMarkedErrored    *model.Retry
+	PublishedFailure      *failuremodel.Failure
 	retriesToReturn       []model.Retry
-	willError          bool
+	willError             bool
 }
 
 func newMockRepository(willError bool) *mockRepository {
