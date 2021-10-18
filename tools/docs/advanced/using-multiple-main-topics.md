@@ -15,6 +15,8 @@ would generate the following topic chains:
 1. `price` -> `retry1.algolia.price` (delay of 120 secs) -> `deadLetter.algolia.price`
 1. `product` -> `retry1.algolia.product` (delay of 120 secs) -> `deadLetter.algolia.product`
 
+>_NOTE: If `USE_DB_RETRY_QUEUE` is set to `true` then retries will be persisted and processed from the database instead of Kafka retry topics, but the same flow applies._
+
 ## Multiple topic handlers
 
 If you are consuming messages from multiple main topics, then you will need to provide a topic handler for each of them.

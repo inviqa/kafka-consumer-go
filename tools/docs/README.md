@@ -6,13 +6,31 @@ This module takes care of the consuming of messages from a Kafka cluster, and de
 
 If your topic handler function returns an error, e.g. if an upstream service is down and you cannot process the message because of it, then this module will automatically forward on the failed message to a retry topic to be picked up later.
 
-In its simplest configuration, there is a single main topic where messages are consumed from, and a chain of retry topics that messages move through if they error during processing, i.e. the topic handler function returns an error value.
+In its simplest configuration, there is a single main topic where messages are consumed from, and a chain of retry intervals that messages move through if they error during processing, i.e. the topic handler function returns an error value.
 
-An example topic chain would be something like
+## Retries
+
+Retries are used to attempt 1 or more additional attempts to process a message, and reduce the need for manual intervention for things like temporary network errors or transient failures upstream.
+
+They can be configured as Kafka topics, or as a database table. See [configuration] on how to do this. When configured as Kafka retries each message that errors will be sent back to Kafka to a special topic where messages get consumed from and retried after a short-interval. If retries continue to fail, then the message will be placed in a dead-letter topic for manual inspection.
+
+If you configure your consumer to use the database for retries, then you will need to provide some additional [configuration] to tell it how to connect to your database. Now, any messages that fail processing will be stored in a database table for retry later. The same rules apply in that if your message continues to fail and runs out of retry attempts, it will be marked as dead-lettered for manual inspection.
+
+### Example
+
+An example retry chain using Kafka as the retry storage would be something like:
 
 `event.product` -> `retry1.groupName.product` -> `deadLetter.groupName.product`
 
-The topic chain is determined by your [configuration].
+>_NOTE: The topic chain is determined by your [configuration]._
+
+When configured to use a database for retries, that topic chain will be managed purely by tracking the number of attempts to process the message against the correlating database record for it.
+
+## Should I use the database or Kafka for retries?
+
+When this module was originally created, the only option for processing retries was to use additional Kafka topics. However, you may face session timeout issues with Kafka depending on your retry topic configuration, so sometimes it is better to use the database for storing your retries instead as this does not suffer from that problem. 
+
+Currently, **our recommendation is that you continue to use Kafka for retries** until database retries have been tested more thoroughly on real-world projects.
 
 ## Getting started
 
