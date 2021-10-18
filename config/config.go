@@ -20,7 +20,7 @@ const (
 	EnvVarDbPort         = "DB_PORT"
 	EnvVarDbPass         = "DB_PASS"
 	EnvVarDbUser         = "DB_USER"
-	EnvVarDbSchema       = "DB_SCHEMA" // todo: rename to DB_NAME
+	EnvVarDbSchema       = "DB_SCHEMA"
 )
 
 type Config struct {
