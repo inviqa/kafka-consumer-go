@@ -63,6 +63,10 @@ func TestRepository_PublishFailure(t *testing.T) {
 		if err := repo.PublishFailure(ctx, f); err == nil {
 			t.Error("expected an error but got nil")
 		}
+
+		if err := mock.ExpectationsWereMet(); err != nil {
+			t.Error(err)
+		}
 	})
 }
 
