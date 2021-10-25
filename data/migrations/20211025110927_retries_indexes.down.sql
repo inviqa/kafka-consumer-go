@@ -1,0 +1,1 @@
+DROP INDEX IF EXISTS topic_attempts_idx;

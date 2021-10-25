@@ -1,0 +1,1 @@
+CREATE INDEX IF NOT EXISTS topic_attempts_idx ON kafka_consumer_retries (topic, attempts);
