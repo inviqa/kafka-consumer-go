@@ -17,7 +17,7 @@ type consumer struct {
 	logger    log.Logger
 }
 
-func NewConsumer(fch chan<- model.Failure, cfg *config.Config, hs HandlerMap, l log.Logger) sarama.ConsumerGroupHandler {
+func newConsumer(fch chan<- model.Failure, cfg *config.Config, hs HandlerMap, l log.Logger) sarama.ConsumerGroupHandler {
 	return &consumer{
 		failureCh: fch,
 		cfg:       cfg,

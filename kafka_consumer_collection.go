@@ -38,7 +38,7 @@ func newKafkaConsumerCollection(
 		cfg:       cfg,
 		consumers: []sarama.ConsumerGroup{},
 		producer:  p,
-		handler:   NewConsumer(fch, cfg, hm, logger),
+		handler:   newConsumer(fch, cfg, hm, logger),
 		saramaCfg: scfg,
 		logger:    logger,
 	}

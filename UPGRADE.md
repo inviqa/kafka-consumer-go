@@ -10,6 +10,7 @@ This document highlights breaking changes in releases that will require some mig
 * `consumer.NewCollection()` has been renamed to `consumer.newKafkaConsumerCollection()`, and is now no longer part of the public API of this module
 * The `consumer.ConsumerCollection` interface has been renamed to `consumer.collection`, and is now no longer part of the public API of this module
 * The `Failure` struct type has been moved to `data/failure/model` package, previously it was in the module root
+* `consumer.NewConsumer()` function has been renamed to `consumer.newConsumer()`, and is now no longer part of the public API of this module.
 
 ## `0.1.x` -> `0.2.0`
 

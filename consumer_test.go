@@ -36,7 +36,7 @@ func TestNewConsumer(t *testing.T) {
 		logger:    l,
 	}
 
-	if diff := deep.Equal(exp, NewConsumer(fch, cfg, hs, l)); diff != nil {
+	if diff := deep.Equal(exp, newConsumer(fch, cfg, hs, l)); diff != nil {
 		t.Error(diff)
 	}
 }
@@ -50,7 +50,7 @@ func TestConsumer_ConsumeClaim(t *testing.T) {
 	}
 	l := log.NullLogger{}
 
-	con := NewConsumer(fch, cfg, hs, l)
+	con := newConsumer(fch, cfg, hs, l)
 
 	gs := saramatest.NewMockConsumerGroupSession()
 	gc := saramatest.NewMockConsumerGroupClaim()
@@ -99,7 +99,7 @@ func TestConsumer_ConsumeClaim_WithFailure(t *testing.T) {
 	gc.PublishMessage(msg1)
 	gc.CloseChannel()
 
-	con := NewConsumer(fch, cfg, hs, log.NullLogger{})
+	con := newConsumer(fch, cfg, hs, log.NullLogger{})
 	if err := con.ConsumeClaim(gs, gc); err != nil {
 		t.Fatalf("unexpected error occurred: %s", err)
 	}

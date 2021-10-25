@@ -57,7 +57,7 @@ func newKafkaConsumerDbCollection(
 		kafkaConsumers: []sarama.ConsumerGroup{},
 		producer:       p,
 		retryManager:   rm,
-		handler:        NewConsumer(fch, cfg, hm, logger),
+		handler:        newConsumer(fch, cfg, hm, logger),
 		handlerMap:     hm,
 		saramaCfg:      scfg,
 		logger:         logger,

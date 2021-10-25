@@ -27,7 +27,7 @@ func TestNewCollection(t *testing.T) {
 		cfg:       cfg,
 		consumers: []sarama.ConsumerGroup{},
 		producer:  fp,
-		handler:   NewConsumer(fch, cfg, hm, l),
+		handler:   newConsumer(fch, cfg, hm, l),
 		saramaCfg: scfg,
 		logger:    l,
 	}
