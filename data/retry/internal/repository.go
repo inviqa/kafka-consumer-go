@@ -14,12 +14,10 @@ import (
 )
 
 const (
-	// todo: better name?
 	consideredStaleAfter = time.Minute * 10
 )
 
 var (
-	// TODO: any columns (and struct fields) that can be removed from app code?
 	columns = []string{"id", "topic", "payload_json", "payload_headers", "payload_key", "kafka_offset", "kafka_partition", "attempts"}
 )
 
@@ -82,7 +80,6 @@ func (r Repository) createEventBatch(ctx context.Context, topic string, sequence
 	stale := time.Now().Add(consideredStaleAfter * -1)
 	before := time.Now().Add(interval * -1)
 
-	// TODO: add an index for this WHERE condition
 	upSql := `UPDATE kafka_consumer_retries SET batch_id = $1, retry_started_at = NOW()
 		WHERE id IN(
 			SELECT id FROM kafka_consumer_retries

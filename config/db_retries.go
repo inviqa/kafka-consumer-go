@@ -21,7 +21,6 @@ type DBTopicRetry struct {
 // MakeRetryErrored will increment the Attempts field on the retry, and then mark it errored
 // and, if no more attempts are needed, deadlettered also. A new copy of the retry will be
 // returned so callers should use this instead of the original retry passed to the func.
-// TODO: write more unit tests to cover edge cases?
 func (dr DBRetries) MakeRetryErrored(retry model.Retry) model.Retry {
 	retry.Errored = true
 	retry.Attempts = retry.Attempts + 1

@@ -39,9 +39,10 @@ func saramaRecordHeadersToJson(headers []*sarama.RecordHeader) []byte {
 
 	for _, h := range headers {
 		valueBytes, err := base64.StdEncoding.DecodeString(string(h.Value))
-		// TODO: should we just store the original h.Value? this might give us the chance to inspect the data later if it's stored, e.g. in DB retry
+		// we store the original h.Value if something went wrong, as this might give us the
+		// chance to inspect the data later as it is stored in retry record in the database
 		if err != nil {
-			headerMap[string(h.Key)] = []byte(`{}`)
+			headerMap[string(h.Key)] = h.Value
 		} else {
 			headerMap[string(h.Key)] = valueBytes
 		}

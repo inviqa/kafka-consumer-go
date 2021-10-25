@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/Shopify/sarama"
+
 	"github.com/inviqa/kafka-consumer-go/config"
 	"github.com/inviqa/kafka-consumer-go/data"
 	"github.com/inviqa/kafka-consumer-go/data/failure/model"
@@ -22,16 +24,13 @@ func Start(cfg *config.Config, ctx context.Context, hs HandlerMap, logger log.Lo
 	srmCfg := config.NewSaramaConfig(cfg.TLSEnable, cfg.TLSSkipVerifyPeer)
 
 	var cons collection
+	var err error
 
-	// TODO: clean this up
 	if cfg.UseDBForRetryQueue {
-		db, err := data.NewDB(cfg.GetDBConnectionString(), logger)
+		cons, err = setupKafkaConsumerDbCollection(cfg, logger, fch, cons, hs, srmCfg)
 		if err != nil {
-			return fmt.Errorf("could not connect to DB: %w", err)
+			return err
 		}
-		repo := retry.NewManagerWithDefaults(cfg.DBRetries, db)
-		dbProducer := newDatabaseProducer(repo, fch, logger)
-		cons = newKafkaConsumerDbCollection(cfg, dbProducer, repo, fch, hs, srmCfg, logger, defaultKafkaConnector)
 	} else {
 		kafkaProducer, err := newKafkaFailureProducerWithDefaults(cfg, fch, logger)
 		if err != nil {
@@ -50,4 +49,17 @@ func Start(cfg *config.Config, ctx context.Context, hs HandlerMap, logger log.Lo
 	wg.Wait()
 
 	return nil
+}
+
+func setupKafkaConsumerDbCollection(cfg *config.Config, logger log.Logger, fch chan model.Failure, cons collection, hs HandlerMap, srmCfg *sarama.Config) (collection, error) {
+	db, err := data.NewDB(cfg.GetDBConnectionString(), logger)
+	if err != nil {
+		return nil, fmt.Errorf("could not connect to DB: %w", err)
+	}
+
+	repo := retry.NewManagerWithDefaults(cfg.DBRetries, db)
+	dbProducer := newDatabaseProducer(repo, fch, logger)
+	cons = newKafkaConsumerDbCollection(cfg, dbProducer, repo, fch, hs, srmCfg, logger, defaultKafkaConnector)
+
+	return cons, nil
 }
