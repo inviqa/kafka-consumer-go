@@ -30,10 +30,10 @@ type Config struct {
 	ConsumableTopics []*KafkaTopic
 	TopicMap         map[TopicKey]*KafkaTopic
 	// DBRetries is indexed by the topic name, and represents retry intervals for processing retries in the DB
-	DBRetries             DBRetries
-	TLSEnable             bool
-	TLSSkipVerifyPeer     bool
-	DB                    Database
+	DBRetries           DBRetries
+	TLSEnable           bool
+	TLSSkipVerifyPeer   bool
+	DB                  Database
 	UseDBForRetryQueue  bool
 	MaintenanceInterval time.Duration
 	topicNameGenerator  topicNameGenerator

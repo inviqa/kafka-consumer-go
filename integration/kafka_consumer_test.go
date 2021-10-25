@@ -83,7 +83,7 @@ func TestMessagesAreConsumedFromKafka_WithDbRetries(t *testing.T) {
 
 func TestRegularDbMaintenance(t *testing.T) {
 	defaultMaintenanceInterval := cfg.MaintenanceInterval
-	cfg.MaintenanceInterval = time.Millisecond*100
+	cfg.MaintenanceInterval = time.Millisecond * 100
 	defer func() {
 		cfg.MaintenanceInterval = defaultMaintenanceInterval
 	}()
@@ -105,7 +105,7 @@ func TestRegularDbMaintenance(t *testing.T) {
 		// configured maintenance interval
 		err := consumeFromKafkaUsingDbRetriesUntil(func(donech chan<- bool) {
 			time.Sleep(time.Millisecond * 120)
-			donech<- true
+			donech <- true
 		}, kafka.NewTestConsumerHandler().Handle)
 
 		if err != nil {
@@ -128,7 +128,7 @@ func TestRegularDbMaintenance(t *testing.T) {
 
 		err := consumeFromKafkaUsingDbRetriesUntil(func(donech chan<- bool) {
 			time.Sleep(time.Millisecond * 120)
-			donech<- true
+			donech <- true
 		}, kafka.NewTestConsumerHandler().Handle)
 
 		if err != nil {
