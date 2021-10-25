@@ -16,6 +16,7 @@ type mockRetryManager struct {
 	willErrorOnGetBatch       bool
 	retryErrored              bool
 	retrySuccessful           bool
+	runMaintenanceCallCount   int
 }
 
 // GetBatch will return in-memory received failures as retries
@@ -59,6 +60,11 @@ func (mr *mockRetryManager) PublishFailure(ctx context.Context, f failuremodel.F
 		return errors.New("oops")
 	}
 	mr.recvdFailures[f.Topic] = append(mr.recvdFailures[f.Topic], f)
+	return nil
+}
+
+func (mr *mockRetryManager) RunMaintenance(ctx context.Context) error {
+	mr.runMaintenanceCallCount++
 	return nil
 }
 

@@ -11,6 +11,10 @@ import (
 	"github.com/inviqa/kafka-consumer-go/data/retry/model"
 )
 
+var (
+	deleteSuccessfulRetriesAfter = time.Hour * 1
+)
+
 type Manager struct {
 	dbRetries config.DBRetries
 	repo      repository
@@ -21,6 +25,7 @@ type repository interface {
 	MarkRetrySuccessful(ctx context.Context, retry model.Retry) error
 	MarkRetryErrored(ctx context.Context, retry model.Retry, err error) error
 	PublishFailure(ctx context.Context, failure failuremodel.Failure) error
+	DeleteSuccessful(ctx context.Context, olderThan time.Time) error
 }
 
 func NewManagerWithDefaults(dbRetries config.DBRetries, db *sql.DB) *Manager {
@@ -44,4 +49,10 @@ func (m Manager) MarkErrored(ctx context.Context, retry model.Retry, err error) 
 
 func (m Manager) PublishFailure(ctx context.Context, failure failuremodel.Failure) error {
 	return m.repo.PublishFailure(ctx, failure)
+}
+
+func (m Manager) RunMaintenance(ctx context.Context) error {
+	olderThan := time.Now().Add(-1 * deleteSuccessfulRetriesAfter)
+
+	return m.repo.DeleteSuccessful(ctx, olderThan)
 }

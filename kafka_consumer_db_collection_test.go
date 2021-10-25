@@ -51,9 +51,13 @@ func TestNewKafkaConsumerDbCollection(t *testing.T) {
 
 func TestKafkaConsumerDbCollection_Start(t *testing.T) {
 	defaultDbRetryPollInterval := dbRetryPollInterval
+	defaultMaintenanceInterval := maintenanceInterval
 	dbRetryPollInterval = time.Millisecond * 25
+	maintenanceInterval = time.Millisecond * 25
+
 	defer func() {
 		dbRetryPollInterval = defaultDbRetryPollInterval
+		maintenanceInterval = defaultMaintenanceInterval
 	}()
 
 	exampleMsg := &sarama.ConsumerMessage{
@@ -114,6 +118,10 @@ func TestKafkaConsumerDbCollection_Start(t *testing.T) {
 
 		if got := repo.getPublishedFailureCountByTopic("product"); got != 0 {
 			t.Errorf("expected 0 failures to be produced in database, but got %d", got)
+		}
+
+		if got := repo.runMaintenanceCallCount; got != 2 {
+			t.Errorf("expected 2 calls to manager.RunMaintenance(), but got %d instead", got)
 		}
 	})
 

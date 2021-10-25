@@ -36,6 +36,7 @@ type retryManager interface {
 	MarkSuccessful(ctx context.Context, retry model.Retry) error
 	MarkErrored(ctx context.Context, retry model.Retry, err error) error
 	PublishFailure(ctx context.Context, f failuremodel.Failure) error
+	RunMaintenance(ctx context.Context) error
 }
 
 func newKafkaConsumerDbCollection(
@@ -79,9 +80,26 @@ func (cc *kafkaConsumerDbCollection) Start(ctx context.Context, wg *sync.WaitGro
 		cc.kafkaConsumers = append(cc.kafkaConsumers, group)
 		cc.startDbRetryProcessorsForTopic(ctx, t, cc.cfg.DBRetries[t], wg)
 	}
+
 	cc.producer.listenForFailures(ctx, wg)
+	cc.periodicRetryManagerMaintenance(ctx)
 
 	return nil
+}
+
+func (cc *kafkaConsumerDbCollection) periodicRetryManagerMaintenance(ctx context.Context) {
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-time.After(maintenanceInterval):
+				if err := cc.retryManager.RunMaintenance(ctx); err != nil {
+					cc.logger.Errorf("error running maintenance in kafka consumer DB collection: %s", err)
+				}
+			}
+		}
+	}()
 }
 
 // startMainTopicConsumer starts a sarama.ConsumerGroup to consume messages from Kafka for the given main topic name

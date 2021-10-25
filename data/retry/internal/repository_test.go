@@ -129,6 +129,40 @@ func TestRepository_GetMessagesForRetry(t *testing.T) {
 	})
 }
 
+func TestRepository_DeleteSuccessful(t *testing.T) {
+	db, mock, _ := sqlmock.New()
+	repo := NewRepository(db)
+	ctx := context.Background()
+	now := time.Now()
+
+	t.Run("deletes successfully processed retries", func(t *testing.T) {
+		mock.ExpectExec(`DELETE FROM kafka_consumer_retries WHERE.*`).
+			WithArgs(now).
+			WillReturnResult(sqlmock.NewResult(0, 10))
+
+		if err := repo.DeleteSuccessful(ctx, now); err != nil {
+			t.Fatalf("unexpected error: %s", err)
+		}
+
+		if err := mock.ExpectationsWereMet(); err != nil {
+			t.Error(err)
+		}
+	})
+
+	t.Run("returns error from query", func(t *testing.T) {
+		mock.ExpectExec(`DELETE FROM kafka_consumer_retries WHERE.*`).
+			WillReturnError(errors.New("oops"))
+
+		if err := repo.DeleteSuccessful(ctx, now); err == nil {
+			t.Error("expected an error but got nil")
+		}
+
+		if err := mock.ExpectationsWereMet(); err != nil {
+			t.Error(err)
+		}
+	})
+}
+
 func TestRepository_MarkRetryErrored(t *testing.T) {
 	db, mock, _ := sqlmock.New()
 	repo := NewRepository(db)

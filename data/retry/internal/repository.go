@@ -49,6 +49,12 @@ func (r Repository) GetMessagesForRetry(ctx context.Context, topic string, seque
 	return r.getCreatedEventBatch(ctx, batchId)
 }
 
+func (r Repository) DeleteSuccessful(ctx context.Context, olderThan time.Time) error {
+	_, err := r.db.ExecContext(ctx, `DELETE FROM kafka_consumer_retries WHERE successful = true AND updated_at <= $1;`, olderThan)
+
+	return err
+}
+
 func (r Repository) MarkRetrySuccessful(ctx context.Context, retry model.Retry) error {
 	q := `UPDATE kafka_consumer_retries
 		SET attempts = $1, last_error = '', retry_finished_at = NOW(), errored = false, successful = true, updated_at = NOW()

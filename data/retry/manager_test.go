@@ -198,6 +198,31 @@ func TestManager_PublishFailure(t *testing.T) {
 	})
 }
 
+func TestManager_RunMaintenance(t *testing.T) {
+	ctx := context.Background()
+	now := time.Now()
+
+	t.Run("runs maintenance", func(t *testing.T) {
+		manager, repo := newManagerForTests(false)
+
+		if err := manager.RunMaintenance(ctx); err != nil {
+			t.Errorf("unexpected error: %s", err)
+		}
+
+		if now.Sub(repo.receivedOlderThan) > time.Hour {
+			t.Error("repo.DeleteSuccessful() should have been called with olderThan time of 1 hour ago, but was not")
+		}
+	})
+
+	t.Run("returns error from repo", func(t *testing.T) {
+		manager, _ := newManagerForTests(true)
+
+		if err := manager.RunMaintenance(ctx); err == nil {
+			t.Error("expected an error but got nil")
+		}
+	})
+}
+
 func newManagerForTests(repoWillError bool) (Manager, *mockRepository) {
 	repo := newMockRepository(repoWillError)
 	manager := Manager{
