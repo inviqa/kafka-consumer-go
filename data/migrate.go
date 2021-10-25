@@ -7,7 +7,7 @@ import (
 
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
-	"github.com/johejo/golang-migrate-extra/source/iofs"
+	"github.com/golang-migrate/migrate/v4/source/iofs"
 
 	"github.com/inviqa/kafka-consumer-go/config"
 )
