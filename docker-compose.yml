@@ -28,6 +28,18 @@ services:
       - "2181:2181"
     networks:
       private: {}
+
+  postgres:
+    image: postgres:11.7
+    environment:
+      POSTGRES_DB: kafka-consumer
+      POSTGRES_USER: kafka-consumer
+      PGDATA: /var/lib/postgresql/data/pgdata
+      POSTGRES_PASSWORD: kafka-consumer
+    networks:
+      - private
+    ports:
+      - "15432:5432"
 networks:
   private:
     external: false

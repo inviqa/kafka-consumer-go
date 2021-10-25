@@ -4,10 +4,22 @@ To use this module you must configure it correctly. You do this by setting envir
 
 Configuration is initialised by calling `config.NewConfig()` in this module, which automatically parses environment variables and returns a `config.Config` value.
 
-## Kafka connection
+## Configuration options
 
-* `KAFKA_HOST`: comma-separated host names for brokers in your cluster, e.g. `KAFKA_HOST=kafka1.eu-central-1.amazonaws.com:9094,kafka2.eu-central-1.amazonaws.com:9094`
-* `KAFKA_GROUP`: the name of the consumer group for your service
+| Environment Variable  | Required? | Description                                                                                                                                                                                                 |
+|-----------------------|-----------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| KAFKA_HOST            | Yes       | The Kafka broker(s) to consume from. Multiple brokers should be separated by a comma.                                                                                                                       |
+| KAFKA_GROUP           | Yes       | The Kafka group name for your consumer.                                                                                                                                                                     |
+| KAFKA_SOURCE_TOPICS   | Yes       | The topics to consume messages from.                                                                                                                                                                        |
+| KAFKA_RETRY_INTERVALS | No        | The intervals, in seconds, of the retries in your retry chain. See [Kafka topics](#kafka-topics) for more info. If this is omitted then no retries will be attempted for messages.                          |
+| USE_DB_RETRY_QUEUE    | No        | Whether to store messages that need retrying in the database. If false, then messages that need retrying will be stored in Kafka topics instead. See  [Kafka topics](#kafka-topics). **Defaults to false**. |
+| DB_HOST               | No        | The database host where the outbox table resides. NOTE: This is required if you enable database-based retries (`USE_DB_RETRY_QUEUE`).                                                                       |
+| DB_PORT               | No        | Database port.                                                                                                                                                                                              |
+| DB_USER               | No        | Database user.                                                                                                                                                                                              |
+| DB_PASS               | No        | Database password.                                                                                                                                                                                          |
+| DB_SCHEMA             | No        | Database name.                                                                                                                                                                                              |
+| TLS_ENABLE            | No        | Whether to enable TLS when communicating with Kafka and the database. We recommend enabling this if your database and Kafka cluster support it. **Defaults to false.**                                      |
+| TLS_SKIP_VERIFY_PEER  | No        | Whether to skip peer verification when connecting over TLS. **Defaults to false.**                                                                                                                          |
 
 ## Kafka topics
 
@@ -30,16 +42,20 @@ You can see it has automatically generated the retry and deadLetter topic names 
 
 >_NOTE: You do not need to have any retry topics in the chain, but it is advisable in most circumstances. If you don't set the `KAFKA_RETRY_INTERVALS` variable, then it would directly send the failures to the deadLetter topic._
 
+### Database retries
+
+If you set `USE_DB_RETRY_QUEUE` to `true`, then messages needing a retry will be stored in a database table that is automatically created when the consumer starts. You will need to provide database credentials using the `DB_*` env vars detailed in the config table above.
+
 ### Flow of event processing:
 
 Sticking the configuration example above, this will tell this module to:
 
 * Consume records from `product`
-* If there are errors during the processing of those records then publish them to the next topic in the chain: `retry1.algolia.product`
-* Wait for 120 seconds before processing messages from this topic
-* If there are any errors processing these messages, then publish them to the last topic in the chain: `deadLetter.algolia.product`
+* If there are errors during the processing of those records then publish them to the next topic in the chain: `retry1.algolia.product` (or the database if `USE_DB_RETRY_QUEUE` is `true`).
+* Wait for 120 seconds before processing the errored messages again
+* If there are any errors processing these messages, then publish them to the last topic in the chain: `deadLetter.algolia.product` (or mark them as dead-lettered in the database table).
 
-> _NOTE: No consumer will be registered for the last topic in the chain, as this indicates that something has gone wrong and more retries are unlikely to solve it, so it needs manual intervention._
+> _NOTE: Messages that are dead-lettered will not be processed again, as these messages have usually failed multiple times and more retries are unlikely to resolve the situation. They will usually need manual intervention._
 
 ### Multiple sets of topics
 

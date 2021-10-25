@@ -4,6 +4,7 @@ package kafka
 
 import (
 	"errors"
+	"log"
 
 	"github.com/Shopify/sarama"
 )
@@ -18,6 +19,8 @@ func NewTestConsumerHandler() *TestConsumerHandler {
 }
 
 func (t *TestConsumerHandler) Handle(msg *sarama.ConsumerMessage) error {
+	log.Printf("handling message with topic: %s, offset: %d, partition: %d\n", msg.Topic, msg.Offset, msg.Partition)
+
 	t.RecvdMessages = append(t.RecvdMessages, msg)
 
 	if t.fail {

@@ -1,95 +1,29 @@
 package consumer
 
 import (
-	"context"
-	"reflect"
-	"sync"
-	"testing"
-	"time"
+	"errors"
 
 	"github.com/Shopify/sarama"
+
 	"github.com/inviqa/kafka-consumer-go/config"
+	"github.com/inviqa/kafka-consumer-go/log"
 	"github.com/inviqa/kafka-consumer-go/test/saramatest"
 )
 
-func TestNewCollection(t *testing.T) {
-	cfg := &config.Config{}
-	fp := NewFailureProducer(saramatest.NewMockSyncProducer(), make(chan Failure, 10), nil)
-	fch := make(chan Failure)
-	scfg := config.NewSaramaConfig(false, false)
-	l := NullLogger{}
-	hm := HandlerMap{}
-
-	exp := &Collection{
-		cfg:       cfg,
-		consumers: []sarama.ConsumerGroup{},
-		producer:  fp,
-		handler:   NewConsumer(fch, cfg, hm, l),
-		saramaCfg: scfg,
-		logger:    l,
-	}
-	col := NewCollection(cfg, fp, fch, hm, scfg, nil)
-	if !reflect.DeepEqual(exp, col) {
-		t.Errorf("expected %v, but got %v", exp, col)
-	}
+type testKafkaConnector struct {
+	consumerGroup sarama.ConsumerGroup
+	willError     bool
 }
 
-func TestCollection_Close(t *testing.T) {
-	mcg1 := saramatest.NewMockConsumerGroup()
-	mcg2 := saramatest.NewMockConsumerGroup()
-	col := &Collection{consumers: []sarama.ConsumerGroup{mcg1, mcg2}}
-
-	col.Close()
-
-	if !mcg1.WasClosed() || !mcg2.WasClosed() {
-		t.Errorf("consumer collection was not closed properly")
+// connectToKafka satisfies the kafkaConnector type and is used from tests
+func (t testKafkaConnector) connectToKafka(cfg *config.Config, saramaCfg *sarama.Config, logger log.Logger) (sarama.ConsumerGroup, error) {
+	if t.willError {
+		return nil, errors.New("oops")
 	}
-}
 
-func TestCollection_CloseWithError(t *testing.T) {
-	mcg1 := saramatest.NewMockConsumerGroup()
-	mcg2 := saramatest.NewMockConsumerGroup()
-	mcg1.ErrorOnClose()
-
-	col := &Collection{consumers: []sarama.ConsumerGroup{mcg1, mcg2}, logger: NullLogger{}}
-	col.Close()
-
-	if !mcg2.WasClosed() || len(col.consumers) > 0 {
-		t.Errorf("consumer collection was not closed properly")
+	if t.consumerGroup == nil {
+		return saramatest.NewMockConsumerGroup(), nil
 	}
-}
 
-func TestCollection_StartConsumer(t *testing.T) {
-	mcg := saramatest.NewMockConsumerGroup()
-	ctx := context.Background()
-	cfg := &config.Config{}
-
-	col := &Collection{consumers: []sarama.ConsumerGroup{mcg}, cfg: cfg}
-
-	col.startConsumer(mcg, ctx, &sync.WaitGroup{}, &config.KafkaTopic{
-		Name:  "retry",
-		Delay: time.Millisecond * 1,
-	})
-
-	<-time.After(time.Millisecond * 5)
-
-	if c := mcg.GetTopicConsumeCount("retry"); c == 0 {
-		t.Error("expected topic 'retry' to be consumed, but was not")
-	}
-}
-
-func TestCollection_StartConsumerWithError(t *testing.T) {
-	mcg := saramatest.NewMockConsumerGroup()
-	mcg.ErrorOnConsume()
-	ctx, cancel := context.WithCancel(context.Background())
-	cfg := &config.Config{}
-
-	col := &Collection{consumers: []sarama.ConsumerGroup{mcg}, cfg: cfg}
-
-	col.startConsumer(mcg, ctx, &sync.WaitGroup{}, &config.KafkaTopic{
-		Name:  "retry",
-		Delay: time.Millisecond * 1,
-	})
-
-	cancel()
+	return t.consumerGroup, nil
 }

@@ -5,12 +5,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/inviqa/kafka-consumer-go/test/saramatest"
-
+	"github.com/Shopify/sarama"
 	"github.com/go-test/deep"
 
-	"github.com/Shopify/sarama"
 	"github.com/inviqa/kafka-consumer-go/config"
+	"github.com/inviqa/kafka-consumer-go/data/failure/model"
+	"github.com/inviqa/kafka-consumer-go/log"
+	"github.com/inviqa/kafka-consumer-go/test/saramatest"
 )
 
 func TestNewConsumer(t *testing.T) {
@@ -21,12 +22,12 @@ func TestNewConsumer(t *testing.T) {
 		deep.MaxDepth = 0
 	}()
 
-	fch := make(chan Failure)
+	fch := make(chan model.Failure)
 	cfg := &config.Config{}
 	hs := HandlerMap{
 		"product": func(msg *sarama.ConsumerMessage) error { return nil },
 	}
-	l := NullLogger{}
+	l := log.NullLogger{}
 
 	exp := &consumer{
 		failureCh: fch,
@@ -35,21 +36,21 @@ func TestNewConsumer(t *testing.T) {
 		logger:    l,
 	}
 
-	if diff := deep.Equal(exp, NewConsumer(fch, cfg, hs, l)); diff != nil {
+	if diff := deep.Equal(exp, newConsumer(fch, cfg, hs, l)); diff != nil {
 		t.Error(diff)
 	}
 }
 
 func TestConsumer_ConsumeClaim(t *testing.T) {
-	fch := make(chan Failure)
+	fch := make(chan model.Failure)
 	cfg := newTestConfig()
 	handler := &mockConsumerHandler{}
 	hs := HandlerMap{
 		"product": handler.handle,
 	}
-	l := NullLogger{}
+	l := log.NullLogger{}
 
-	con := NewConsumer(fch, cfg, hs, l)
+	con := newConsumer(fch, cfg, hs, l)
 
 	gs := saramatest.NewMockConsumerGroupSession()
 	gc := saramatest.NewMockConsumerGroupClaim()
@@ -77,26 +78,29 @@ func TestConsumer_ConsumeClaim(t *testing.T) {
 }
 
 func TestConsumer_ConsumeClaim_WithFailure(t *testing.T) {
-	fch := make(chan Failure, 1)
+	fch := make(chan model.Failure, 1)
 	cfg := newTestConfig()
 	handler := &mockConsumerHandler{}
 	handler.willFail()
 	hs := HandlerMap{
 		"product": handler.handle,
 	}
-	l := NullLogger{}
-
-	con := NewConsumer(fch, cfg, hs, l)
 
 	gs := saramatest.NewMockConsumerGroupSession()
 	gc := saramatest.NewMockConsumerGroupClaim()
 
-	msg1 := &sarama.ConsumerMessage{Value: []byte(`{"type":"productCreated"}`), Topic: "product"}
+	msg1 := &sarama.ConsumerMessage{
+		Value:     []byte(`{"type":"productCreated"}`),
+		Topic:     "product",
+		Offset:    10001,
+		Partition: 2,
+		Key:       []byte("SKU-123"),
+	}
 	gc.PublishMessage(msg1)
 	gc.CloseChannel()
 
-	err := con.ConsumeClaim(gs, gc)
-	if err != nil {
+	con := newConsumer(fch, cfg, hs, log.NullLogger{})
+	if err := con.ConsumeClaim(gs, gc); err != nil {
 		t.Fatalf("unexpected error occurred: %s", err)
 	}
 
@@ -120,7 +124,20 @@ func TestConsumer_ConsumeClaim_WithFailure(t *testing.T) {
 				t.Errorf("expected %d messages in failure channel, got %d", 1, failureCount)
 			}
 			return
-		case <-fch:
+		case got := <-fch:
+			exp := model.Failure{
+				Reason:         "oops",
+				Topic:          "product",
+				NextTopic:      "retry.kafkaGroup.product",
+				MessageHeaders: []byte(`{}`),
+				Message:        []byte(`{"type":"productCreated"}`),
+				MessageKey:     []byte("SKU-123"),
+				KafkaOffset:    10001,
+				KafkaPartition: 2,
+			}
+			if diff := deep.Equal(exp, got); diff != nil {
+				t.Error(diff)
+			}
 			failureCount++
 		}
 	}
@@ -149,6 +166,16 @@ func newTestConfig() *config.Config {
 			"product":                       product,
 			"retry.kafkaGroup.product":      retryProduct,
 			"deadLetter.kafkaGroup.product": deadLetterProduct,
+		},
+		ConsumableTopics: []*config.KafkaTopic{product, retryProduct},
+		DBRetries: map[string][]*config.DBTopicRetry{
+			"product": {
+				{
+					Interval: time.Millisecond * 10,
+					Sequence: 1,
+					Key:      "product",
+				},
+			},
 		},
 	}
 }

@@ -4,20 +4,20 @@ import (
 	"fmt"
 
 	"github.com/Shopify/sarama"
+
 	"github.com/inviqa/kafka-consumer-go/config"
+	"github.com/inviqa/kafka-consumer-go/data/failure/model"
+	"github.com/inviqa/kafka-consumer-go/log"
 )
 
 type consumer struct {
-	failureCh chan<- Failure
+	failureCh chan<- model.Failure
 	cfg       *config.Config
 	handlers  HandlerMap
-	logger    Logger
+	logger    log.Logger
 }
 
-type Handler func(msg *sarama.ConsumerMessage) error
-type HandlerMap map[config.TopicKey]Handler
-
-func NewConsumer(fch chan<- Failure, cfg *config.Config, hs HandlerMap, l Logger) sarama.ConsumerGroupHandler {
+func newConsumer(fch chan<- model.Failure, cfg *config.Config, hs HandlerMap, l log.Logger) sarama.ConsumerGroupHandler {
 	return &consumer{
 		failureCh: fch,
 		cfg:       cfg,
@@ -60,17 +60,13 @@ func (c *consumer) markMessageProcessed(session sarama.ConsumerGroupSession, msg
 }
 
 func (c *consumer) sendToFailureChannel(message *sarama.ConsumerMessage, err error) {
-	topic, nextErr := c.cfg.NextTopicNameInChain(message.Topic)
+	nextTopic, nextErr := c.cfg.NextTopicNameInChain(message.Topic)
 	if nextErr != nil {
 		c.logger.Errorf("no next topic to send failure to (deadletter topic being consumed?)")
 		return
 	}
 
-	c.failureCh <- Failure{
-		Reason:        err.Error(),
-		Message:       message.Value,
-		TopicToSendTo: topic,
-	}
+	c.failureCh <- model.FailureFromSaramaMessage(err, nextTopic, message)
 }
 
 func (c *consumer) Setup(session sarama.ConsumerGroupSession) error {

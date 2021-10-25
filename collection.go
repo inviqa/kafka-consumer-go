@@ -2,73 +2,27 @@ package consumer
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"sync"
 	"time"
 
 	"github.com/Shopify/sarama"
+
 	"github.com/inviqa/kafka-consumer-go/config"
+	"github.com/inviqa/kafka-consumer-go/log"
 )
 
-type Collection struct {
-	cfg       *config.Config
-	consumers []sarama.ConsumerGroup
-	producer  FailureProducer
-	handler   sarama.ConsumerGroupHandler
-	saramaCfg *sarama.Config
-	logger    Logger
+type collection interface {
+	Start(ctx context.Context, wg *sync.WaitGroup) error
+	Close()
 }
 
-func NewCollection(cfg *config.Config, p FailureProducer, fch chan Failure, hm HandlerMap, scfg *sarama.Config, log Logger) *Collection {
-	if log == nil {
-		log = NullLogger{}
-	}
-
-	return &Collection{
-		cfg:       cfg,
-		consumers: []sarama.ConsumerGroup{},
-		producer:  p,
-		handler:   NewConsumer(fch, cfg, hm, log),
-		saramaCfg: scfg,
-		logger:    log,
-	}
-}
-
-func (cc *Collection) Start(ctx context.Context, wg *sync.WaitGroup) error {
-	topics := cc.cfg.ConsumableTopics
-	if topics == nil {
-		return errors.New("no Kafka topics are configured, therefore cannot start consumers")
-	}
-
-	for _, t := range topics {
-		group, err := cc.startConsumerGroup(ctx, wg, t)
-		if err != nil {
-			return err
-		}
-		cc.consumers = append(cc.consumers, group)
-	}
-	cc.producer.ListenForFailures(ctx, wg)
-
-	return nil
-}
-
-func (cc *Collection) Close() {
-	for _, c := range cc.consumers {
-		if err := c.Close(); err != nil {
-			cc.logger.Errorf("error occurred closing a Kafka consumer: %w", err)
-		}
-	}
-	cc.consumers = []sarama.ConsumerGroup{}
-}
-
-func (cc *Collection) startConsumerGroup(ctx context.Context, wg *sync.WaitGroup, topic *config.KafkaTopic) (sarama.ConsumerGroup, error) {
-	cc.logger.Infof("starting Kafka consumer group for '%s'", topic.Name)
-
+func connectToKafka(cfg *config.Config, saramaCfg *sarama.Config, logger log.Logger) (sarama.ConsumerGroup, error) {
 	var cl sarama.ConsumerGroup
 	var err error
+
 	for i := 0; i < maxConnectionAttempts; i++ {
-		cl, err = sarama.NewConsumerGroup(cc.cfg.Host, cc.cfg.Group, cc.saramaCfg)
+		cl, err = sarama.NewConsumerGroup(cfg.Host, cfg.Group, saramaCfg)
 		if err == nil {
 			break
 		}
@@ -79,43 +33,9 @@ func (cc *Collection) startConsumerGroup(ctx context.Context, wg *sync.WaitGroup
 			return nil, fmt.Errorf("error occurred creating Kafka consumer group client: %w", err)
 		}
 
-		cc.logger.Info("Kafka cluster is not reachable, retrying...")
+		logger.Info("Kafka cluster is not reachable, retrying...")
 		time.Sleep(connectionInterval)
 	}
 
-	cc.startConsumer(cl, ctx, wg, topic)
-
 	return cl, nil
-}
-
-func (cc *Collection) startConsumer(cl sarama.ConsumerGroup, ctx context.Context, wg *sync.WaitGroup, topic *config.KafkaTopic) {
-	go func() {
-		for err := range cl.Errors() {
-			cc.logger.Errorf("error occurred in consumer group Handler: %w", err)
-		}
-	}()
-
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		timer := time.NewTimer(topic.Delay)
-		for {
-			select {
-			case <-timer.C:
-				if err := cl.Consume(ctx, []string{topic.Name}, cc.handler); err != nil {
-					cc.logger.Errorf("error when consuming from Kafka: %s", err)
-				}
-				if ctx.Err() != nil {
-					timer.Stop()
-					return
-				}
-				timer.Reset(topic.Delay)
-			case <-ctx.Done():
-				if !timer.Stop() {
-					<-timer.C
-				}
-				return
-			}
-		}
-	}()
 }

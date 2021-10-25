@@ -7,26 +7,27 @@ import (
 	"time"
 
 	"github.com/Shopify/sarama"
+
 	"github.com/inviqa/kafka-consumer-go/config"
+	"github.com/inviqa/kafka-consumer-go/data/failure/model"
+	"github.com/inviqa/kafka-consumer-go/log"
 )
 
-type FailureProducer interface {
-	ListenForFailures(ctx context.Context, wg *sync.WaitGroup)
-}
-
-type failureProducer struct {
+// kafkaFailureProducer is a producer that listens for failed push attempts from kafka
+// on fch and then sends them to the next kafka retry topic in the chain for retry later
+type kafkaFailureProducer struct {
 	producer sarama.SyncProducer
-	fch      <-chan Failure
-	logger   Logger
+	fch      <-chan model.Failure
+	logger   log.Logger
 }
 
-func NewFailureProducerWithDefaults(cfg *config.Config, fch <-chan Failure, log Logger) (FailureProducer, error) {
+func newKafkaFailureProducerWithDefaults(cfg *config.Config, fch <-chan model.Failure, logger log.Logger) (*kafkaFailureProducer, error) {
+	if logger == nil {
+		logger = log.NullLogger{}
+	}
+
 	var sp sarama.SyncProducer
 	var err error
-
-	if log == nil {
-		log = NullLogger{}
-	}
 
 	for i := 0; i < maxConnectionAttempts; i++ {
 		sp, err = sarama.NewSyncProducer(cfg.Host, config.NewSaramaConfig(cfg.TLSEnable, cfg.TLSSkipVerifyPeer))
@@ -41,26 +42,22 @@ func NewFailureProducerWithDefaults(cfg *config.Config, fch <-chan Failure, log 
 			return nil, fmt.Errorf("error occurred creating Kafka producer for retries: %w", err)
 		}
 
-		log.Info("Kafka cluster is not reachable, retrying...")
+		logger.Info("Kafka cluster is not reachable, retrying...")
 		time.Sleep(connectionInterval)
 	}
 
-	return NewFailureProducer(sp, fch, log), nil
+	return newKafkaFailureProducer(sp, fch, logger), nil
 }
 
-func NewFailureProducer(p sarama.SyncProducer, fch <-chan Failure, log Logger) FailureProducer {
-	if log == nil {
-		log = NullLogger{}
-	}
-
-	return &failureProducer{
-		producer: p,
+func newKafkaFailureProducer(sp sarama.SyncProducer, fch <-chan model.Failure, logger log.Logger) *kafkaFailureProducer {
+	return &kafkaFailureProducer{
+		producer: sp,
 		fch:      fch,
-		logger:   log,
+		logger:   logger,
 	}
 }
 
-func (p failureProducer) ListenForFailures(ctx context.Context, wg *sync.WaitGroup) {
+func (p kafkaFailureProducer) listenForFailures(ctx context.Context, wg *sync.WaitGroup) {
 	p.logger.Info("starting Kafka retry producer")
 
 	wg.Add(1)
@@ -83,18 +80,18 @@ func (p failureProducer) ListenForFailures(ctx context.Context, wg *sync.WaitGro
 	}()
 }
 
-func (p failureProducer) publishFailure(f Failure) {
-	p.logger.Debugf("publishing retry to Kafka topic '%s'", f.TopicToSendTo)
+func (p kafkaFailureProducer) publishFailure(f model.Failure) {
+	p.logger.Debugf("publishing retry to Kafka topic '%s'", f.NextTopic)
 
 	_, _, err := p.producer.SendMessage(&sarama.ProducerMessage{
-		Topic: f.TopicToSendTo,
+		Topic: f.NextTopic,
 		Value: sarama.ByteEncoder(f.Message),
 	})
 
 	if err != nil {
-		p.logger.Errorf("error occurred publishing retry to Kafka topic '%s': %w", f.TopicToSendTo, err)
+		p.logger.Errorf("error occurred publishing retry to Kafka topic '%s': %w", f.NextTopic, err)
 		return
 	}
 
-	p.logger.Debugf("published Failure event message to Kafka retry topic '%s' successfully", f.TopicToSendTo)
+	p.logger.Debugf("published Failure event message to Kafka retry topic '%s' successfully", f.NextTopic)
 }
