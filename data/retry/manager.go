@@ -52,7 +52,7 @@ func (m Manager) PublishFailure(ctx context.Context, failure failuremodel.Failur
 }
 
 func (m Manager) RunMaintenance(ctx context.Context) error {
-	olderThan := time.Now().Add(-1 * deleteSuccessfulRetriesAfter)
+	olderThan := time.Now().In(time.UTC).Add(-1 * deleteSuccessfulRetriesAfter)
 
 	return m.repo.DeleteSuccessful(ctx, olderThan)
 }

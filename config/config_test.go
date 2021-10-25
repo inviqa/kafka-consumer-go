@@ -371,6 +371,7 @@ func TestNewConfig(t *testing.T) {
 	os.Setenv("DB_PASS", "pass123")
 	os.Setenv("DB_SCHEMA", "consumer")
 	os.Setenv("USE_DB_RETRY_QUEUE", "true")
+	os.Setenv("MAINTENANCE_INTERVAL_SECONDS", "100")
 	defer os.Clearenv()
 
 	expDeadLetterProduct := &KafkaTopic{
@@ -464,7 +465,8 @@ func TestNewConfig(t *testing.T) {
 			User:   "user",
 			Pass:   "pass123",
 		},
-		UseDBForRetryQueue: true,
+		UseDBForRetryQueue:  true,
+		MaintenanceInterval: time.Second * 100,
 	}
 
 	c, err := NewConfig()

@@ -27,6 +27,9 @@ type kafkaConsumerDbCollection struct {
 	saramaCfg      *sarama.Config
 	logger         log.Logger
 	connectToKafka kafkaConnector
+
+	// optional fields managed by setters
+	maintenanceInterval time.Duration
 }
 
 type kafkaConnector func(cfg *config.Config, saramaCfg *sarama.Config, logger log.Logger) (sarama.ConsumerGroup, error)
@@ -54,15 +57,16 @@ func newKafkaConsumerDbCollection(
 	}
 
 	return &kafkaConsumerDbCollection{
-		cfg:            cfg,
-		kafkaConsumers: []sarama.ConsumerGroup{},
-		producer:       p,
-		retryManager:   rm,
-		handler:        newConsumer(fch, cfg, hm, logger),
-		handlerMap:     hm,
-		saramaCfg:      scfg,
-		logger:         logger,
-		connectToKafka: connector,
+		cfg:                 cfg,
+		kafkaConsumers:      []sarama.ConsumerGroup{},
+		producer:            p,
+		retryManager:        rm,
+		handler:             newConsumer(fch, cfg, hm, logger),
+		handlerMap:          hm,
+		saramaCfg:           scfg,
+		logger:              logger,
+		connectToKafka:      connector,
+		maintenanceInterval: defaultMaintenanceInterval,
 	}
 }
 
@@ -93,7 +97,7 @@ func (cc *kafkaConsumerDbCollection) periodicRetryManagerMaintenance(ctx context
 			select {
 			case <-ctx.Done():
 				return
-			case <-time.After(maintenanceInterval):
+			case <-time.After(cc.maintenanceInterval):
 				if err := cc.retryManager.RunMaintenance(ctx); err != nil {
 					cc.logger.Errorf("error running maintenance in kafka consumer DB collection: %s", err)
 				}
@@ -206,4 +210,8 @@ func (cc *kafkaConsumerDbCollection) Close() {
 		}
 	}
 	cc.kafkaConsumers = []sarama.ConsumerGroup{}
+}
+
+func (cc *kafkaConsumerDbCollection) setMaintenanceInterval(duration time.Duration) {
+	cc.maintenanceInterval = duration
 }

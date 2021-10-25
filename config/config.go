@@ -9,18 +9,19 @@ import (
 )
 
 const (
-	EnvVarHost           = "KAFKA_HOST"
-	EnvVarGroup          = "KAFKA_GROUP"
-	EnvVarSourceTopics   = "KAFKA_SOURCE_TOPICS"
-	EnvVarRetryIntervals = "KAFKA_RETRY_INTERVALS"
-	EnvVarTLSEnable      = "TLS_ENABLE"
-	EnvVarTLSSkipVerify  = "TLS_SKIP_VERIFY_PEER"
-	EnvVarDbRetryQueue   = "USE_DB_RETRY_QUEUE"
-	EnvVarDbHost         = "DB_HOST"
-	EnvVarDbPort         = "DB_PORT"
-	EnvVarDbPass         = "DB_PASS"
-	EnvVarDbUser         = "DB_USER"
-	EnvVarDbSchema       = "DB_SCHEMA"
+	EnvVarHost                  = "KAFKA_HOST"
+	EnvVarGroup                 = "KAFKA_GROUP"
+	EnvVarSourceTopics          = "KAFKA_SOURCE_TOPICS"
+	EnvVarRetryIntervals        = "KAFKA_RETRY_INTERVALS"
+	EnvVarTLSEnable             = "TLS_ENABLE"
+	EnvVarTLSSkipVerify         = "TLS_SKIP_VERIFY_PEER"
+	EnvVarDbRetryQueue          = "USE_DB_RETRY_QUEUE"
+	EnvVarDbMaintenanceInterval = "MAINTENANCE_INTERVAL_SECONDS"
+	EnvVarDbHost                = "DB_HOST"
+	EnvVarDbPort                = "DB_PORT"
+	EnvVarDbPass                = "DB_PASS"
+	EnvVarDbUser                = "DB_USER"
+	EnvVarDbSchema              = "DB_SCHEMA"
 )
 
 type Config struct {
@@ -29,12 +30,13 @@ type Config struct {
 	ConsumableTopics []*KafkaTopic
 	TopicMap         map[TopicKey]*KafkaTopic
 	// DBRetries is indexed by the topic name, and represents retry intervals for processing retries in the DB
-	DBRetries          DBRetries
-	TLSEnable          bool
-	TLSSkipVerifyPeer  bool
-	DB                 Database
-	UseDBForRetryQueue bool
-	topicNameGenerator topicNameGenerator
+	DBRetries             DBRetries
+	TLSEnable             bool
+	TLSSkipVerifyPeer     bool
+	DB                    Database
+	UseDBForRetryQueue  bool
+	MaintenanceInterval time.Duration
+	topicNameGenerator  topicNameGenerator
 }
 
 type KafkaTopic struct {
@@ -183,6 +185,7 @@ func (cfg *Config) loadFromEnvVars() error {
 	cfg.DB.Pass = os.Getenv(EnvVarDbPass)
 	cfg.DB.Schema = os.Getenv(EnvVarDbSchema)
 	cfg.DB.Port = envVarAsInt(EnvVarDbPort)
+	cfg.MaintenanceInterval = time.Second * time.Duration(envVarAsInt(EnvVarDbMaintenanceInterval))
 
 	sourceTopics := strings.Split(os.Getenv(EnvVarSourceTopics), ",")
 	retryIntervals, err := envVarAsIntSlice(EnvVarRetryIntervals)
