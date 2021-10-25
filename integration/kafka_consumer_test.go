@@ -4,6 +4,7 @@ package integration
 
 import (
 	"testing"
+	"time"
 
 	"github.com/inviqa/kafka-consumer-go/integration/kafka"
 )
@@ -43,6 +44,7 @@ func TestMessagesAreConsumedFromKafka_WithError(t *testing.T) {
 				doneCh <- true
 				return
 			}
+			time.Sleep(time.Millisecond * 500)
 		}
 	}, handler.Handle)
 
