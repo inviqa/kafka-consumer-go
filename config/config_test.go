@@ -454,7 +454,8 @@ func TestNewConfig(t *testing.T) {
 				"product":                       expMainProduct,
 				"deadLetter.kafkaGroup.product": expDeadLetterProduct,
 			},
-			DBRetries: DBRetries{"product": []*DBTopicRetry{}},
+			DBRetries:           DBRetries{"product": []*DBTopicRetry{}},
+			MaintenanceInterval: time.Hour * 1,
 		}
 
 		c, err := NewConfig()

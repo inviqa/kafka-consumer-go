@@ -24,6 +24,10 @@ const (
 	EnvVarDbSchema              = "DB_SCHEMA"
 )
 
+var (
+	defaultMaintenanceInterval = time.Hour * 1
+)
+
 type Config struct {
 	Host             []string
 	Group            string
@@ -207,6 +211,10 @@ func (cfg *Config) loadFromEnvVars() error {
 
 	if err := cfg.addTopicsFromSource(sourceTopics, retryIntervals); err != nil {
 		return fmt.Errorf("consumer/config: error loading config with topic names from env vars: %w", err)
+	}
+
+	if cfg.MaintenanceInterval == 0 {
+		cfg.MaintenanceInterval = defaultMaintenanceInterval
 	}
 
 	return nil
