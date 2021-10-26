@@ -68,6 +68,7 @@ func TestBuilder_Config(t *testing.T) {
 				},
 			},
 		},
+		MaintenanceInterval: time.Hour * 1,
 	}
 
 	c, err := NewBuilder().SetTopicNameDecorator(dummyGenerator).Config()
