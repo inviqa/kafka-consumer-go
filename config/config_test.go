@@ -359,182 +359,150 @@ func TestConfig_FindTopicKey(t *testing.T) {
 }
 
 func TestNewConfig(t *testing.T) {
-	os.Setenv("KAFKA_SOURCE_TOPICS", "product,payment")
-	os.Setenv("KAFKA_RETRY_INTERVALS", "120,300")
-	os.Setenv("KAFKA_HOST", "broker1,broker2")
-	os.Setenv("KAFKA_GROUP", "kafkaGroup")
-	os.Setenv("TLS_ENABLE", "false")
-	os.Setenv("TLS_SKIP_VERIFY_PEER", "true")
-	os.Setenv("DB_HOST", "localhost")
-	os.Setenv("DB_PORT", "3306")
-	os.Setenv("DB_USER", "user")
-	os.Setenv("DB_PASS", "pass123")
-	os.Setenv("DB_SCHEMA", "consumer")
-	os.Setenv("USE_DB_RETRY_QUEUE", "true")
-	os.Setenv("MAINTENANCE_INTERVAL_SECONDS", "100")
-	defer os.Clearenv()
+	t.Run("it creates config correctly", func(t *testing.T) {
+		setAllEnvVars()
+		defer os.Clearenv()
 
-	expDeadLetterProduct := &KafkaTopic{
-		Name: "deadLetter.kafkaGroup.product",
-		Key:  "product",
-	}
-	expRetry2Product := &KafkaTopic{
-		Name:  "retry2.kafkaGroup.product",
-		Delay: time.Duration(300000000000),
-		Key:   "product",
-		Next:  expDeadLetterProduct,
-	}
-	expRetry1Product := &KafkaTopic{
-		Name:  "retry1.kafkaGroup.product",
-		Delay: time.Duration(120000000000),
-		Key:   "product",
-		Next:  expRetry2Product,
-	}
-	expMainProduct := &KafkaTopic{
-		Name: "product",
-		Key:  "product",
-		Next: expRetry1Product,
-	}
-	expDeadLetterPayment := &KafkaTopic{
-		Name: "deadLetter.kafkaGroup.payment",
-		Key:  "payment",
-	}
-	expRetry2Payment := &KafkaTopic{
-		Name:  "retry2.kafkaGroup.payment",
-		Delay: time.Duration(300000000000),
-		Key:   "payment",
-		Next:  expDeadLetterPayment,
-	}
-	expRetry1Payment := &KafkaTopic{
-		Name:  "retry1.kafkaGroup.payment",
-		Delay: time.Duration(120000000000),
-		Key:   "payment",
-		Next:  expRetry2Payment,
-	}
-	expMainPayment := &KafkaTopic{
-		Name: "payment",
-		Key:  "payment",
-		Next: expRetry1Payment,
-	}
+		expDeadLetterProduct := &KafkaTopic{
+			Name: "deadLetter.kafkaGroup.product",
+			Key:  "product",
+		}
+		expRetry2Product := &KafkaTopic{
+			Name:  "retry2.kafkaGroup.product",
+			Delay: time.Duration(300000000000),
+			Key:   "product",
+			Next:  expDeadLetterProduct,
+		}
+		expRetry1Product := &KafkaTopic{
+			Name:  "retry1.kafkaGroup.product",
+			Delay: time.Duration(120000000000),
+			Key:   "product",
+			Next:  expRetry2Product,
+		}
+		expMainProduct := &KafkaTopic{
+			Name: "product",
+			Key:  "product",
+			Next: expRetry1Product,
+		}
 
-	exp := &Config{
-		Host:             []string{"broker1", "broker2"},
-		Group:            "kafkaGroup",
-		ConsumableTopics: []*KafkaTopic{expMainProduct, expRetry1Product, expRetry2Product, expMainPayment, expRetry1Payment, expRetry2Payment},
-		TopicMap: map[TopicKey]*KafkaTopic{
-			"product":                       expMainProduct,
-			"retry1.kafkaGroup.product":     expRetry1Product,
-			"retry2.kafkaGroup.product":     expRetry2Product,
-			"deadLetter.kafkaGroup.product": expDeadLetterProduct,
-			"payment":                       expMainPayment,
-			"retry1.kafkaGroup.payment":     expRetry1Payment,
-			"retry2.kafkaGroup.payment":     expRetry2Payment,
-			"deadLetter.kafkaGroup.payment": expDeadLetterPayment,
-		},
-		DBRetries: map[string][]*DBTopicRetry{
-			"product": {
-				{
-					Interval: time.Duration(120000000000),
-					Sequence: 1,
-					Key:      "product",
-				},
-				{
-					Interval: time.Duration(300000000000),
-					Sequence: 2,
-					Key:      "product",
+		exp := &Config{
+			Host:             []string{"broker1", "broker2"},
+			Group:            "kafkaGroup",
+			ConsumableTopics: []*KafkaTopic{expMainProduct, expRetry1Product, expRetry2Product},
+			TopicMap: map[TopicKey]*KafkaTopic{
+				"product":                       expMainProduct,
+				"retry1.kafkaGroup.product":     expRetry1Product,
+				"retry2.kafkaGroup.product":     expRetry2Product,
+				"deadLetter.kafkaGroup.product": expDeadLetterProduct,
+			},
+			DBRetries: map[string][]*DBTopicRetry{
+				"product": {
+					{
+						Interval: time.Duration(120000000000),
+						Sequence: 1,
+						Key:      "product",
+					},
+					{
+						Interval: time.Duration(300000000000),
+						Sequence: 2,
+						Key:      "product",
+					},
 				},
 			},
-			"payment": {
-				{
-					Interval: time.Duration(120000000000),
-					Sequence: 1,
-					Key:      "payment",
-				},
-				{
-					Interval: time.Duration(300000000000),
-					Sequence: 2,
-					Key:      "payment",
-				},
+			TLSSkipVerifyPeer: true,
+			DB: Database{
+				Host:   "localhost",
+				Port:   3306,
+				Schema: "consumer",
+				User:   "user",
+				Pass:   "pass123",
 			},
-		},
-		TLSSkipVerifyPeer: true,
-		DB: Database{
-			Host:   "localhost",
-			Port:   3306,
-			Schema: "consumer",
-			User:   "user",
-			Pass:   "pass123",
-		},
-		UseDBForRetryQueue:  true,
-		MaintenanceInterval: time.Second * 100,
-	}
+			UseDBForRetryQueue:  true,
+			MaintenanceInterval: time.Second * 100,
+		}
 
-	c, err := NewConfig()
-	if err != nil {
-		t.Fatalf("unexpected error: %s", err)
-	}
+		c, err := NewConfig()
+		if err != nil {
+			t.Fatalf("unexpected error: %s", err)
+		}
 
-	if diff := deep.Equal(c, exp); diff != nil {
-		t.Error(diff)
-	}
-}
+		if diff := deep.Equal(c, exp); diff != nil {
+			t.Error(diff)
+		}
+	})
 
-func TestNewConfig_WithEmptyRetryIntervals(t *testing.T) {
-	os.Setenv("KAFKA_SOURCE_TOPICS", "product")
-	os.Setenv("KAFKA_HOST", "broker1,broker2")
-	os.Setenv("KAFKA_GROUP", "kafkaGroup")
-	os.Setenv("TLS_ENABLE", "true")
-	os.Setenv("TLS_SKIP_VERIFY_PEER", "true")
-	defer os.Clearenv()
+	t.Run("it creates config from only required env vars", func(t *testing.T) {
+		setRequiredEnvVars()
+		defer os.Clearenv()
 
-	expDeadLetterProduct := &KafkaTopic{
-		Name: "deadLetter.kafkaGroup.product",
-		Key:  "product",
-	}
-	expMainProduct := &KafkaTopic{
-		Name: "product",
-		Key:  "product",
-		Next: expDeadLetterProduct,
-	}
+		expDeadLetterProduct := &KafkaTopic{
+			Name: "deadLetter.kafkaGroup.product",
+			Key:  "product",
+		}
 
-	exp := &Config{
-		Host:             []string{"broker1", "broker2"},
-		Group:            "kafkaGroup",
-		ConsumableTopics: []*KafkaTopic{expMainProduct},
-		TopicMap: map[TopicKey]*KafkaTopic{
-			"product":                       expMainProduct,
-			"deadLetter.kafkaGroup.product": expDeadLetterProduct,
-		},
-		TLSEnable:         true,
-		TLSSkipVerifyPeer: true,
-		DBRetries: map[string][]*DBTopicRetry{
-			"product": {},
-		},
-	}
+		expMainProduct := &KafkaTopic{
+			Name: "product",
+			Key:  "product",
+			Next: expDeadLetterProduct,
+		}
 
-	c, err := NewConfig()
-	if err != nil {
-		t.Fatalf("unexpected error: %s", err)
-	}
-	if diff := deep.Equal(exp, c); diff != nil {
-		t.Error(diff)
-	}
-}
+		exp := &Config{
+			Host:             []string{"broker1", "broker2"},
+			Group:            "kafkaGroup",
+			ConsumableTopics: []*KafkaTopic{expMainProduct},
+			TopicMap: map[TopicKey]*KafkaTopic{
+				"product":                       expMainProduct,
+				"deadLetter.kafkaGroup.product": expDeadLetterProduct,
+			},
+			DBRetries: DBRetries{"product": []*DBTopicRetry{}},
+		}
 
-func TestNewConfig_WithError(t *testing.T) {
-	defer func() {
-		os.Clearenv()
-	}()
+		c, err := NewConfig()
+		if err != nil {
+			t.Fatalf("unexpected error: %s", err)
+		}
 
-	t.Run("missing KAFKA_HOST", func(t *testing.T) {
+		if diff := deep.Equal(c, exp); diff != nil {
+			t.Error(diff)
+		}
+	})
+
+	t.Run("it returns error if KAFKA_HOST is omitted", func(t *testing.T) {
+		setRequiredEnvVars()
+		defer os.Clearenv()
+		os.Setenv("KAFKA_HOST", "")
+
 		_, err := NewConfig()
 		if err == nil {
 			t.Error("expected an error but got nil")
 		}
 	})
 
-	t.Run("invalid KAFKA_RETRY_INTERVALS", func(t *testing.T) {
-		os.Setenv("KAFKA_HOST", "kafka:9092")
+	t.Run("it returns error if KAFKA_GROUP is omitted", func(t *testing.T) {
+		setRequiredEnvVars()
+		defer os.Clearenv()
+		os.Setenv("KAFKA_GROUP", "")
+
+		_, err := NewConfig()
+		if err == nil {
+			t.Error("expected an error but got nil")
+		}
+	})
+
+	t.Run("it returns error if KAFKA_SOURCE_TOPICS is omitted", func(t *testing.T) {
+		setRequiredEnvVars()
+		defer os.Clearenv()
+		os.Setenv("KAFKA_SOURCE_TOPICS", "")
+
+		_, err := NewConfig()
+		if err == nil {
+			t.Error("expected an error but got nil")
+		}
+	})
+
+	t.Run("it returns error if KAFKA_RETRY_INTERVALS is ommitted", func(t *testing.T) {
+		setRequiredEnvVars()
+		defer os.Clearenv()
 		os.Setenv("KAFKA_RETRY_INTERVALS", "58493058409358439058349058903485309")
 
 		_, err := NewConfig()
@@ -589,9 +557,7 @@ func TestConfig_GetDBConnectionString(t *testing.T) {
 }
 
 func TestConfig_MainTopics(t *testing.T) {
-	os.Setenv("KAFKA_SOURCE_TOPICS", "product,payment")
-	os.Setenv("KAFKA_RETRY_INTERVALS", "120,300")
-	os.Setenv("KAFKA_GROUP", "foo")
+	setRequiredEnvVars()
 	defer os.Clearenv()
 
 	t.Run("main topics returned", func(t *testing.T) {
@@ -600,9 +566,29 @@ func TestConfig_MainTopics(t *testing.T) {
 			t.Fatalf("unexpected error: %s", err)
 		}
 		got := cfg.MainTopics()
-		exp := []string{"product", "payment"}
+		exp := []string{"product"}
 		if diff := deep.Equal(exp, got); diff != nil {
 			t.Error(diff)
 		}
 	})
+}
+
+func setAllEnvVars() {
+	setRequiredEnvVars()
+	os.Setenv("KAFKA_RETRY_INTERVALS", "120,300")
+	os.Setenv("TLS_ENABLE", "false")
+	os.Setenv("TLS_SKIP_VERIFY_PEER", "true")
+	os.Setenv("DB_HOST", "localhost")
+	os.Setenv("DB_PORT", "3306")
+	os.Setenv("DB_USER", "user")
+	os.Setenv("DB_PASS", "pass123")
+	os.Setenv("DB_SCHEMA", "consumer")
+	os.Setenv("USE_DB_RETRY_QUEUE", "true")
+	os.Setenv("MAINTENANCE_INTERVAL_SECONDS", "100")
+}
+
+func setRequiredEnvVars() {
+	os.Setenv("KAFKA_HOST", "broker1,broker2")
+	os.Setenv("KAFKA_GROUP", "kafkaGroup")
+	os.Setenv("KAFKA_SOURCE_TOPICS", "product")
 }

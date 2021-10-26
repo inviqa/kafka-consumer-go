@@ -175,7 +175,7 @@ func (cfg *Config) addTopics(topics []*KafkaTopic) {
 }
 
 func (cfg *Config) loadFromEnvVars() error {
-	cfg.Host = strings.Split(os.Getenv(EnvVarHost), ",")
+	cfg.Host = envVarAsStringSlice(EnvVarHost)
 	cfg.Group = os.Getenv(EnvVarGroup)
 	cfg.TLSEnable = envVarAsBool(EnvVarTLSEnable)
 	cfg.TLSSkipVerifyPeer = envVarAsBool(EnvVarTLSSkipVerify)
@@ -187,7 +187,11 @@ func (cfg *Config) loadFromEnvVars() error {
 	cfg.DB.Port = envVarAsInt(EnvVarDbPort)
 	cfg.MaintenanceInterval = time.Second * time.Duration(envVarAsInt(EnvVarDbMaintenanceInterval))
 
-	sourceTopics := strings.Split(os.Getenv(EnvVarSourceTopics), ",")
+	sourceTopics := envVarAsStringSlice(EnvVarSourceTopics)
+	if len(sourceTopics) == 0 {
+		return fmt.Errorf("consumer/config: you must define a %s value", EnvVarSourceTopics)
+	}
+
 	retryIntervals, err := envVarAsIntSlice(EnvVarRetryIntervals)
 	if err != nil {
 		return fmt.Errorf("consumer/config: error parsing %s: %w", EnvVarRetryIntervals, err)
