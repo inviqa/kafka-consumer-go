@@ -107,3 +107,24 @@ func TestEnvVarAsBool(t *testing.T) {
 		})
 	}
 }
+
+func TestEnvVarAsStringSlice(t *testing.T) {
+	os.Setenv("FOO", "BAR,BAZ")
+	defer os.Clearenv()
+
+	t.Run("it returns string slice from env var", func(t *testing.T) {
+		exp := []string{"BAR", "BAZ"}
+
+		if diff := deep.Equal(exp, envVarAsStringSlice("FOO")); diff != nil {
+			t.Error(diff)
+		}
+	})
+
+	t.Run("it returns empty slice when env var is empty", func(t *testing.T) {
+		exp := []string{}
+
+		if diff := deep.Equal(exp, envVarAsStringSlice("BUZZ")); diff != nil {
+			t.Error(diff)
+		}
+	})
+}

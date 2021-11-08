@@ -1,0 +1,1 @@
+CREATE INDEX IF NOT EXISTS retries_updated_at_idx ON kafka_consumer_retries (updated_at);

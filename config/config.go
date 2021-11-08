@@ -9,18 +9,23 @@ import (
 )
 
 const (
-	EnvVarHost           = "KAFKA_HOST"
-	EnvVarGroup          = "KAFKA_GROUP"
-	EnvVarSourceTopics   = "KAFKA_SOURCE_TOPICS"
-	EnvVarRetryIntervals = "KAFKA_RETRY_INTERVALS"
-	EnvVarTLSEnable      = "TLS_ENABLE"
-	EnvVarTLSSkipVerify  = "TLS_SKIP_VERIFY_PEER"
-	EnvVarDbRetryQueue   = "USE_DB_RETRY_QUEUE"
-	EnvVarDbHost         = "DB_HOST"
-	EnvVarDbPort         = "DB_PORT"
-	EnvVarDbPass         = "DB_PASS"
-	EnvVarDbUser         = "DB_USER"
-	EnvVarDbSchema       = "DB_SCHEMA"
+	EnvVarHost                  = "KAFKA_HOST"
+	EnvVarGroup                 = "KAFKA_GROUP"
+	EnvVarSourceTopics          = "KAFKA_SOURCE_TOPICS"
+	EnvVarRetryIntervals        = "KAFKA_RETRY_INTERVALS"
+	EnvVarTLSEnable             = "TLS_ENABLE"
+	EnvVarTLSSkipVerify         = "TLS_SKIP_VERIFY_PEER"
+	EnvVarDbRetryQueue          = "USE_DB_RETRY_QUEUE"
+	EnvVarDbMaintenanceInterval = "MAINTENANCE_INTERVAL_SECONDS"
+	EnvVarDbHost                = "DB_HOST"
+	EnvVarDbPort                = "DB_PORT"
+	EnvVarDbPass                = "DB_PASS"
+	EnvVarDbUser                = "DB_USER"
+	EnvVarDbSchema              = "DB_SCHEMA"
+)
+
+var (
+	defaultMaintenanceInterval = time.Hour * 1
 )
 
 type Config struct {
@@ -29,12 +34,13 @@ type Config struct {
 	ConsumableTopics []*KafkaTopic
 	TopicMap         map[TopicKey]*KafkaTopic
 	// DBRetries is indexed by the topic name, and represents retry intervals for processing retries in the DB
-	DBRetries          DBRetries
-	TLSEnable          bool
-	TLSSkipVerifyPeer  bool
-	DB                 Database
-	UseDBForRetryQueue bool
-	topicNameGenerator topicNameGenerator
+	DBRetries           DBRetries
+	TLSEnable           bool
+	TLSSkipVerifyPeer   bool
+	DB                  Database
+	UseDBForRetryQueue  bool
+	MaintenanceInterval time.Duration
+	topicNameGenerator  topicNameGenerator
 }
 
 type KafkaTopic struct {
@@ -173,7 +179,7 @@ func (cfg *Config) addTopics(topics []*KafkaTopic) {
 }
 
 func (cfg *Config) loadFromEnvVars() error {
-	cfg.Host = strings.Split(os.Getenv(EnvVarHost), ",")
+	cfg.Host = envVarAsStringSlice(EnvVarHost)
 	cfg.Group = os.Getenv(EnvVarGroup)
 	cfg.TLSEnable = envVarAsBool(EnvVarTLSEnable)
 	cfg.TLSSkipVerifyPeer = envVarAsBool(EnvVarTLSSkipVerify)
@@ -183,8 +189,13 @@ func (cfg *Config) loadFromEnvVars() error {
 	cfg.DB.Pass = os.Getenv(EnvVarDbPass)
 	cfg.DB.Schema = os.Getenv(EnvVarDbSchema)
 	cfg.DB.Port = envVarAsInt(EnvVarDbPort)
+	cfg.MaintenanceInterval = time.Second * time.Duration(envVarAsInt(EnvVarDbMaintenanceInterval))
 
-	sourceTopics := strings.Split(os.Getenv(EnvVarSourceTopics), ",")
+	sourceTopics := envVarAsStringSlice(EnvVarSourceTopics)
+	if len(sourceTopics) == 0 {
+		return fmt.Errorf("consumer/config: you must define a %s value", EnvVarSourceTopics)
+	}
+
 	retryIntervals, err := envVarAsIntSlice(EnvVarRetryIntervals)
 	if err != nil {
 		return fmt.Errorf("consumer/config: error parsing %s: %w", EnvVarRetryIntervals, err)
@@ -200,6 +211,10 @@ func (cfg *Config) loadFromEnvVars() error {
 
 	if err := cfg.addTopicsFromSource(sourceTopics, retryIntervals); err != nil {
 		return fmt.Errorf("consumer/config: error loading config with topic names from env vars: %w", err)
+	}
+
+	if cfg.MaintenanceInterval == 0 {
+		cfg.MaintenanceInterval = defaultMaintenanceInterval
 	}
 
 	return nil

@@ -15,6 +15,7 @@ type mockRepository struct {
 	PublishedFailure      *failuremodel.Failure
 	retriesToReturn       []model.Retry
 	willError             bool
+	receivedOlderThan     time.Time
 }
 
 func newMockRepository(willError bool) *mockRepository {
@@ -49,5 +50,13 @@ func (m *mockRepository) PublishFailure(ctx context.Context, failure failuremode
 		return errors.New("oops")
 	}
 	m.PublishedFailure = &failure
+	return nil
+}
+
+func (m *mockRepository) DeleteSuccessful(ctx context.Context, olderThan time.Time) error {
+	if m.willError {
+		return errors.New("oops")
+	}
+	m.receivedOlderThan = olderThan
 	return nil
 }

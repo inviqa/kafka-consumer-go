@@ -27,7 +27,7 @@ func Start(cfg *config.Config, ctx context.Context, hs HandlerMap, logger log.Lo
 	var err error
 
 	if cfg.UseDBForRetryQueue {
-		cons, err = setupKafkaConsumerDbCollection(cfg, logger, fch, cons, hs, srmCfg)
+		cons, err = setupKafkaConsumerDbCollection(cfg, logger, fch, hs, srmCfg)
 		if err != nil {
 			return err
 		}
@@ -51,7 +51,7 @@ func Start(cfg *config.Config, ctx context.Context, hs HandlerMap, logger log.Lo
 	return nil
 }
 
-func setupKafkaConsumerDbCollection(cfg *config.Config, logger log.Logger, fch chan model.Failure, cons collection, hs HandlerMap, srmCfg *sarama.Config) (collection, error) {
+func setupKafkaConsumerDbCollection(cfg *config.Config, logger log.Logger, fch chan model.Failure, hs HandlerMap, srmCfg *sarama.Config) (collection, error) {
 	db, err := data.NewDB(cfg.GetDBConnectionString(), logger)
 	if err != nil {
 		return nil, fmt.Errorf("could not connect to DB: %w", err)
@@ -59,7 +59,8 @@ func setupKafkaConsumerDbCollection(cfg *config.Config, logger log.Logger, fch c
 
 	repo := retry.NewManagerWithDefaults(cfg.DBRetries, db)
 	dbProducer := newDatabaseProducer(repo, fch, logger)
-	cons = newKafkaConsumerDbCollection(cfg, dbProducer, repo, fch, hs, srmCfg, logger, defaultKafkaConnector)
+	cons := newKafkaConsumerDbCollection(cfg, dbProducer, repo, fch, hs, srmCfg, logger, defaultKafkaConnector)
+	cons.setMaintenanceInterval(cfg.MaintenanceInterval)
 
 	return cons, nil
 }

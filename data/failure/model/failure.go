@@ -1,7 +1,6 @@
 package model
 
 import (
-	"encoding/base64"
 	"encoding/json"
 
 	"github.com/Shopify/sarama"
@@ -35,17 +34,10 @@ func FailureFromSaramaMessage(err error, nextTopic string, sm *sarama.ConsumerMe
 }
 
 func saramaRecordHeadersToJson(headers []*sarama.RecordHeader) []byte {
-	headerMap := map[string][]byte{}
+	headerMap := map[string]string{}
 
 	for _, h := range headers {
-		valueBytes, err := base64.StdEncoding.DecodeString(string(h.Value))
-		// we store the original h.Value if something went wrong, as this might give us the
-		// chance to inspect the data later as it is stored in retry record in the database
-		if err != nil {
-			headerMap[string(h.Key)] = h.Value
-		} else {
-			headerMap[string(h.Key)] = valueBytes
-		}
+		headerMap[string(h.Key)] = string(h.Value)
 	}
 
 	// we silence the error if the marshalling fails, as the data is likely not valid

@@ -31,15 +31,16 @@ func TestNewKafkaConsumerDbCollection(t *testing.T) {
 	logger := log.NullLogger{}
 
 	exp := &kafkaConsumerDbCollection{
-		kafkaConsumers: []sarama.ConsumerGroup{},
-		cfg:            cfg,
-		producer:       dp,
-		retryManager:   repo,
-		handler:        newConsumer(fch, cfg, hm, logger),
-		handlerMap:     hm,
-		saramaCfg:      scfg,
-		logger:         logger,
-		connectToKafka: defaultKafkaConnector,
+		kafkaConsumers:      []sarama.ConsumerGroup{},
+		cfg:                 cfg,
+		producer:            dp,
+		retryManager:        repo,
+		handler:             newConsumer(fch, cfg, hm, logger),
+		handlerMap:          hm,
+		saramaCfg:           scfg,
+		logger:              logger,
+		connectToKafka:      defaultKafkaConnector,
+		maintenanceInterval: defaultMaintenanceInterval,
 	}
 
 	got := newKafkaConsumerDbCollection(cfg, dp, repo, fch, hm, scfg, logger, defaultKafkaConnector)
@@ -52,6 +53,7 @@ func TestNewKafkaConsumerDbCollection(t *testing.T) {
 func TestKafkaConsumerDbCollection_Start(t *testing.T) {
 	defaultDbRetryPollInterval := dbRetryPollInterval
 	dbRetryPollInterval = time.Millisecond * 25
+
 	defer func() {
 		dbRetryPollInterval = defaultDbRetryPollInterval
 	}()
@@ -104,6 +106,8 @@ func TestKafkaConsumerDbCollection_Start(t *testing.T) {
 			return nil
 		}, false)
 
+		col.setMaintenanceInterval(time.Millisecond * 20)
+
 		ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*50)
 		defer cancel()
 		var wg sync.WaitGroup
@@ -114,6 +118,10 @@ func TestKafkaConsumerDbCollection_Start(t *testing.T) {
 
 		if got := repo.getPublishedFailureCountByTopic("product"); got != 0 {
 			t.Errorf("expected 0 failures to be produced in database, but got %d", got)
+		}
+
+		if got := repo.runMaintenanceCallCount; got != 2 {
+			t.Errorf("expected 2 calls to manager.RunMaintenance(), but got %d instead", got)
 		}
 	})
 

@@ -38,6 +38,15 @@ func envVarAsIntSlice(name string) ([]int, error) {
 	return i, nil
 }
 
+func envVarAsStringSlice(name string) []string {
+	envVal := os.Getenv(name)
+	if envVal == "" {
+		return []string{}
+	}
+
+	return strings.Split(envVal, ",")
+}
+
 func envVarAsInt(name string) int {
 	val, err := strconv.Atoi(strings.TrimSpace(os.Getenv(name)))
 	if err != nil {

@@ -18,6 +18,7 @@ Configuration is initialised by calling `config.NewConfig()` in this module, whi
 | DB_USER               | No        | Database user.                                                                                                                                                                                              |
 | DB_PASS               | No        | Database password.                                                                                                                                                                                          |
 | DB_SCHEMA             | No        | Database name.                                                                                                                                                                                              |
+| MAINTENANCE_INTERVAL_SECONDS | No | How regularly the maintenance job will be run. Defaults to every hour. NOTE: You do not need to worry about this if you are not using [database retries](#database-retries). Even then, you should never need to change this value. 
 | TLS_ENABLE            | No        | Whether to enable TLS when communicating with Kafka and the database. We recommend enabling this if your database and Kafka cluster support it. **Defaults to false.**                                      |
 | TLS_SKIP_VERIFY_PEER  | No        | Whether to skip peer verification when connecting over TLS. **Defaults to false.**                                                                                                                          |
 
@@ -44,7 +45,9 @@ You can see it has automatically generated the retry and deadLetter topic names 
 
 ### Database retries
 
-If you set `USE_DB_RETRY_QUEUE` to `true`, then messages needing a retry will be stored in a database table that is automatically created when the consumer starts. You will need to provide database credentials using the `DB_*` env vars detailed in the config table above.
+If you set `USE_DB_RETRY_QUEUE` to `true`, then messages needing a retry will be stored in a Postgres database table that is automatically created when the consumer starts. You will need to provide database credentials using the `DB_*` env vars detailed in the config table above.
+
+>_NOTE: We may add support for additional database engines in a future release._
 
 ### Flow of event processing:
 
