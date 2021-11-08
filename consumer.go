@@ -69,10 +69,10 @@ func (c *consumer) sendToFailureChannel(message *sarama.ConsumerMessage, err err
 	c.failureCh <- model.FailureFromSaramaMessage(err, nextTopic, message)
 }
 
-func (c *consumer) Setup(session sarama.ConsumerGroupSession) error {
+func (c *consumer) Setup(sarama.ConsumerGroupSession) error {
 	return nil
 }
 
-func (c *consumer) Cleanup(session sarama.ConsumerGroupSession) error {
+func (c *consumer) Cleanup(sarama.ConsumerGroupSession) error {
 	return nil
 }

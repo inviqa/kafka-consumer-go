@@ -105,6 +105,10 @@ func (mg *MockConsumerGroup) ErrorOnConsume() {
 	mg.errorOnConsume = true
 }
 
+func (mg *MockConsumerGroup) Consumed() bool {
+	return mg.consumed
+}
+
 func (mg *MockConsumerGroup) AddMessage(msg *sarama.ConsumerMessage) {
 	mg.msgsToConsume[msg.Topic] = append(mg.msgsToConsume[msg.Topic], msg)
 }

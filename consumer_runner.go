@@ -36,7 +36,7 @@ func Start(cfg *config.Config, ctx context.Context, hs HandlerMap, logger log.Lo
 		if err != nil {
 			return fmt.Errorf("could not start Kafka failure producer: %w", err)
 		}
-		cons = newKafkaConsumerCollection(cfg, kafkaProducer, fch, hs, srmCfg, logger)
+		cons = newKafkaConsumerCollection(cfg, kafkaProducer, fch, hs, srmCfg, logger, defaultKafkaConnector)
 	}
 
 	if err := cons.Start(ctx, wg); err != nil {

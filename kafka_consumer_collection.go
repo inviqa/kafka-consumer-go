@@ -13,34 +13,41 @@ import (
 	"github.com/inviqa/kafka-consumer-go/log"
 )
 
+type failureProducer interface {
+	listenForFailures(ctx context.Context, wg *sync.WaitGroup)
+}
+
 type kafkaConsumerCollection struct {
-	cfg       *config.Config
-	consumers []sarama.ConsumerGroup
-	producer  *kafkaFailureProducer
-	handler   sarama.ConsumerGroupHandler
-	saramaCfg *sarama.Config
-	logger    log.Logger
+	cfg            *config.Config
+	consumers      []sarama.ConsumerGroup
+	producer       failureProducer
+	handler        sarama.ConsumerGroupHandler
+	saramaCfg      *sarama.Config
+	logger         log.Logger
+	connectToKafka kafkaConnector
 }
 
 func newKafkaConsumerCollection(
 	cfg *config.Config,
-	p *kafkaFailureProducer,
+	p failureProducer,
 	fch chan model.Failure,
 	hm HandlerMap,
 	scfg *sarama.Config,
 	logger log.Logger,
+	connector kafkaConnector,
 ) *kafkaConsumerCollection {
 	if logger == nil {
 		logger = log.NullLogger{}
 	}
 
 	return &kafkaConsumerCollection{
-		cfg:       cfg,
-		consumers: []sarama.ConsumerGroup{},
-		producer:  p,
-		handler:   newConsumer(fch, cfg, hm, logger),
-		saramaCfg: scfg,
-		logger:    logger,
+		cfg:            cfg,
+		consumers:      []sarama.ConsumerGroup{},
+		producer:       p,
+		handler:        newConsumer(fch, cfg, hm, logger),
+		saramaCfg:      scfg,
+		logger:         logger,
+		connectToKafka: connector,
 	}
 }
 
@@ -74,7 +81,7 @@ func (cc *kafkaConsumerCollection) Close() {
 func (cc *kafkaConsumerCollection) startConsumerGroup(ctx context.Context, wg *sync.WaitGroup, topic *config.KafkaTopic) (sarama.ConsumerGroup, error) {
 	cc.logger.Infof("starting Kafka consumer group for '%s'", topic.Name)
 
-	cl, err := connectToKafka(cc.cfg, cc.saramaCfg, cc.logger)
+	cl, err := cc.connectToKafka(cc.cfg, cc.saramaCfg, cc.logger)
 	if err != nil {
 		return nil, err
 	}

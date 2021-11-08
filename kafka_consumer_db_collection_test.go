@@ -31,7 +31,6 @@ func TestNewKafkaConsumerDbCollection(t *testing.T) {
 	logger := log.NullLogger{}
 
 	exp := &kafkaConsumerDbCollection{
-		kafkaConsumers:      []sarama.ConsumerGroup{},
 		cfg:                 cfg,
 		producer:            dp,
 		retryManager:        repo,
@@ -75,8 +74,8 @@ func TestKafkaConsumerDbCollection_Start(t *testing.T) {
 	})
 
 	t.Run("errors when it cannot connect to kafka", func(t *testing.T) {
-		col, _ := kafkaConsumerDbCollectionForTests(saramatest.NewMockConsumerGroup(), nil, true)
-		ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*10)
+		col, _ := testKafkaConsumerDbCollection(saramatest.NewMockConsumerGroup(), nil, true)
+		ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*1)
 		defer cancel()
 		var wg sync.WaitGroup
 		if err := col.Start(ctx, &wg); err == nil {
@@ -88,7 +87,7 @@ func TestKafkaConsumerDbCollection_Start(t *testing.T) {
 	t.Run("handles errors on kafka consume", func(t *testing.T) {
 		mcg := saramatest.NewMockConsumerGroup()
 		mcg.ErrorOnConsume()
-		col, _ := kafkaConsumerDbCollectionForTests(mcg, nil, false)
+		col, _ := testKafkaConsumerDbCollection(mcg, nil, false)
 		ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*100)
 		defer cancel()
 		var wg sync.WaitGroup
@@ -97,12 +96,16 @@ func TestKafkaConsumerDbCollection_Start(t *testing.T) {
 			t.Errorf("unexpected error: %s", err)
 		}
 		wg.Wait()
+
+		if !mcg.Consumed() {
+			t.Error("expected something to have been consumed, but was not")
+		}
 	})
 
 	t.Run("successful messages are not retried", func(t *testing.T) {
 		mcg := saramatest.NewMockConsumerGroup()
 		mcg.AddMessage(exampleMsg)
-		col, repo := kafkaConsumerDbCollectionForTests(mcg, func(msg *sarama.ConsumerMessage) error {
+		col, repo := testKafkaConsumerDbCollection(mcg, func(msg *sarama.ConsumerMessage) error {
 			return nil
 		}, false)
 
@@ -129,7 +132,7 @@ func TestKafkaConsumerDbCollection_Start(t *testing.T) {
 		mcg := saramatest.NewMockConsumerGroup()
 		mcg.AddMessage(exampleMsg)
 		var called bool
-		col, repo := kafkaConsumerDbCollectionForTests(mcg, func(msg *sarama.ConsumerMessage) error {
+		col, repo := testKafkaConsumerDbCollection(mcg, func(msg *sarama.ConsumerMessage) error {
 			if !called {
 				called = true
 				return errors.New("something bad happened")
@@ -157,7 +160,7 @@ func TestKafkaConsumerDbCollection_Start(t *testing.T) {
 	t.Run("retries are marked as errored when they continue to fail", func(t *testing.T) {
 		mcg := saramatest.NewMockConsumerGroup()
 		mcg.AddMessage(exampleMsg)
-		col, repo := kafkaConsumerDbCollectionForTests(mcg, func(msg *sarama.ConsumerMessage) error {
+		col, repo := testKafkaConsumerDbCollection(mcg, func(msg *sarama.ConsumerMessage) error {
 			return errors.New("something bad happened")
 		}, false)
 
@@ -181,7 +184,7 @@ func TestKafkaConsumerDbCollection_Start(t *testing.T) {
 	t.Run("handles error from repository when fetching messages for retry", func(t *testing.T) {
 		mcg := saramatest.NewMockConsumerGroup()
 		mcg.AddMessage(exampleMsg)
-		col, repo := kafkaConsumerDbCollectionForTests(mcg, func(msg *sarama.ConsumerMessage) error {
+		col, repo := testKafkaConsumerDbCollection(mcg, func(msg *sarama.ConsumerMessage) error {
 			return errors.New("something bad happened")
 		}, false)
 		repo.willErrorOnGetBatch = true
@@ -206,7 +209,7 @@ func TestKafkaConsumerDbCollection_Start(t *testing.T) {
 	t.Run("handles error from repository when publishing failure", func(t *testing.T) {
 		mcg := saramatest.NewMockConsumerGroup()
 		mcg.AddMessage(exampleMsg)
-		col, repo := kafkaConsumerDbCollectionForTests(mcg, func(msg *sarama.ConsumerMessage) error {
+		col, repo := testKafkaConsumerDbCollection(mcg, func(msg *sarama.ConsumerMessage) error {
 			return errors.New("something bad happened")
 		}, false)
 		repo.willErrorOnPublishFailure = true
@@ -227,7 +230,7 @@ func TestKafkaConsumerDbCollection_Start(t *testing.T) {
 	t.Run("gracefully handles messages when there is no registered handler in the handler map", func(t *testing.T) {
 		mcg := saramatest.NewMockConsumerGroup()
 		mcg.AddMessage(exampleMsg)
-		col, repo := kafkaConsumerDbCollectionForTests(mcg, func(msg *sarama.ConsumerMessage) error {
+		col, repo := testKafkaConsumerDbCollection(mcg, func(msg *sarama.ConsumerMessage) error {
 			return errors.New("something bad happened")
 		}, false)
 
@@ -251,31 +254,40 @@ func TestKafkaConsumerDbCollection_Close(t *testing.T) {
 	t.Run("consumers are closed", func(t *testing.T) {
 		t.Parallel()
 		mcg1 := saramatest.NewMockConsumerGroup()
-		mcg2 := saramatest.NewMockConsumerGroup()
-		col := &kafkaConsumerDbCollection{kafkaConsumers: []sarama.ConsumerGroup{mcg1, mcg2}}
+		col := &kafkaConsumerDbCollection{mainKafkaConsumer: mcg1}
 		col.Close()
 
-		if !mcg1.WasClosed() || !mcg2.WasClosed() || len(col.kafkaConsumers) > 0 {
-			t.Errorf("consumer collection was not closed properly")
+		if !mcg1.WasClosed() {
+			t.Error("consumer collection was not closed properly")
 		}
 	})
 
 	t.Run("gracefully handles errors from closes", func(t *testing.T) {
 		t.Parallel()
 		mcg1 := saramatest.NewMockConsumerGroup()
-		mcg2 := saramatest.NewMockConsumerGroup()
 		mcg1.ErrorOnClose()
 
-		col := &kafkaConsumerDbCollection{kafkaConsumers: []sarama.ConsumerGroup{mcg1, mcg2}, logger: log.NullLogger{}}
+		col := &kafkaConsumerDbCollection{mainKafkaConsumer: mcg1, logger: log.NullLogger{}}
 		col.Close()
 
-		if !mcg2.WasClosed() || len(col.kafkaConsumers) > 0 {
+		if col.mainKafkaConsumer != nil {
+			t.Errorf("consumer collection was not closed properly")
+		}
+	})
+
+	t.Run("gracefully closes with no main kafka consumer", func(t *testing.T) {
+		t.Parallel()
+
+		col := &kafkaConsumerDbCollection{logger: log.NullLogger{}}
+		col.Close()
+
+		if col.mainKafkaConsumer != nil {
 			t.Errorf("consumer collection was not closed properly")
 		}
 	})
 }
 
-func kafkaConsumerDbCollectionForTests(mcg *saramatest.MockConsumerGroup, msgHandler Handler, errorOnConnect bool) (*kafkaConsumerDbCollection, *mockRetryManager) {
+func testKafkaConsumerDbCollection(mcg *saramatest.MockConsumerGroup, msgHandler Handler, errorOnConnect bool) (*kafkaConsumerDbCollection, *mockRetryManager) {
 	fch := make(chan model.Failure, 10)
 	repo := newMockRetryManager(false)
 	dp := newDatabaseProducer(repo, fch, log.NullLogger{})
