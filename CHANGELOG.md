@@ -1,8 +1,25 @@
 # Changelog
 
-## [0.2.0](https://github.com/inviqa/kafka-consumer-go/tree/0.2.0) (2021-08-06)
+## [0.3.0](https://github.com/inviqa/kafka-consumer-go/tree/0.3.0) (2021-11-08)
 
-[Full Changelog](https://github.com/inviqa/kafka-consumer-go/compare/0.1.0...0.2.0)
+[Full Changelog](https://github.com/inviqa/kafka-consumer-go/compare/v0.2.0...0.3.0)
+
+**Implemented enhancements:**
+
+- Provide ability to use a DB storage mechanism for retry and deadletter messages [\#4](https://github.com/inviqa/kafka-consumer-go/issues/4)
+
+**Merged pull requests:**
+
+- Reduce number of goroutines and consumers for DB kafka collection [\#20](https://github.com/inviqa/kafka-consumer-go/pull/20) ([jameshalsall](https://github.com/jameshalsall))
+- Add test case for fail/succeed DB retry scenario [\#19](https://github.com/inviqa/kafka-consumer-go/pull/19) ([jameshalsall](https://github.com/jameshalsall))
+- Add maintenance job to the DB consumer collection [\#18](https://github.com/inviqa/kafka-consumer-go/pull/18) ([jameshalsall](https://github.com/jameshalsall))
+- Upgrade module dependencies [\#17](https://github.com/inviqa/kafka-consumer-go/pull/17) ([jameshalsall](https://github.com/jameshalsall))
+- Add support for DB retry queues as alternative to Kafka topics [\#16](https://github.com/inviqa/kafka-consumer-go/pull/16) ([jameshalsall](https://github.com/jameshalsall))
+- Switch changelog generator docker image [\#15](https://github.com/inviqa/kafka-consumer-go/pull/15) ([kierenevans](https://github.com/kierenevans))
+
+## [v0.2.0](https://github.com/inviqa/kafka-consumer-go/tree/v0.2.0) (2021-08-06)
+
+[Full Changelog](https://github.com/inviqa/kafka-consumer-go/compare/v0.1.0...v0.2.0)
 
 **Implemented enhancements:**
 
@@ -19,11 +36,10 @@
 
 - Remove github.com/alexflint/go-arg [\#11](https://github.com/inviqa/kafka-consumer-go/pull/11) ([jameshalsall](https://github.com/jameshalsall))
 - Add integration tests [\#9](https://github.com/inviqa/kafka-consumer-go/pull/9) ([hgajjar](https://github.com/hgajjar))
-- Improve DX [\#3](https://github.com/inviqa/kafka-consumer-go/pull/3) ([hgajjar](https://github.com/hgajjar))
 
-## [0.1.0](https://github.com/inviqa/kafka-consumer-go/tree/0.1.0) (2021-06-21)
+## [v0.1.0](https://github.com/inviqa/kafka-consumer-go/tree/v0.1.0) (2021-06-21)
 
-[Full Changelog](https://github.com/inviqa/kafka-consumer-go/compare/48d5d2dab678e327a3d9cfe87813f3d9ad665ef4...0.1.0)
+[Full Changelog](https://github.com/inviqa/kafka-consumer-go/compare/48d5d2dab678e327a3d9cfe87813f3d9ad665ef4...v0.1.0)
 
 **Implemented enhancements:**
 
@@ -32,6 +48,7 @@
 **Merged pull requests:**
 
 - Expand GitHub actions to cover linting and gosec [\#7](https://github.com/inviqa/kafka-consumer-go/pull/7) ([jameshalsall](https://github.com/jameshalsall))
+- Improve DX [\#3](https://github.com/inviqa/kafka-consumer-go/pull/3) ([hgajjar](https://github.com/hgajjar))
 - Add GitHub actions checks [\#1](https://github.com/inviqa/kafka-consumer-go/pull/1) ([jameshalsall](https://github.com/jameshalsall))
 
 
