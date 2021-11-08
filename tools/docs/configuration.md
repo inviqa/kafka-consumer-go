@@ -45,7 +45,9 @@ You can see it has automatically generated the retry and deadLetter topic names 
 
 ### Database retries
 
-If you set `USE_DB_RETRY_QUEUE` to `true`, then messages needing a retry will be stored in a database table that is automatically created when the consumer starts. You will need to provide database credentials using the `DB_*` env vars detailed in the config table above.
+If you set `USE_DB_RETRY_QUEUE` to `true`, then messages needing a retry will be stored in a Postgres database table that is automatically created when the consumer starts. You will need to provide database credentials using the `DB_*` env vars detailed in the config table above.
+
+>_NOTE: We may add support for additional database engines in a future release._
 
 ### Flow of event processing:
 

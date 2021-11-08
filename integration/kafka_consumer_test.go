@@ -6,6 +6,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-test/deep"
+
+	"github.com/inviqa/kafka-consumer-go/data/retry/model"
 	"github.com/inviqa/kafka-consumer-go/integration/kafka"
 )
 
@@ -58,14 +61,16 @@ func TestMessagesAreConsumedFromKafka_WithError(t *testing.T) {
 }
 
 func TestMessagesAreConsumedFromKafka_WithDbRetries(t *testing.T) {
-	publishTestMessageToKafka(kafka.TestMessage{})
+	publishTestMessageToKafka(kafka.TestMessage{
+		XEventId: "test-consume-db-retry",
+	})
 
 	handler := kafka.NewTestConsumerHandler()
 	handler.WillFail()
 
 	err := consumeFromKafkaUsingDbRetriesUntil(func(doneCh chan<- bool) {
 		for {
-			if len(handler.RecvdMessages) == 2 {
+			if len(handler.RecvdMessages) >= 2 {
 				doneCh <- true
 				return
 			}
@@ -76,67 +81,35 @@ func TestMessagesAreConsumedFromKafka_WithDbRetries(t *testing.T) {
 		t.Fatalf("unexpected error: %s", err)
 	}
 
+	// we expect 2 messages to have been received, one for the original consume operation and
+	// another for retry which should have been picked up from the database retry table
 	if len(handler.RecvdMessages) != 2 {
-		t.Errorf("expected 2 messages to be received by handler, received %d", len(handler.RecvdMessages))
+		t.Fatalf("expected 2 messages to be received by handler, received %d", len(handler.RecvdMessages))
 	}
-}
 
-func TestRegularDbMaintenance(t *testing.T) {
-	defaultMaintenanceInterval := cfg.MaintenanceInterval
-	cfg.MaintenanceInterval = time.Millisecond * 100
-	defer func() {
-		cfg.MaintenanceInterval = defaultMaintenanceInterval
-	}()
+	got, err := dbRetryWithEventId("test-consume-db-retry")
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	oneHourAgo := time.Now().In(time.UTC).Add(time.Hour * -1)
-	oneMinuteAgo := time.Now().In(time.UTC).Add(time.Minute * -1)
+	exp := &Retry{
+		Retry: model.Retry{
+			ID:             got.ID,
+			Topic:          "mainTopic",
+			PayloadJSON:    []byte(`{"type":"","data":{},"event_id":"test-consume-db-retry"}`),
+			PayloadHeaders: []byte(`{"foo":"bar"}`),
+			PayloadKey:     []byte(`message-key`),
+			KafkaOffset:    got.KafkaOffset,
+			KafkaPartition: 0,
+			Attempts:       2,
+			Deadlettered:   true,
+			Errored:        true,
+		},
+		Successful: false,
+		LastError:  "oops",
+	}
 
-	t.Run("it cleans up successfully processed retries updated over an hour ago", func(t *testing.T) {
-		purgeDatabase()
-		insertSuccessfullyProcessedDbRetry(oneHourAgo)
-		insertSuccessfullyProcessedDbRetry(oneMinuteAgo)
-
-		if got := retriesRecordCount(); got != 2 {
-			t.Fatalf("expected 2 fixture records to be added to retry table, but there was %d instead", got)
-		}
-
-		// given the maintenance job is part of the consumer collection, we just start that
-		// up as if under normal operation and wait until the job will have ran based on the
-		// configured maintenance interval
-		err := consumeFromKafkaUsingDbRetriesUntil(func(donech chan<- bool) {
-			time.Sleep(time.Millisecond * 120)
-			donech <- true
-		}, kafka.NewTestConsumerHandler().Handle)
-
-		if err != nil {
-			t.Fatalf("unexpected error: %s", err)
-		}
-
-		if got := retriesRecordCount(); got != 1 {
-			t.Errorf("expected 1 retry record to remain, but got %d instead", got)
-		}
-	})
-
-	t.Run("it does not touch errored and deadlettered retries", func(t *testing.T) {
-		purgeDatabase()
-		insertErroredProcessedDbRetry(oneHourAgo)
-		insertDeadletteredProcessedDbRetry(oneHourAgo)
-
-		if got := retriesRecordCount(); got != 2 {
-			t.Fatalf("expected 2 fixture records to be added to retry table, but there was %d instead", got)
-		}
-
-		err := consumeFromKafkaUsingDbRetriesUntil(func(donech chan<- bool) {
-			time.Sleep(time.Millisecond * 120)
-			donech <- true
-		}, kafka.NewTestConsumerHandler().Handle)
-
-		if err != nil {
-			t.Fatalf("unexpected error: %s", err)
-		}
-
-		if got := retriesRecordCount(); got != 2 {
-			t.Errorf("expected 2 retry records to remain, but got %d instead", got)
-		}
-	})
+	if diff := deep.Equal(exp, got); diff != nil {
+		t.Error(diff)
+	}
 }

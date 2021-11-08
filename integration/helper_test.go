@@ -92,6 +92,11 @@ func publishMessageToKafka(b []byte, topic string) {
 	partition, offset, err := producer.SendMessage(&sarama.ProducerMessage{
 		Topic: topic,
 		Value: sarama.ByteEncoder(b),
+		Key:   sarama.StringEncoder("message-key"),
+		Headers: []sarama.RecordHeader{{
+			Key:   []byte(`foo`),
+			Value: []byte(`bar`),
+		}},
 	})
 	if err != nil {
 		log.Print("failed to send message to kafka:", err)
@@ -111,6 +116,21 @@ func consumeFromKafkaUsingDbRetriesUntil(done func(chan<- bool), handler consume
 	}()
 
 	return test.ConsumeFromKafkaUntil(cfg, consumer.HandlerMap{"mainTopic": handler}, time.Second*10, done)
+}
+
+func dbRetryWithEventId(eventId string) (*Retry, error) {
+	row := db.QueryRow(
+		`SELECT id, topic, payload_json, payload_headers, payload_key, kafka_offset, kafka_partition, attempts, deadlettered, successful, errored, last_error FROM kafka_consumer_retries WHERE payload_json::text LIKE $1`,
+		fmt.Sprintf(`%%"event_id":"%s"%%`, eventId),
+	)
+
+	retry := &Retry{}
+	err := row.Scan(&retry.ID, &retry.Topic, &retry.PayloadJSON, &retry.PayloadHeaders, &retry.PayloadKey, &retry.KafkaOffset, &retry.KafkaPartition, &retry.Attempts, &retry.Deadlettered, &retry.Successful, &retry.Errored, &retry.LastError)
+	if err != nil && err != sql.ErrNoRows {
+		return nil, fmt.Errorf("error trying to fetch db retry in integration tests: %w", err)
+	}
+
+	return retry, nil
 }
 
 func insertSuccessfullyProcessedDbRetry(updatedAt time.Time) {
