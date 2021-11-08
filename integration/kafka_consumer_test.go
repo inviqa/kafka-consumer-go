@@ -61,55 +61,100 @@ func TestMessagesAreConsumedFromKafka_WithError(t *testing.T) {
 }
 
 func TestMessagesAreConsumedFromKafka_WithDbRetries(t *testing.T) {
-	publishTestMessageToKafka(kafka.TestMessage{
-		XEventId: "test-consume-db-retry",
+	t.Run("it marks retries as successful if they succeed on retry", func(t *testing.T) {
+		publishTestMessageToKafka(kafka.TestMessage{
+			XEventId: "test-consume-db-retry-1",
+		})
+
+		handler := kafka.NewTestConsumerHandler()
+		handler.WillFailOn(1)
+
+		err := consumeFromKafkaUsingDbRetriesUntil(func(doneCh chan<- bool) {
+			for {
+				if len(handler.RecvdMessages) >= 2 {
+					doneCh <- true
+					return
+				}
+			}
+		}, handler.Handle)
+
+		if err != nil {
+			t.Fatalf("unexpected error: %s", err)
+		}
+
+		// we expect 2 messages to have been received, one for the original consume operation and
+		// another for retry which should have been picked up from the database retry table
+		if len(handler.RecvdMessages) != 2 {
+			t.Fatalf("expected 2 messages to be received by handler, received %d", len(handler.RecvdMessages))
+		}
+
+		got, err := dbRetryWithEventId("test-consume-db-retry-1")
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		exp := testExpectedRetryModelBase("test-consume-db-retry-1", got.ID, got.KafkaOffset)
+		exp.Successful = true
+
+		if diff := deep.Equal(exp, got); diff != nil {
+			t.Error(diff)
+		}
 	})
 
-	handler := kafka.NewTestConsumerHandler()
-	handler.WillFail()
+	t.Run("it marks retries as deadlettered if they fail on all retries", func(t *testing.T) {
+		publishTestMessageToKafka(kafka.TestMessage{
+			XEventId: "test-consume-db-retry-2",
+		})
 
-	err := consumeFromKafkaUsingDbRetriesUntil(func(doneCh chan<- bool) {
-		for {
-			if len(handler.RecvdMessages) >= 2 {
-				doneCh <- true
-				return
+		handler := kafka.NewTestConsumerHandler()
+		handler.WillFail()
+
+		err := consumeFromKafkaUsingDbRetriesUntil(func(doneCh chan<- bool) {
+			for {
+				if len(handler.RecvdMessages) >= 2 {
+					doneCh <- true
+					return
+				}
 			}
+		}, handler.Handle)
+
+		if err != nil {
+			t.Fatalf("unexpected error: %s", err)
 		}
-	}, handler.Handle)
 
-	if err != nil {
-		t.Fatalf("unexpected error: %s", err)
-	}
+		// we expect 2 messages to have been received, one for the original consume operation and
+		// another for retry which should have been picked up from the database retry table
+		if len(handler.RecvdMessages) != 2 {
+			t.Fatalf("expected 2 messages to be received by handler, received %d", len(handler.RecvdMessages))
+		}
 
-	// we expect 2 messages to have been received, one for the original consume operation and
-	// another for retry which should have been picked up from the database retry table
-	if len(handler.RecvdMessages) != 2 {
-		t.Fatalf("expected 2 messages to be received by handler, received %d", len(handler.RecvdMessages))
-	}
+		got, err := dbRetryWithEventId("test-consume-db-retry-2")
+		if err != nil {
+			t.Fatal(err)
+		}
 
-	got, err := dbRetryWithEventId("test-consume-db-retry")
-	if err != nil {
-		t.Fatal(err)
-	}
+		exp := testExpectedRetryModelBase("test-consume-db-retry-2", got.ID, got.KafkaOffset)
+		exp.Deadlettered = true
+		exp.Errored = true
+		exp.LastError = "oops"
 
-	exp := &Retry{
+		if diff := deep.Equal(exp, got); diff != nil {
+			t.Error(diff)
+		}
+	})
+}
+
+func testExpectedRetryModelBase(eventId string, id, offset int64) *Retry {
+	return &Retry{
 		Retry: model.Retry{
-			ID:             got.ID,
+			ID:             id,
 			Topic:          "mainTopic",
-			PayloadJSON:    []byte(`{"type":"","data":{},"event_id":"test-consume-db-retry"}`),
+			PayloadJSON:    []byte(`{"type":"","data":{},"event_id":"` + eventId + `"}`),
 			PayloadHeaders: []byte(`{"foo":"bar"}`),
 			PayloadKey:     []byte(`message-key`),
-			KafkaOffset:    got.KafkaOffset,
+			KafkaOffset:    offset,
 			KafkaPartition: 0,
 			Attempts:       2,
-			Deadlettered:   true,
-			Errored:        true,
 		},
-		Successful: false,
-		LastError:  "oops",
-	}
-
-	if diff := deep.Equal(exp, got); diff != nil {
-		t.Error(diff)
 	}
 }
