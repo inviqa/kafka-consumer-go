@@ -10,8 +10,9 @@ import (
 )
 
 type TestConsumerHandler struct {
-	RecvdMessages []*sarama.ConsumerMessage
-	fail          bool
+	RecvdMessages       []*sarama.ConsumerMessage
+	fail                bool
+	failOnMessageNumber *int
 }
 
 func NewTestConsumerHandler() *TestConsumerHandler {
@@ -27,9 +28,17 @@ func (t *TestConsumerHandler) Handle(msg *sarama.ConsumerMessage) error {
 		return errors.New("oops")
 	}
 
+	if t.failOnMessageNumber != nil && len(t.RecvdMessages) == (*t.failOnMessageNumber) {
+		return errors.New("oops")
+	}
+
 	return nil
 }
 
 func (t *TestConsumerHandler) WillFail() {
 	t.fail = true
+}
+
+func (t *TestConsumerHandler) WillFailOn(messageNumber int) {
+	t.failOnMessageNumber = &messageNumber
 }
