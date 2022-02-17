@@ -75,7 +75,7 @@ jobs:
     - run: go test -v ./...
     - run: sleep 5 && LOG_LEVEL=error go test -timeout=100s -count=1 -v --tags=integration ./integration/
 
-  security:
+  gosec:
     runs-on: ubuntu-latest
     name: run gosec
     steps:
@@ -86,11 +86,29 @@ jobs:
         with:
           args: ./...
 
+  codeql:
+    runs-on: ubuntu-latest
+    name: run codeql
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v2
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v1
+        with:
+          languages: ${{ matrix.language }}
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v1
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v1
+
   build:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        go: [ '1.16' ]
+        go: [ '1.16', '1.17' ]
     name: run build @ ${{ matrix.go }}
     steps:
       - uses: actions/checkout@v2
