@@ -94,6 +94,7 @@ jobs:
       contents: read
       security-events: write
     steps:
+      - uses: actions/checkout@v2
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v1
         with:
