@@ -47,6 +47,10 @@ func init() {
 		log.Fatalf("failed to connect to the DB: %s", err)
 	}
 
+	if err = data.MigrateDatabase(db, cfg); err != nil {
+		log.Fatalf("failed to migrate the database: %s", err)
+	}
+
 	purgeDatabase()
 }
 
