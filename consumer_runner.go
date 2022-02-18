@@ -57,6 +57,10 @@ func setupKafkaConsumerDbCollection(cfg *config.Config, logger log.Logger, fch c
 		return nil, fmt.Errorf("could not connect to DB: %w", err)
 	}
 
+	if err = data.MigrateDatabase(db, cfg); err != nil {
+		return nil, fmt.Errorf("unable to migrate DB: %w", err)
+	}
+
 	repo := retry.NewManagerWithDefaults(cfg.DBRetries, db)
 	dbProducer := newDatabaseProducer(repo, fch, logger)
 	cons := newKafkaConsumerDbCollection(cfg, dbProducer, repo, fch, hs, srmCfg, logger, defaultKafkaConnector)
