@@ -2,6 +2,7 @@ package consumer
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -35,6 +36,10 @@ func connectToKafka(cfg *config.Config, saramaCfg *sarama.Config, logger log.Log
 
 		logger.Info("Kafka cluster is not reachable, retrying...")
 		time.Sleep(connectionInterval)
+	}
+
+	if cl == nil {
+		return nil, errors.New("unable to connect to Kafka cluster, maybe it is unreachable or not ready yet")
 	}
 
 	return cl, nil
