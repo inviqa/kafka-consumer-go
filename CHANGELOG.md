@@ -1,8 +1,29 @@
 # Changelog
 
-## [0.3.0](https://github.com/inviqa/kafka-consumer-go/tree/0.3.0) (2021-11-08)
+## [0.3.1](https://github.com/inviqa/kafka-consumer-go/tree/0.3.1) (2022-02-18)
 
-[Full Changelog](https://github.com/inviqa/kafka-consumer-go/compare/v0.2.0...0.3.0)
+[Full Changelog](https://github.com/inviqa/kafka-consumer-go/compare/v0.3.0...0.3.1)
+
+**Implemented enhancements:**
+
+- Add CodeQL to github actions flow [\#21](https://github.com/inviqa/kafka-consumer-go/pull/21) ([jameshalsall](https://github.com/jameshalsall))
+
+**Fixed bugs:**
+
+- Return error when Kafka cluster never becomes available in time [\#26](https://github.com/inviqa/kafka-consumer-go/pull/26) ([jameshalsall](https://github.com/jameshalsall))
+- Ensure database is migrated when Start\(\) is called [\#23](https://github.com/inviqa/kafka-consumer-go/pull/23) ([jameshalsall](https://github.com/jameshalsall))
+
+**Security fixes:**
+
+- Upgrade two modules with security vulnerabilities [\#22](https://github.com/inviqa/kafka-consumer-go/pull/22) ([jameshalsall](https://github.com/jameshalsall))
+
+**Merged pull requests:**
+
+- Wait longer between connection attempts to Kafka [\#25](https://github.com/inviqa/kafka-consumer-go/pull/25) ([jameshalsall](https://github.com/jameshalsall))
+
+## [v0.3.0](https://github.com/inviqa/kafka-consumer-go/tree/v0.3.0) (2021-11-08)
+
+[Full Changelog](https://github.com/inviqa/kafka-consumer-go/compare/v0.2.0...v0.3.0)
 
 **Implemented enhancements:**
 
