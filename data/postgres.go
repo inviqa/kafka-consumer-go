@@ -21,7 +21,8 @@ func NewDB(dsn string, logger log.Logger) (*sql.DB, error) {
 
 	tries := retryAttempts
 	for {
-		if err := db.Ping(); err == nil {
+		err := db.Ping()
+		if err == nil {
 			break
 		}
 
