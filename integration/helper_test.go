@@ -42,7 +42,7 @@ func init() {
 		log.Fatalf("failed to start Sarama producer: %s", err)
 	}
 
-	db, err = data.NewDB(cfg.GetDBConnectionString(), ourlog.NullLogger{})
+	db, err = data.NewDB(cfg.DSN(), ourlog.NullLogger{})
 	if err != nil {
 		log.Fatalf("failed to connect to the DB: %s", err)
 	}

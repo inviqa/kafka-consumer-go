@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -91,13 +92,13 @@ func (cfg *Config) FindTopicKey(topicName string) TopicKey {
 	return topic.Key
 }
 
-func (cfg *Config) GetDBConnectionString() string {
+func (cfg *Config) DSN() string {
 	sslMode := "disable"
 	if cfg.TLSEnable {
 		sslMode = "verify-full"
 	}
 
-	return fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=%s", cfg.DB.User, cfg.DB.Pass, cfg.DB.Host, cfg.DB.Port, cfg.DB.Schema, sslMode)
+	return fmt.Sprintf("postgres://%s@%s:%d/%s?sslmode=%s", url.UserPassword(cfg.DB.User, cfg.DB.Pass), cfg.DB.Host, cfg.DB.Port, cfg.DB.Schema, sslMode)
 }
 
 // MainTopics will return a slice containing the main topic names from

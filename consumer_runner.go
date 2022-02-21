@@ -52,7 +52,7 @@ func Start(cfg *config.Config, ctx context.Context, hs HandlerMap, logger log.Lo
 }
 
 func setupKafkaConsumerDbCollection(cfg *config.Config, logger log.Logger, fch chan model.Failure, hs HandlerMap, srmCfg *sarama.Config) (collection, error) {
-	db, err := data.NewDB(cfg.GetDBConnectionString(), logger)
+	db, err := data.NewDB(cfg.DSN(), logger)
 	if err != nil {
 		return nil, fmt.Errorf("could not connect to DB: %w", err)
 	}
