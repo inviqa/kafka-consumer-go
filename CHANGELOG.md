@@ -1,8 +1,16 @@
 # Changelog
 
-## [0.3.2](https://github.com/inviqa/kafka-consumer-go/tree/0.3.2) (2022-02-21)
+## [0.3.3](https://github.com/inviqa/kafka-consumer-go/tree/0.3.3) (2022-02-21)
 
-[Full Changelog](https://github.com/inviqa/kafka-consumer-go/compare/v0.3.1...0.3.2)
+[Full Changelog](https://github.com/inviqa/kafka-consumer-go/compare/v0.3.2...0.3.3)
+
+**Fixed bugs:**
+
+- Properly encode user/pass in DSN [\#28](https://github.com/inviqa/kafka-consumer-go/pull/28) ([jameshalsall](https://github.com/jameshalsall))
+
+## [v0.3.2](https://github.com/inviqa/kafka-consumer-go/tree/v0.3.2) (2022-02-21)
+
+[Full Changelog](https://github.com/inviqa/kafka-consumer-go/compare/v0.3.1...v0.3.2)
 
 **Fixed bugs:**
 
