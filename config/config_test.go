@@ -546,12 +546,26 @@ func TestConfig_GetDBConnectionString(t *testing.T) {
 			},
 			want: "postgres://root:pass123@postgres-db:5002/data?sslmode=verify-full",
 		},
+		{
+			name: "with password that should be encoded",
+			cfg: Config{
+				DB: Database{
+					Host:   "postgres-db",
+					Port:   5002,
+					Schema: "data",
+					User:   "root",
+					Pass:   "pass%123",
+				},
+				TLSEnable: true,
+			},
+			want: "postgres://root:pass%25123@postgres-db:5002/data?sslmode=verify-full",
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.cfg.GetDBConnectionString(); got != tt.want {
-				t.Errorf("GetDBConnectionString(): %s, want %s", got, tt.want)
+			if got := tt.cfg.DSN(); got != tt.want {
+				t.Errorf("DSN(): %s, want %s", got, tt.want)
 			}
 		})
 	}
