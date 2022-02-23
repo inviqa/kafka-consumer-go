@@ -1,8 +1,16 @@
 # Changelog
 
-## [0.3.3](https://github.com/inviqa/kafka-consumer-go/tree/0.3.3) (2022-02-21)
+## [0.3.4](https://github.com/inviqa/kafka-consumer-go/tree/0.3.4) (2022-02-23)
 
-[Full Changelog](https://github.com/inviqa/kafka-consumer-go/compare/v0.3.2...0.3.3)
+[Full Changelog](https://github.com/inviqa/kafka-consumer-go/compare/v0.3.3...0.3.4)
+
+**Fixed bugs:**
+
+- Change last\_error to text type to allow full error message [\#29](https://github.com/inviqa/kafka-consumer-go/pull/29) ([jameshalsall](https://github.com/jameshalsall))
+
+## [v0.3.3](https://github.com/inviqa/kafka-consumer-go/tree/v0.3.3) (2022-02-21)
+
+[Full Changelog](https://github.com/inviqa/kafka-consumer-go/compare/v0.3.2...v0.3.3)
 
 **Fixed bugs:**
 
