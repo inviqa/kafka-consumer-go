@@ -1,0 +1,1 @@
+ALTER TABLE kafka_consumer_retries ALTER COLUMN last_error TYPE VARCHAR(255);
