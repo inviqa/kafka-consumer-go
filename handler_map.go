@@ -8,3 +8,8 @@ import (
 
 type Handler func(msg *sarama.ConsumerMessage) error
 type HandlerMap map[config.TopicKey]Handler
+
+func (hm HandlerMap) handlerForTopic(t config.TopicKey) (Handler, bool) {
+	h, ok := hm[t]
+	return h, ok
+}
