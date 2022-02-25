@@ -1,3 +1,4 @@
+//go:build integration
 // +build integration
 
 package integration
@@ -11,7 +12,7 @@ import (
 
 func TestRegularDbMaintenance(t *testing.T) {
 	defaultMaintenanceInterval := cfg.MaintenanceInterval
-	cfg.MaintenanceInterval = time.Millisecond * 100
+	cfg.MaintenanceInterval = time.Millisecond * 60
 	defer func() {
 		cfg.MaintenanceInterval = defaultMaintenanceInterval
 	}()

@@ -36,12 +36,10 @@ func init() {
 
 	srmcfg := config.NewSaramaConfig(false, false)
 	srmcfg.Producer.Return.Successes = true
-	var err error
-	producer, err = sarama.NewSyncProducer(cfg.Host, srmcfg)
-	if err != nil {
-		log.Fatalf("failed to start Sarama producer: %s", err)
-	}
 
+	initKafkaProducer(srmcfg)
+
+	var err error
 	db, err = data.NewDB(cfg.DSN(), ourlog.NullLogger{})
 	if err != nil {
 		log.Fatalf("failed to connect to the DB: %s", err)
@@ -52,6 +50,23 @@ func init() {
 	}
 
 	purgeDatabase()
+}
+
+func initKafkaProducer(srmcfg *sarama.Config) {
+	var err error
+	attempts := 10
+	for {
+		producer, err = sarama.NewSyncProducer(cfg.Host, srmcfg)
+		attempts--
+		if attempts == 0 {
+			break
+		}
+		time.Sleep(time.Second * 1)
+	}
+
+	if producer == nil {
+		log.Fatalf("failed to start Sarama producer: %s", err)
+	}
 }
 
 func createConfig() *config.Config {
