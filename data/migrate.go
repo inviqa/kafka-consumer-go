@@ -16,7 +16,7 @@ import (
 var migrationFiles embed.FS
 
 func MigrateDatabase(db *sql.DB, cfg *config.Config) error {
-	databaseDriver, err := postgres.WithInstance(db, &postgres.Config{})
+	databaseDriver, err := postgres.WithInstance(db, &postgres.Config{MigrationsTable: "kafka_consumer_migrations"})
 	if err != nil {
 		return fmt.Errorf("unable to create migration instance from database: %w", err)
 	}
