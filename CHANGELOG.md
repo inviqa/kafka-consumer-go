@@ -1,8 +1,16 @@
 # Changelog
 
-## [0.3.4](https://github.com/inviqa/kafka-consumer-go/tree/0.3.4) (2022-02-23)
+## [0.3.5](https://github.com/inviqa/kafka-consumer-go/tree/0.3.5) (2022-02-25)
 
-[Full Changelog](https://github.com/inviqa/kafka-consumer-go/compare/v0.3.3...0.3.4)
+[Full Changelog](https://github.com/inviqa/kafka-consumer-go/compare/v0.3.4...0.3.5)
+
+**Fixed bugs:**
+
+- Use a unique migrations table name [\#30](https://github.com/inviqa/kafka-consumer-go/pull/30) ([jameshalsall](https://github.com/jameshalsall))
+
+## [v0.3.4](https://github.com/inviqa/kafka-consumer-go/tree/v0.3.4) (2022-02-23)
+
+[Full Changelog](https://github.com/inviqa/kafka-consumer-go/compare/v0.3.3...v0.3.4)
 
 **Fixed bugs:**
 
