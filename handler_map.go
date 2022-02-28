@@ -1,12 +1,14 @@
 package consumer
 
 import (
+	"context"
+
 	"github.com/Shopify/sarama"
 
 	"github.com/inviqa/kafka-consumer-go/config"
 )
 
-type Handler func(msg *sarama.ConsumerMessage) error
+type Handler func(ctx context.Context, msg *sarama.ConsumerMessage) error
 type HandlerMap map[config.TopicKey]Handler
 
 func (hm HandlerMap) handlerForTopic(t config.TopicKey) (Handler, bool) {

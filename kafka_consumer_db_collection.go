@@ -187,7 +187,7 @@ func (cc *kafkaConsumerDbCollection) processMessagesForRetry(topic string, rc *c
 
 	for _, msg := range msgsForRetry {
 		saramaMsg := msg.ToSaramaConsumerMessage()
-		if err = h(saramaMsg); err != nil {
+		if err = h(ctx, saramaMsg); err != nil {
 			cc.logger.Errorf("error processing retried message from DB: %s", err)
 			if repoErr := cc.retryManager.MarkErrored(ctx, msg, err); repoErr != nil {
 				cc.logger.Errorf("error marking retried message as errored in the DB: %s", repoErr)
