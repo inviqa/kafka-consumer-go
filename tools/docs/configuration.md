@@ -11,7 +11,7 @@ To use this module you must provide valid configuration to it. This is done usin
 | Source topics        | `[]string`      | Yes       | The topics to consume messages from.                                                                                                                                                                                                    |
 | Retry intervals      | `[]int`         | No        | The intervals, in seconds, of the retries in your retry chain. See [Kafka topics](#kafka-topics) for more info. If this is omitted then no retries will be attempted for messages.                                                      |
 | Use DB for retries   | `bool`          | No        | Whether to store messages that need retrying in the database. If false, then messages that need retrying will be stored in Kafka topics instead. See  [Kafka topics](#kafka-topics). **Defaults to false**.                             |
-| DB host              | `string`        | No        | The database host where the outbox table resides. NOTE: This is required if you enable database-based retries (`USE_DB_RETRY_QUEUE`).                                                                                                   |
+| DB host              | `string`        | No        | The database host where the outbox table resides. NOTE: This is required if you enable database-based retries.                                                                                                                          |
 | DB port              | `int`           | No        | Database port. **Defaults to 5432**.                                                                                                                                                                                                    |
 | DB user              | `string`        | No        | Database user.                                                                                                                                                                                                                          |
 | DB pass              | `string`        | No        | Database password.                                                                                                                                                                                                                      |
@@ -56,15 +56,17 @@ func main() {
 
 ## Kafka topics
 
-You can use the `KAFKA_SOURCE_TOPICS` environment variable in combination with `KAFKA_RETRY_INTERVALS` to control which topics to consume from in your cluster.
-This module generates a chain of topics with retry intervals based on given environment variables.
+You can use the "Kafka source topics" and "Kafka retry topics" configuration values to control which topics to consume from in your cluster. This module generates a chain of topics with retry intervals based on the provided configuration.
 
 For example, the following config:
 
-```
-KAFKA_SOURCE_TOPICS=product
-KAFKA_RETRY_INTERVALS=120
-KAFKA_GROUP=algolia
+```go
+consumerCfg, err := config.NewBuilder().
+		SetKafkaHost([]string{"broker1"}).
+		SetKafkaGroup("algolia").
+		SetSourceTopics([]string{"product"}).
+		SetRetryIntervals([]int{120}).
+		Config()
 ```
 
 would generate a topic chain of
@@ -73,11 +75,11 @@ would generate a topic chain of
 
 You can see it has automatically generated the retry and deadLetter topic names along with the retry delay.
 
->_NOTE: You do not need to have any retry topics in the chain, but it is advisable in most circumstances. If you don't set the `KAFKA_RETRY_INTERVALS` variable, then it would directly send the failures to the deadLetter topic._
+>_NOTE: You do not need to have any retry topics in the chain, but it is advisable in most circumstances. If you don't set any retry intervals, then it would directly send the failures to the deadLetter topic._
 
 ### Database retries
 
-If you set `USE_DB_RETRY_QUEUE` to `true`, then messages needing a retry will be stored in a Postgres database table that is automatically created when the consumer starts. You will need to provide database credentials using the `DB_*` env vars detailed in the config table above.
+If you use `UseDbForRetries(true)` in your config builder, then messages needing a retry will be stored in a Postgres database table that is automatically created when the consumer starts. You will need to provide database credentials using the `SetDb*()` builder setters.
 
 >_NOTE: We may add support for additional database engines in a future release._
 
@@ -86,7 +88,7 @@ If you set `USE_DB_RETRY_QUEUE` to `true`, then messages needing a retry will be
 Sticking the configuration example above, this will tell this module to:
 
 * Consume records from `product`
-* If there are errors during the processing of those records then publish them to the next topic in the chain: `retry1.algolia.product` (or the database if `USE_DB_RETRY_QUEUE` is `true`).
+* If there are errors during the processing of those records then publish them to the next topic in the chain: `retry1.algolia.product` (or the database if you have enabled DB retries).
 * Wait for 120 seconds before processing the errored messages again
 * If there are any errors processing these messages, then publish them to the last topic in the chain: `deadLetter.algolia.product` (or mark them as dead-lettered in the database table).
 

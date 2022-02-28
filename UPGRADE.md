@@ -9,6 +9,7 @@ This document highlights breaking changes in releases that will require some mig
 * `test.NewConfig()` argument types have changed to align it with the builder that it now uses underneath the hood:
   * The `sourceTopics` argument is now a `[]string` instead of `string`
   * The `retryIntervals` argument is now a `[]int` instead of `string`
+* `config.Builder.SetTopicNameDecorator()` has been renamed to `config.Builder.SetTopicNameGenerator()` which matches the concept and underlying field names better
 
 ## `0.2.x` -> `0.3.0`
 
