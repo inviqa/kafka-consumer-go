@@ -37,7 +37,7 @@ func (c *consumer) ConsumeClaim(session sarama.ConsumerGroupSession, claim saram
 			c.logger.Debugf("processing message from Kafka")
 
 			k := c.cfg.FindTopicKey(message.Topic)
-			h, ok := c.handlers[k]
+			h, ok := c.handlers.handlerForTopic(k)
 			if !ok {
 				return fmt.Errorf("consumer: handler not found for topic: %s", k)
 			}

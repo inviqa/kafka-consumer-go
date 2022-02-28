@@ -179,7 +179,7 @@ func (cc *kafkaConsumerDbCollection) processMessagesForRetry(topic string, rc *c
 		return
 	}
 
-	h, ok := cc.handlerMap[rc.Key]
+	h, ok := cc.handlerMap.handlerForTopic(rc.Key)
 	if !ok {
 		cc.logger.Errorf("no handler found for topic key '%s'", rc.Key)
 		return
