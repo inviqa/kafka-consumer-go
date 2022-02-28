@@ -6,7 +6,7 @@ The consuming of messages is handled by this module. You need to implement the p
 
 A topic handler function needs to be created in the implementing service importing this module, and it must have the following signature
 
-    func(msg *sarama.ConsumerMessage) error.
+    func(ctx context.Context, msg *sarama.ConsumerMessage) error.
 
 You can implement this as a standadalone function, or as a method on a receiver. It should return an error if there was a problem processing the message, e.g. if your database returned an error, or if an upstream REST API returned an error and you want to retry it later.
 

@@ -105,7 +105,7 @@ func TestKafkaConsumerDbCollection_Start(t *testing.T) {
 	t.Run("successful messages are not retried", func(t *testing.T) {
 		mcg := saramatest.NewMockConsumerGroup()
 		mcg.AddMessage(exampleMsg)
-		col, repo := testKafkaConsumerDbCollection(mcg, func(msg *sarama.ConsumerMessage) error {
+		col, repo := testKafkaConsumerDbCollection(mcg, func(ctx context.Context, msg *sarama.ConsumerMessage) error {
 			return nil
 		}, false)
 
@@ -132,7 +132,7 @@ func TestKafkaConsumerDbCollection_Start(t *testing.T) {
 		mcg := saramatest.NewMockConsumerGroup()
 		mcg.AddMessage(exampleMsg)
 		var called bool
-		col, repo := testKafkaConsumerDbCollection(mcg, func(msg *sarama.ConsumerMessage) error {
+		col, repo := testKafkaConsumerDbCollection(mcg, func(ctx context.Context, msg *sarama.ConsumerMessage) error {
 			if !called {
 				called = true
 				return errors.New("something bad happened")
@@ -160,7 +160,7 @@ func TestKafkaConsumerDbCollection_Start(t *testing.T) {
 	t.Run("retries are marked as errored when they continue to fail", func(t *testing.T) {
 		mcg := saramatest.NewMockConsumerGroup()
 		mcg.AddMessage(exampleMsg)
-		col, repo := testKafkaConsumerDbCollection(mcg, func(msg *sarama.ConsumerMessage) error {
+		col, repo := testKafkaConsumerDbCollection(mcg, func(ctx context.Context, msg *sarama.ConsumerMessage) error {
 			return errors.New("something bad happened")
 		}, false)
 
@@ -184,7 +184,7 @@ func TestKafkaConsumerDbCollection_Start(t *testing.T) {
 	t.Run("handles error from repository when fetching messages for retry", func(t *testing.T) {
 		mcg := saramatest.NewMockConsumerGroup()
 		mcg.AddMessage(exampleMsg)
-		col, repo := testKafkaConsumerDbCollection(mcg, func(msg *sarama.ConsumerMessage) error {
+		col, repo := testKafkaConsumerDbCollection(mcg, func(ctx context.Context, msg *sarama.ConsumerMessage) error {
 			return errors.New("something bad happened")
 		}, false)
 		repo.willErrorOnGetBatch = true
@@ -209,7 +209,7 @@ func TestKafkaConsumerDbCollection_Start(t *testing.T) {
 	t.Run("handles error from repository when publishing failure", func(t *testing.T) {
 		mcg := saramatest.NewMockConsumerGroup()
 		mcg.AddMessage(exampleMsg)
-		col, repo := testKafkaConsumerDbCollection(mcg, func(msg *sarama.ConsumerMessage) error {
+		col, repo := testKafkaConsumerDbCollection(mcg, func(ctx context.Context, msg *sarama.ConsumerMessage) error {
 			return errors.New("something bad happened")
 		}, false)
 		repo.willErrorOnPublishFailure = true
@@ -230,7 +230,7 @@ func TestKafkaConsumerDbCollection_Start(t *testing.T) {
 	t.Run("gracefully handles messages when there is no registered handler in the handler map", func(t *testing.T) {
 		mcg := saramatest.NewMockConsumerGroup()
 		mcg.AddMessage(exampleMsg)
-		col, repo := testKafkaConsumerDbCollection(mcg, func(msg *sarama.ConsumerMessage) error {
+		col, repo := testKafkaConsumerDbCollection(mcg, func(ctx context.Context, msg *sarama.ConsumerMessage) error {
 			return errors.New("something bad happened")
 		}, false)
 
