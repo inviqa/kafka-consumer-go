@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"os"
 	"time"
 
 	"github.com/Shopify/sarama"
@@ -19,10 +18,6 @@ import (
 	"github.com/inviqa/kafka-consumer-go/integration/kafka"
 	ourlog "github.com/inviqa/kafka-consumer-go/log"
 	"github.com/inviqa/kafka-consumer-go/test"
-)
-
-const (
-	testModeDocker = "docker"
 )
 
 var (
@@ -70,23 +65,20 @@ func initKafkaProducer(srmcfg *sarama.Config) {
 }
 
 func createConfig() *config.Config {
-	os.Setenv("KAFKA_HOST", "localhost:9092")
-	os.Setenv("KAFKA_GROUP", "test")
-	os.Setenv("KAFKA_SOURCE_TOPICS", "mainTopic")
-	os.Setenv("KAFKA_RETRY_INTERVALS", "1")
-	os.Setenv("DB_HOST", "127.0.0.1")
-	os.Setenv("DB_PORT", "15432")
-	os.Setenv("DB_USER", "kafka-consumer")
-	os.Setenv("DB_PASS", "kafka-consumer")
-	os.Setenv("DB_SCHEMA", "kafka-consumer")
+	c, err := config.NewBuilder().
+		SetKafkaHost([]string{"localhost:9092"}).
+		SetKafkaGroup("test").
+		SetSourceTopics([]string{"mainTopic"}).
+		SetRetryIntervals([]int{1}).
+		SetDBHost("127.0.0.1").
+		SetDBPass("kafka-consumer").
+		SetDBUser("kafka-consumer").
+		SetDBSchema("kafka-consumer").
+		SetDBPort(15432).
+		Config()
 
-	c, err := config.NewConfig()
 	if err != nil {
 		panic(err)
-	}
-
-	if os.Getenv("GO_TEST_MODE") == testModeDocker {
-		c.Host = []string{"kafka:29092"}
 	}
 
 	return c

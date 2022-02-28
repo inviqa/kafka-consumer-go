@@ -77,7 +77,7 @@ func main() {
 		"product": ph.Handle,
 	}
 
-	cfg, err := okconf.NewConfig()
+	cfg, err := okconf.NewBuilder().Config()
 	if err != nil {
 		log.WithError(err).Panic("unable to create consumer configuration")
 	}

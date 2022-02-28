@@ -5,6 +5,10 @@ This document highlights breaking changes in releases that will require some mig
 ## `0.3.x` -> `0.4.0`
 
 * The handler signature has now changed. The first argument is now a `context.Context` value to allow handlers to act upon cancellations and timeouts from this module.
+* `config.NewConfig()` function has been removed in favour of using the config builder, via `config.NewBuilder()`. See [the docs] for more information on how to use this.
+* `test.NewConfig()` argument types have changed to align it with the builder that it now uses underneath the hood:
+  * The `sourceTopics` argument is now a `[]string` instead of `string`
+  * The `retryIntervals` argument is now a `[]int` instead of `string`
 
 ## `0.2.x` -> `0.3.0`
 
