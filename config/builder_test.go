@@ -166,7 +166,7 @@ func TestBuilder_Config(t *testing.T) {
 		}
 	})
 
-	t.Run("it returns an error if kafka host is not set", func(t *testing.T) {
+	t.Run("it returns an error if kafka group is not set", func(t *testing.T) {
 		_, err := NewBuilder().
 			SetKafkaHost([]string{"broker1"}).
 			SetSourceTopics([]string{"product"}).
