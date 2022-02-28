@@ -1,13 +1,16 @@
 # Using multiple main topics
 
-A consumer can also consume from multiple main topics. This can be done by passing a comma separated list of main topics to the `KAFKA_SOURCE_TOPICS` variable.
+A consumer can also consume from multiple main topics. This can be done by passing multiple main topics as the source topics in the config builder.
 
 For example, the following config:
 
-```
-KAFKA_SOURCE_TOPICS=price,product
-KAFKA_RETRY_INTERVALS=120
-KAFKA_GROUP=algolia
+```go
+consumerCfg, err := config.NewBuilder().
+		SetKafkaHost([]string{"broker1"}).
+		SetKafkaGroup("algolia").
+		SetSourceTopics([]string{"product", "price"}).
+		SetRetryIntervals([]int{120}).
+		Config()
 ```
 
 would generate the following topic chains:
@@ -15,7 +18,7 @@ would generate the following topic chains:
 1. `price` -> `retry1.algolia.price` (delay of 120 secs) -> `deadLetter.algolia.price`
 1. `product` -> `retry1.algolia.product` (delay of 120 secs) -> `deadLetter.algolia.product`
 
->_NOTE: If `USE_DB_RETRY_QUEUE` is set to `true` then retries will be persisted and processed from the database instead of Kafka retry topics, but the same flow applies._
+>_NOTE: If DB retries are enabled then retries will be persisted and processed from the database instead of Kafka retry topics, but the same flow applies._
 
 ## Multiple topic handlers
 
@@ -44,11 +47,10 @@ func main() {
 		"price":   prh.Handle,
 	}
 
-	fch := make(chan okc.Failure)
 	cfg, err := okconf.NewBuilder().Config()
 	if err != nil {
 		panic(err)
     }
-	okc.Start(cfg, ctx, fch, handlerMap, log.New())
+	okc.Start(cfg, ctx, handlerMap, log.New())
 }
 ```

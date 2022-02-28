@@ -8,9 +8,14 @@ This module provides a default naming strategy for automatically generated retry
 
 These are made up of the Kafka consumer group name, the retry topic number in the chain, and the original main topic that the message was consumed from. For example, with the following config:
 
-    KAFKA_SOURCE_TOPICS=product
-    KAFKA_RETRY_INTERVALS=60,120
-    KAFKA_GROUP=algolia
+```go
+consumerCfg, err := config.NewBuilder().
+		SetKafkaHost([]string{"broker1"}).
+		SetSourceTopics([]string{"product"}).
+		SetKafkaGroup("algolia").
+		SetRetryIntervals([]int{60, 120}).
+		Config()
+```
 
 We would get 2 retry topics: `retry1.algolia.product` and `retry2.algolia.product`.
 
@@ -18,9 +23,14 @@ We would get 2 retry topics: `retry1.algolia.product` and `retry2.algolia.produc
 
 For these topics, it is a bit simpler. There is only one dead-letter topic per main topic and consumer group pair. For example, with the following config:
 
-    KAFKA_SOURCE_TOPICS=price
-    KAFKA_RETRY_INTERVALS=60,120
-    KAFKA_GROUP=algolia
+```go
+consumerCfg, err := config.NewBuilder().
+		SetKafkaHost([]string{"broker1"}).
+		SetSourceTopics([]string{"price"}).
+		SetKafkaGroup("algolia").
+		SetRetryIntervals([]int{60, 120}).
+		Config()
+```
 
 We would get a single dead-letter topic: `deadLetter.algolia.price`.
 
@@ -42,7 +52,7 @@ import (
 func main() {
 	// ...
 
-	builder := okconf.NewBuilder().SetTopicNameDecorator(func(group, mainTopic, prefix string) string {
+	builder := okconf.NewBuilder().SetTopicNameGenerator(func(group, mainTopic, prefix string) string {
 		// produce something like "algolia.retry1.product" instead
 		return fmt.Sprintf("%s.%s.%s", group, prefix, mainTopic)
 	})

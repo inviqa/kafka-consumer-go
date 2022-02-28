@@ -4,7 +4,7 @@ You will likely want to write integration tests for your consumer service. This 
 
 ## Configuration
 
-Configuration parsing for this module, as described in its [documentation](/tools/docs/configuration.md), is done from environment variables that your application environment should set. However, this module provides a convenience method for creating configuration in your tests, where you can provide raw values for all options rather than setting env vars:
+Configuration for this module, as described in its [documentation](/tools/docs/configuration.md), is created using the config builder. However, this module provides a convenience method for creating configuration in your tests, where you can provide raw values for all options rather than setting env vars:
 
 ```go
 package integration
@@ -14,7 +14,7 @@ import (
 )
 
 func init() {
-	consumerCfg, err := kctest.NewConfig("localhost:9092", "testGroup", "test.order,test.payment", "1,2")
+	consumerCfg, err := kctest.NewConfig("localhost:9092", "testGroup", []string{"test.order,test.payment"}, []int{1, 2})
 	if err != nil {
 		panic(err)
 	}
