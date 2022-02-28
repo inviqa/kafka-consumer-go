@@ -127,7 +127,7 @@ func TestCollection_Start(t *testing.T) {
 		t.Parallel()
 		mcg := saramatest.NewMockConsumerGroup()
 		mcg.AddMessage(exampleMsg)
-		col, failureProd := testKafkaConsumerCollection(mcg, func(msg *sarama.ConsumerMessage) error {
+		col, failureProd := testKafkaConsumerCollection(mcg, func(ctx context.Context, msg *sarama.ConsumerMessage) error {
 			return nil
 		}, false)
 
@@ -154,7 +154,7 @@ func TestCollection_Start(t *testing.T) {
 		mcg := saramatest.NewMockConsumerGroup()
 		mcg.AddMessage(exampleMsg)
 		var called bool
-		col, failureProd := testKafkaConsumerCollection(mcg, func(msg *sarama.ConsumerMessage) error {
+		col, failureProd := testKafkaConsumerCollection(mcg, func(ctx context.Context, msg *sarama.ConsumerMessage) error {
 			if !called {
 				called = true
 				return errors.New("something bad happened")

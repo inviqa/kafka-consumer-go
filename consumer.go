@@ -42,7 +42,7 @@ func (c *consumer) ConsumeClaim(session sarama.ConsumerGroupSession, claim saram
 				return fmt.Errorf("consumer: handler not found for topic: %s", k)
 			}
 
-			if err := h(message); err != nil {
+			if err := h(session.Context(), message); err != nil {
 				c.sendToFailureChannel(message, err)
 			}
 

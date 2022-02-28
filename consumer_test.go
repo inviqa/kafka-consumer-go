@@ -1,6 +1,7 @@
 package consumer
 
 import (
+	"context"
 	"errors"
 	"testing"
 	"time"
@@ -25,7 +26,7 @@ func TestNewConsumer(t *testing.T) {
 	fch := make(chan model.Failure)
 	cfg := &config.Config{}
 	hs := HandlerMap{
-		"product": func(msg *sarama.ConsumerMessage) error { return nil },
+		"product": func(ctx context.Context, msg *sarama.ConsumerMessage) error { return nil },
 	}
 	l := log.NullLogger{}
 
@@ -185,7 +186,7 @@ type mockConsumerHandler struct {
 	fail          bool
 }
 
-func (m *mockConsumerHandler) handle(msg *sarama.ConsumerMessage) error {
+func (m *mockConsumerHandler) handle(ctx context.Context, msg *sarama.ConsumerMessage) error {
 	m.recvdMessages = append(m.recvdMessages, msg)
 
 	if m.fail {

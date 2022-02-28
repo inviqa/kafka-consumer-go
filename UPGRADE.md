@@ -2,6 +2,10 @@
 
 This document highlights breaking changes in releases that will require some migration effort in your project. As we move towards a `1.0.0` release these will be restricted to major upgrades only, but currently, whilst the API is still being fleshed out in the `0.x` releases, they may be more frequent. 
 
+## `0.3.x` -> `0.4.0`
+
+* The handler signature has now changed. The first argument is now a `context.Context` value to allow handlers to act upon cancellations and timeouts from this module.
+
 ## `0.2.x` -> `0.3.0`
 
 * `test.ConsumeFromKafkaUntil()` now returns an error if the consuming failed, you will need to handle it if you are using this test helper in your integration test suite
