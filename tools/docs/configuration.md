@@ -1,26 +1,58 @@
 # Configuration
 
-To use this module you must configure it correctly. You do this by setting environment variables, which are detailed below.
-
-Configuration is initialised by calling `config.NewConfig()` in this module, which automatically parses environment variables and returns a `config.Config` value.
+To use this module you must provide valid configuration to it. This is done using the `config.Builder{}` type (instantiated via `config.NewBuilder()`), and then using the various setters on it to configure the consumer, before finally calling `.Config()` to get a `config.Config{}` value.
 
 ## Configuration options
 
-| Environment Variable  | Required? | Description                                                                                                                                                                                                 |
-|-----------------------|-----------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| KAFKA_HOST            | Yes       | The Kafka broker(s) to consume from. Multiple brokers should be separated by a comma.                                                                                                                       |
-| KAFKA_GROUP           | Yes       | The Kafka group name for your consumer.                                                                                                                                                                     |
-| KAFKA_SOURCE_TOPICS   | Yes       | The topics to consume messages from.                                                                                                                                                                        |
-| KAFKA_RETRY_INTERVALS | No        | The intervals, in seconds, of the retries in your retry chain. See [Kafka topics](#kafka-topics) for more info. If this is omitted then no retries will be attempted for messages.                          |
-| USE_DB_RETRY_QUEUE    | No        | Whether to store messages that need retrying in the database. If false, then messages that need retrying will be stored in Kafka topics instead. See  [Kafka topics](#kafka-topics). **Defaults to false**. |
-| DB_HOST               | No        | The database host where the outbox table resides. NOTE: This is required if you enable database-based retries (`USE_DB_RETRY_QUEUE`).                                                                       |
-| DB_PORT               | No        | Database port.                                                                                                                                                                                              |
-| DB_USER               | No        | Database user.                                                                                                                                                                                              |
-| DB_PASS               | No        | Database password.                                                                                                                                                                                          |
-| DB_SCHEMA             | No        | Database name.                                                                                                                                                                                              |
-| MAINTENANCE_INTERVAL_SECONDS | No | How regularly the maintenance job will be run. Defaults to every hour. NOTE: You do not need to worry about this if you are not using [database retries](#database-retries). Even then, you should never need to change this value. 
-| TLS_ENABLE            | No        | Whether to enable TLS when communicating with Kafka and the database. We recommend enabling this if your database and Kafka cluster support it. **Defaults to false.**                                      |
-| TLS_SKIP_VERIFY_PEER  | No        | Whether to skip peer verification when connecting over TLS. **Defaults to false.**                                                                                                                          |
+| Name                 | Type            | Required? | Description                                                                                                                                                                                                                             |
+|----------------------|-----------------|-----------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Kafka host           | `[]string`      | Yes       | The Kafka broker(s) to consume from. Multiple brokers should be separated by a comma.                                                                                                                                                   |
+| Kafka group          | `string`        | Yes       | The Kafka group name for your consumer.                                                                                                                                                                                                 |
+| Source topics        | `[]string`      | Yes       | The topics to consume messages from.                                                                                                                                                                                                    |
+| Retry intervals      | `[]int`         | No        | The intervals, in seconds, of the retries in your retry chain. See [Kafka topics](#kafka-topics) for more info. If this is omitted then no retries will be attempted for messages.                                                      |
+| Use DB for retries   | `bool`          | No        | Whether to store messages that need retrying in the database. If false, then messages that need retrying will be stored in Kafka topics instead. See  [Kafka topics](#kafka-topics). **Defaults to false**.                             |
+| DB host              | `string`        | No        | The database host where the outbox table resides. NOTE: This is required if you enable database-based retries (`USE_DB_RETRY_QUEUE`).                                                                                                   |
+| DB port              | `int`           | No        | Database port. **Defaults to 5432**.                                                                                                                                                                                                    |
+| DB user              | `string`        | No        | Database user.                                                                                                                                                                                                                          |
+| DB pass              | `string`        | No        | Database password.                                                                                                                                                                                                                      |
+| DB schema            | `string`        | No        | Database name.                                                                                                                                                                                                                          |
+| Maintenance interval | `time.Duration` | No        | How regularly the maintenance job will be run. **Defaults to every hour**. NOTE: You do not need to worry about this if you are not using [database retries](#database-retries). Even then, you should never need to change this value. |
+| TLS enable           | `bool`          | No        | Whether to enable TLS when communicating with Kafka and the database. We recommend enabling this if your database and Kafka cluster support it. **Defaults to false.**                                                                  |
+| TLS skip verify peer | `bool`          | No        | Whether to skip peer verification when connecting over TLS. **Defaults to false.**                                                                                                                                                      |
+
+### Example of builder
+
+```go
+
+package main
+
+import (
+	"time"
+
+	"github.com/inviqa/kafka-consumer-go/config"
+)
+
+func main() {
+	consumerCfg, err := config.NewBuilder().
+		SetKafkaHost([]string{"broker1", "broker2"}).
+		SetKafkaGroup("group").
+		SetSourceTopics([]string{"product"}).
+		SetRetryIntervals([]int{120}).
+		SetDBHost("postgres").
+		SetDBPass("pass").
+		SetDBUser("user").
+		SetDBSchema("schema").
+		UseDbForRetries(true).
+		Config()
+	
+	if err != nil {
+		panic(err)
+    }
+	
+	// ...
+}
+
+```
 
 ## Kafka topics
 

@@ -1,28 +1,12 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 	"net/url"
-	"os"
 	"strconv"
 	"strings"
 	"time"
-)
-
-const (
-	EnvVarHost                  = "KAFKA_HOST"
-	EnvVarGroup                 = "KAFKA_GROUP"
-	EnvVarSourceTopics          = "KAFKA_SOURCE_TOPICS"
-	EnvVarRetryIntervals        = "KAFKA_RETRY_INTERVALS"
-	EnvVarTLSEnable             = "TLS_ENABLE"
-	EnvVarTLSSkipVerify         = "TLS_SKIP_VERIFY_PEER"
-	EnvVarDbRetryQueue          = "USE_DB_RETRY_QUEUE"
-	EnvVarDbMaintenanceInterval = "MAINTENANCE_INTERVAL_SECONDS"
-	EnvVarDbHost                = "DB_HOST"
-	EnvVarDbPort                = "DB_PORT"
-	EnvVarDbPass                = "DB_PASS"
-	EnvVarDbUser                = "DB_USER"
-	EnvVarDbSchema              = "DB_SCHEMA"
 )
 
 var (
@@ -61,12 +45,6 @@ type Database struct {
 
 type TopicKey string
 type topicNameGenerator func(group, mainTopic, prefix string) string
-
-func NewConfig() (*Config, error) {
-	return buildConfig(Config{
-		topicNameGenerator: defaultTopicNameGenerator,
-	})
-}
 
 func (cfg *Config) NextTopicNameInChain(currentTopic string) (string, error) {
 	topic, ok := cfg.TopicMap[TopicKey(currentTopic)]
@@ -179,39 +157,36 @@ func (cfg *Config) addTopics(topics []*KafkaTopic) {
 	}
 }
 
-func (cfg *Config) loadFromEnvVars() error {
-	cfg.Host = envVarAsStringSlice(EnvVarHost)
-	cfg.Group = os.Getenv(EnvVarGroup)
-	cfg.TLSEnable = envVarAsBool(EnvVarTLSEnable)
-	cfg.TLSSkipVerifyPeer = envVarAsBool(EnvVarTLSSkipVerify)
-	cfg.UseDBForRetryQueue = envVarAsBool(EnvVarDbRetryQueue)
-	cfg.DB.Host = os.Getenv(EnvVarDbHost)
-	cfg.DB.User = os.Getenv(EnvVarDbUser)
-	cfg.DB.Pass = os.Getenv(EnvVarDbPass)
-	cfg.DB.Schema = os.Getenv(EnvVarDbSchema)
-	cfg.DB.Port = envVarAsInt(EnvVarDbPort)
-	cfg.MaintenanceInterval = time.Second * time.Duration(envVarAsInt(EnvVarDbMaintenanceInterval))
+func (cfg *Config) loadFromBuilder(b *Builder) error {
+	cfg.Host = b.kafkaHost
+	cfg.Group = b.kafkaGroup
+	cfg.TLSEnable = b.tlsEnable
+	cfg.TLSSkipVerifyPeer = b.tlsSkipVerifyPeer
+	cfg.UseDBForRetryQueue = b.useDbForRetries
+	cfg.DB.Host = b.dBHost
+	cfg.DB.User = b.dBUser
+	cfg.DB.Pass = b.dBPass
+	cfg.DB.Schema = b.dBSchema
+	cfg.DB.Port = b.dBPort
+	cfg.MaintenanceInterval = b.maintenanceInterval
+	cfg.topicNameGenerator = b.topicNameGenerator
 
-	sourceTopics := envVarAsStringSlice(EnvVarSourceTopics)
+	retryIntervals := b.retryIntervals
+	sourceTopics := b.sourceTopics
 	if len(sourceTopics) == 0 {
-		return fmt.Errorf("consumer/config: you must define a %s value", EnvVarSourceTopics)
-	}
-
-	retryIntervals, err := envVarAsIntSlice(EnvVarRetryIntervals)
-	if err != nil {
-		return fmt.Errorf("consumer/config: error parsing %s: %w", EnvVarRetryIntervals, err)
+		return errors.New("consumer/config: you must define some source topics")
 	}
 
 	if cfg.Host == nil || len(cfg.Host) == 0 {
-		return fmt.Errorf("consumer/config: you must define a %s value", EnvVarHost)
+		return errors.New("consumer/config: you must define a kafka host")
 	}
 
 	if strings.TrimSpace(cfg.Group) == "" {
-		return fmt.Errorf("consumer/config: you must define a %s value", EnvVarGroup)
+		return errors.New("consumer/config: you must define a kafka group")
 	}
 
 	if err := cfg.addTopicsFromSource(sourceTopics, retryIntervals); err != nil {
-		return fmt.Errorf("consumer/config: error loading config with topic names from env vars: %w", err)
+		return fmt.Errorf("consumer/config: error loading config with topic names from builder: %w", err)
 	}
 
 	if cfg.MaintenanceInterval == 0 {
@@ -219,12 +194,4 @@ func (cfg *Config) loadFromEnvVars() error {
 	}
 
 	return nil
-}
-
-func buildConfig(base Config) (*Config, error) {
-	if err := base.loadFromEnvVars(); err != nil {
-		return nil, err
-	}
-
-	return &base, nil
 }

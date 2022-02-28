@@ -45,6 +45,10 @@ func main() {
 	}
 
 	fch := make(chan okc.Failure)
-	okc.Start(okconf.NewConfig(), ctx, fch, handlerMap, log.New())
+	cfg, err := okconf.NewBuilder().Config()
+	if err != nil {
+		panic(err)
+    }
+	okc.Start(cfg, ctx, fch, handlerMap, log.New())
 }
 ```
