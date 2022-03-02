@@ -1,8 +1,19 @@
 # Changelog
 
-## [0.3.5](https://github.com/inviqa/kafka-consumer-go/tree/0.3.5) (2022-02-25)
+## [0.4.0](https://github.com/inviqa/kafka-consumer-go/tree/0.4.0) (2022-03-02)
 
-[Full Changelog](https://github.com/inviqa/kafka-consumer-go/compare/v0.3.4...0.3.5)
+[Full Changelog](https://github.com/inviqa/kafka-consumer-go/compare/v0.3.5...0.4.0)
+
+**Implemented enhancements:**
+
+- Remove env vars used for configuration and inject as part of NewConfig\(\) [\#33](https://github.com/inviqa/kafka-consumer-go/issues/33)
+- Use builder exclusively for configuration creation [\#35](https://github.com/inviqa/kafka-consumer-go/pull/35) ([jameshalsall](https://github.com/jameshalsall))
+- Pass session context to topic handlers [\#34](https://github.com/inviqa/kafka-consumer-go/pull/34) ([jameshalsall](https://github.com/jameshalsall))
+- Encapsulate logic for determining handler for topic key [\#32](https://github.com/inviqa/kafka-consumer-go/pull/32) ([jameshalsall](https://github.com/jameshalsall))
+
+## [v0.3.5](https://github.com/inviqa/kafka-consumer-go/tree/v0.3.5) (2022-02-25)
+
+[Full Changelog](https://github.com/inviqa/kafka-consumer-go/compare/v0.3.4...v0.3.5)
 
 **Fixed bugs:**
 
