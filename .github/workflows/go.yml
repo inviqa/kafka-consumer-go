@@ -23,6 +23,7 @@ jobs:
     - name: Check goimports and go mod tidy
       run: |
         if [ -n "$(git status --porcelain)" ]; then
+          git status
           exit 1
         fi
 
