@@ -36,7 +36,7 @@ func init() {
 	var err error
 	db, err = cfg.DB()
 	if err != nil {
-		log.Fatalf("failed to connect to the db: %s", err)
+		log.Fatalf("failed to connect to the DB: %s", err)
 	}
 
 	if err = data.MigrateDatabase(db, cfg.DBSchema()); err != nil {
