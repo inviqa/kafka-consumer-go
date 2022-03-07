@@ -132,6 +132,7 @@ func TestBuilder_Config(t *testing.T) {
 				Pass:   "pass",
 			},
 			MaintenanceInterval: time.Hour * 1,
+			services:            map[string]interface{}{},
 		}
 
 		c, err := NewBuilder().
