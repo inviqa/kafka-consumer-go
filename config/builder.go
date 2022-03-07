@@ -98,7 +98,9 @@ func (cb *Builder) SetTopicNameGenerator(tng topicNameGenerator) *Builder {
 }
 
 func (cb *Builder) Config() (*Config, error) {
-	c := &Config{}
+	c := &Config{
+		services: map[string]interface{}{},
+	}
 	if err := c.loadFromBuilder(cb); err != nil {
 		return nil, err
 	}

@@ -75,6 +75,7 @@ func TestBuilder_Config(t *testing.T) {
 			TLSEnable:           true,
 			TLSSkipVerifyPeer:   true,
 			UseDBForRetryQueue:  true,
+			services:            map[string]interface{}{},
 		}
 
 		c, err := NewBuilder().
