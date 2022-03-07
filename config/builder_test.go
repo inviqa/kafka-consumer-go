@@ -64,7 +64,7 @@ func TestBuilder_Config(t *testing.T) {
 					},
 				},
 			},
-			DB: Database{
+			db: Database{
 				Host:   "postgres",
 				Port:   15432,
 				Schema: "schema",
@@ -75,6 +75,7 @@ func TestBuilder_Config(t *testing.T) {
 			TLSEnable:           true,
 			TLSSkipVerifyPeer:   true,
 			UseDBForRetryQueue:  true,
+			services:            map[string]interface{}{},
 		}
 
 		c, err := NewBuilder().
@@ -123,7 +124,7 @@ func TestBuilder_Config(t *testing.T) {
 			DBRetries: map[string][]*DBTopicRetry{
 				"product": {},
 			},
-			DB: Database{
+			db: Database{
 				Host:   "postgres",
 				Port:   5432,
 				Schema: "schema",
@@ -131,6 +132,7 @@ func TestBuilder_Config(t *testing.T) {
 				Pass:   "pass",
 			},
 			MaintenanceInterval: time.Hour * 1,
+			services:            map[string]interface{}{},
 		}
 
 		c, err := NewBuilder().

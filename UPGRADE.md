@@ -2,6 +2,12 @@
 
 This document highlights breaking changes in releases that will require some migration effort in your project. As we move towards a `1.0.0` release these will be restricted to major upgrades only, but currently, whilst the API is still being fleshed out in the `0.x` releases, they may be more frequent. 
 
+## `0.4.x` -> `0.5.0`
+
+* The `DB` field in `config.Config` has now been renamed to `db` and is therefore unavailable outside of the `config` package 
+* The `data.MigrateDatabase()` function signature has changed: it now no longer needs a `*config.Config` value as its second argument, instead it takes the schema name as a string instead (this should not affect user-land code).
+* The `data.NewDB()` function signature has changed: it now no longer needs a `log.Logger` value as its second argument.
+
 ## `0.3.x` -> `0.4.0`
 
 * The handler signature has now changed. The first argument is now a `context.Context` value to allow handlers to act upon cancellations and timeouts from this module.

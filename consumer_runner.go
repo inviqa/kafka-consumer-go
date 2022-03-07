@@ -52,12 +52,12 @@ func Start(cfg *config.Config, ctx context.Context, hs HandlerMap, logger log.Lo
 }
 
 func setupKafkaConsumerDbCollection(cfg *config.Config, logger log.Logger, fch chan model.Failure, hs HandlerMap, srmCfg *sarama.Config) (collection, error) {
-	db, err := data.NewDB(cfg.DSN(), logger)
+	db, err := cfg.DB()
 	if err != nil {
 		return nil, fmt.Errorf("could not connect to DB: %w", err)
 	}
 
-	if err = data.MigrateDatabase(db, cfg); err != nil {
+	if err = data.MigrateDatabase(db, cfg.DBSchema()); err != nil {
 		return nil, fmt.Errorf("unable to migrate DB: %w", err)
 	}
 
