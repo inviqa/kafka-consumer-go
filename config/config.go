@@ -1,12 +1,15 @@
 package config
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
 	"net/url"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/inviqa/kafka-consumer-go/data"
 )
 
 var (
@@ -22,10 +25,13 @@ type Config struct {
 	DBRetries           DBRetries
 	TLSEnable           bool
 	TLSSkipVerifyPeer   bool
-	DB                  Database
+	db                  Database
 	UseDBForRetryQueue  bool
 	MaintenanceInterval time.Duration
 	topicNameGenerator  topicNameGenerator
+
+	// memoized services
+	services map[string]interface{}
 }
 
 type KafkaTopic struct {
@@ -70,15 +76,6 @@ func (cfg *Config) FindTopicKey(topicName string) TopicKey {
 	return topic.Key
 }
 
-func (cfg *Config) DSN() string {
-	sslMode := "disable"
-	if cfg.TLSEnable {
-		sslMode = "verify-full"
-	}
-
-	return fmt.Sprintf("postgres://%s@%s:%d/%s?sslmode=%s", url.UserPassword(cfg.DB.User, cfg.DB.Pass), cfg.DB.Host, cfg.DB.Port, cfg.DB.Schema, sslMode)
-}
-
 // MainTopics will return a slice containing the main topic names from
 // where messages are processed in Kafka. It will not include any of the
 // retry or dead-letter topic names.
@@ -91,6 +88,19 @@ func (cfg *Config) MainTopics() []string {
 		}
 	}
 	return mainTopics
+}
+
+// DB will connect to the database and return a *sql.DB value
+// If a database connection already exists, it will return that instead of
+// creating another one.
+func (cfg *Config) DB() (*sql.DB, error) {
+	if db, ok := cfg.services["db"]; ok {
+		return db.(*sql.DB), nil
+	}
+
+	db, err := data.NewDB(cfg.dsn())
+	cfg.services["db"] = db
+	return db, err
 }
 
 func (cfg *Config) addTopicsFromSource(topics []string, retryIntervals []int) error {
@@ -146,6 +156,15 @@ func (cfg *Config) addTopicsFromSource(topics []string, retryIntervals []int) er
 	return nil
 }
 
+func (cfg *Config) dsn() string {
+	sslMode := "disable"
+	if cfg.TLSEnable {
+		sslMode = "verify-full"
+	}
+
+	return fmt.Sprintf("postgres://%s@%s:%d/%s?sslmode=%s", url.UserPassword(cfg.db.User, cfg.db.Pass), cfg.db.Host, cfg.db.Port, cfg.db.Schema, sslMode)
+}
+
 func (cfg *Config) addTopics(topics []*KafkaTopic) {
 	cfg.ConsumableTopics = append(cfg.ConsumableTopics, topics[:len(topics)-1]...)
 
@@ -163,11 +182,11 @@ func (cfg *Config) loadFromBuilder(b *Builder) error {
 	cfg.TLSEnable = b.tlsEnable
 	cfg.TLSSkipVerifyPeer = b.tlsSkipVerifyPeer
 	cfg.UseDBForRetryQueue = b.useDbForRetries
-	cfg.DB.Host = b.dBHost
-	cfg.DB.User = b.dBUser
-	cfg.DB.Pass = b.dBPass
-	cfg.DB.Schema = b.dBSchema
-	cfg.DB.Port = b.dBPort
+	cfg.db.Host = b.dBHost
+	cfg.db.User = b.dBUser
+	cfg.db.Pass = b.dBPass
+	cfg.db.Schema = b.dBSchema
+	cfg.db.Port = b.dBPort
 	cfg.MaintenanceInterval = b.maintenanceInterval
 	cfg.topicNameGenerator = b.topicNameGenerator
 
@@ -194,4 +213,8 @@ func (cfg *Config) loadFromBuilder(b *Builder) error {
 	}
 
 	return nil
+}
+
+func (cfg *Config) DBSchema() string {
+	return cfg.db.Schema
 }

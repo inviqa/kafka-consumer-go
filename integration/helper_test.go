@@ -16,7 +16,6 @@ import (
 	"github.com/inviqa/kafka-consumer-go/config"
 	"github.com/inviqa/kafka-consumer-go/data"
 	"github.com/inviqa/kafka-consumer-go/integration/kafka"
-	ourlog "github.com/inviqa/kafka-consumer-go/log"
 	"github.com/inviqa/kafka-consumer-go/test"
 )
 
@@ -35,12 +34,12 @@ func init() {
 	initKafkaProducer(srmcfg)
 
 	var err error
-	db, err = data.NewDB(cfg.DSN(), ourlog.NullLogger{})
+	db, err = cfg.DB()
 	if err != nil {
-		log.Fatalf("failed to connect to the DB: %s", err)
+		log.Fatalf("failed to connect to the db: %s", err)
 	}
 
-	if err = data.MigrateDatabase(db, cfg); err != nil {
+	if err = data.MigrateDatabase(db, cfg.DBSchema()); err != nil {
 		log.Fatalf("failed to migrate the database: %s", err)
 	}
 

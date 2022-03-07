@@ -320,7 +320,7 @@ func TestConfig_FindTopicKey(t *testing.T) {
 	}
 }
 
-func TestConfig_GetDBConnectionString(t *testing.T) {
+func TestConfig_dsn(t *testing.T) {
 	tests := []struct {
 		name string
 		cfg  Config
@@ -329,7 +329,7 @@ func TestConfig_GetDBConnectionString(t *testing.T) {
 		{
 			name: "without TLS enabled",
 			cfg: Config{
-				DB: Database{
+				db: Database{
 					Host:   "postgres-db",
 					Port:   5002,
 					Schema: "data",
@@ -342,7 +342,7 @@ func TestConfig_GetDBConnectionString(t *testing.T) {
 		{
 			name: "with TLS enabled",
 			cfg: Config{
-				DB: Database{
+				db: Database{
 					Host:   "postgres-db",
 					Port:   5002,
 					Schema: "data",
@@ -356,7 +356,7 @@ func TestConfig_GetDBConnectionString(t *testing.T) {
 		{
 			name: "with password that should be encoded",
 			cfg: Config{
-				DB: Database{
+				db: Database{
 					Host:   "postgres-db",
 					Port:   5002,
 					Schema: "data",
@@ -371,8 +371,8 @@ func TestConfig_GetDBConnectionString(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.cfg.DSN(); got != tt.want {
-				t.Errorf("DSN(): %s, want %s", got, tt.want)
+			if got := tt.cfg.dsn(); got != tt.want {
+				t.Errorf("dsn(): %s, want %s", got, tt.want)
 			}
 		})
 	}
