@@ -1,8 +1,17 @@
 # Changelog
 
-## [0.4.0](https://github.com/inviqa/kafka-consumer-go/tree/0.4.0) (2022-03-02)
+## [0.5.0](https://github.com/inviqa/kafka-consumer-go/tree/0.5.0) (2022-03-08)
 
-[Full Changelog](https://github.com/inviqa/kafka-consumer-go/compare/v0.3.5...0.4.0)
+[Full Changelog](https://github.com/inviqa/kafka-consumer-go/compare/v0.4.0...0.5.0)
+
+**Implemented enhancements:**
+
+- Add dead-lettered prometheus gauge [\#38](https://github.com/inviqa/kafka-consumer-go/pull/38) ([jameshalsall](https://github.com/jameshalsall))
+- Memoize the DB connection pool as part of the config [\#37](https://github.com/inviqa/kafka-consumer-go/pull/37) ([jameshalsall](https://github.com/jameshalsall))
+
+## [v0.4.0](https://github.com/inviqa/kafka-consumer-go/tree/v0.4.0) (2022-03-02)
+
+[Full Changelog](https://github.com/inviqa/kafka-consumer-go/compare/v0.3.5...v0.4.0)
 
 **Implemented enhancements:**
 
