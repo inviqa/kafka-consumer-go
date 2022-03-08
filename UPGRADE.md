@@ -2,6 +2,10 @@
 
 This document highlights breaking changes in releases that will require some migration effort in your project. As we move towards a `1.0.0` release these will be restricted to major upgrades only, but currently, whilst the API is still being fleshed out in the `0.x` releases, they may be more frequent. 
 
+## `0.5.x` -> `0.6.0`
+
+* The `test.NewConfig()` helper function has been removed. Instead, just use `config.NewBuilder()` to build your config in your test code.
+
 ## `0.4.x` -> `0.5.0`
 
 * The `DB` field in `config.Config` has now been renamed to `db` and is therefore unavailable outside of the `config` package 
