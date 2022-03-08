@@ -51,7 +51,7 @@ func newKafkaConsumerCollection(
 	}
 }
 
-func (cc *kafkaConsumerCollection) Start(ctx context.Context, wg *sync.WaitGroup) error {
+func (cc *kafkaConsumerCollection) start(ctx context.Context, wg *sync.WaitGroup) error {
 	topics := cc.cfg.ConsumableTopics
 	if topics == nil {
 		return errors.New("no Kafka topics are configured, therefore cannot start consumers")
@@ -69,7 +69,7 @@ func (cc *kafkaConsumerCollection) Start(ctx context.Context, wg *sync.WaitGroup
 	return nil
 }
 
-func (cc *kafkaConsumerCollection) Close() {
+func (cc *kafkaConsumerCollection) close() {
 	for _, c := range cc.consumers {
 		if err := c.Close(); err != nil {
 			cc.logger.Errorf("error occurred closing a Kafka consumer: %w", err)

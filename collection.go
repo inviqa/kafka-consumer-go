@@ -14,8 +14,8 @@ import (
 )
 
 type collection interface {
-	Start(ctx context.Context, wg *sync.WaitGroup) error
-	Close()
+	start(ctx context.Context, wg *sync.WaitGroup) error
+	close()
 }
 
 func connectToKafka(cfg *config.Config, saramaCfg *sarama.Config, logger log.Logger) (sarama.ConsumerGroup, error) {
