@@ -19,7 +19,7 @@ func TestNewDeadLetteredGauge(t *testing.T) {
 		}()
 
 		ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*2)
-		ObserveDeadLetteredCount(ctx, erroringDbFactory{}, time.Second*1, "foo")
+		ObserveDeadLetteredCount(ctx, erroringDbFactory{}, time.Second*1)
 		cancel()
 	})
 }
@@ -30,7 +30,7 @@ func TestNewDeadLetteredGaugeWithRepo(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*8)
 		defer cancel()
 
-		go observeDeadLetteredSizeUsingRepo(ctx, repo, time.Millisecond*5, "foo")
+		go observeDeadLetteredSizeUsingRepo(ctx, repo, time.Millisecond*5)
 		time.Sleep(time.Millisecond * 8)
 		if got := testutil.ToFloat64(deadLetteredCount); int(got) != 100 {
 			t.Errorf("expected gauge to read 100, but got %d", int(got))

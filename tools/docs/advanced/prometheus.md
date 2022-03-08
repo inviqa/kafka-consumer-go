@@ -37,8 +37,9 @@ func main() {
 	}
 
 	// this gauge will update every 30 seconds, and will appear in prometheus with the "my_app_dead_lettered_count" identifier
-	go prometheus.ObserveDeadLetteredCount(ctx, kafkaCfg, time.Second*30, "my_app_dead_lettered_count")
+	go prometheus.ObserveDeadLetteredCount(ctx, kafkaCfg, time.Second*30)
 
 	// setup prometheus server following their docs
+	// ...
 }
 ```
