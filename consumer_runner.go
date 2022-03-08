@@ -39,10 +39,10 @@ func Start(cfg *config.Config, ctx context.Context, hs HandlerMap, logger log.Lo
 		cons = newKafkaConsumerCollection(cfg, kafkaProducer, fch, hs, srmCfg, logger, defaultKafkaConnector)
 	}
 
-	if err := cons.Start(ctx, wg); err != nil {
+	if err := cons.start(ctx, wg); err != nil {
 		return fmt.Errorf("unable to start consumers: %w", err)
 	}
-	defer cons.Close()
+	defer cons.close()
 
 	logger.Info("kafka consumer started")
 

@@ -67,7 +67,7 @@ func newKafkaConsumerDbCollection(
 	}
 }
 
-func (cc *kafkaConsumerDbCollection) Start(ctx context.Context, wg *sync.WaitGroup) error {
+func (cc *kafkaConsumerDbCollection) start(ctx context.Context, wg *sync.WaitGroup) error {
 	topics := cc.cfg.MainTopics()
 	if topics == nil || len(topics) == 0 {
 		return errors.New("no Kafka topics are configured, therefore cannot start consumers")
@@ -201,7 +201,7 @@ func (cc *kafkaConsumerDbCollection) processMessagesForRetry(topic string, rc *c
 	}
 }
 
-func (cc *kafkaConsumerDbCollection) Close() {
+func (cc *kafkaConsumerDbCollection) close() {
 	if cc.mainKafkaConsumer == nil {
 		return
 	}

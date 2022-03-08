@@ -52,7 +52,7 @@ func TestCollection_Close(t *testing.T) {
 		mcg2 := saramatest.NewMockConsumerGroup()
 		col := &kafkaConsumerCollection{consumers: []sarama.ConsumerGroup{mcg1, mcg2}}
 
-		col.Close()
+		col.close()
 
 		if !mcg1.WasClosed() || !mcg2.WasClosed() {
 			t.Errorf("consumer collection was not closed properly")
@@ -66,7 +66,7 @@ func TestCollection_Close(t *testing.T) {
 		mcg1.ErrorOnClose()
 
 		col := &kafkaConsumerCollection{consumers: []sarama.ConsumerGroup{mcg1, mcg2}, logger: log.NullLogger{}}
-		col.Close()
+		col.close()
 
 		if !mcg2.WasClosed() || len(col.consumers) > 0 {
 			t.Errorf("consumer collection was not closed properly")
@@ -86,7 +86,7 @@ func TestCollection_Start(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*1)
 		defer cancel()
 		var wg sync.WaitGroup
-		if err := col.Start(ctx, &wg); err == nil {
+		if err := col.start(ctx, &wg); err == nil {
 			t.Error("expected an error but got nil")
 		}
 		wg.Wait()
@@ -98,7 +98,7 @@ func TestCollection_Start(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*1)
 		defer cancel()
 		var wg sync.WaitGroup
-		if err := col.Start(ctx, &wg); err == nil {
+		if err := col.start(ctx, &wg); err == nil {
 			t.Error("expected an error but got nil")
 		}
 		wg.Wait()
@@ -113,7 +113,7 @@ func TestCollection_Start(t *testing.T) {
 		defer cancel()
 		var wg sync.WaitGroup
 		// errors from consume should be logged, but not returned
-		if err := col.Start(ctx, &wg); err != nil {
+		if err := col.start(ctx, &wg); err != nil {
 			t.Errorf("unexpected error: %s", err)
 		}
 		wg.Wait()
@@ -135,7 +135,7 @@ func TestCollection_Start(t *testing.T) {
 		defer cancel()
 
 		var wg sync.WaitGroup
-		if err := col.Start(ctx, &wg); err != nil {
+		if err := col.start(ctx, &wg); err != nil {
 			t.Fatalf("unexpected error: %s", err)
 		}
 		wg.Wait()
@@ -164,7 +164,7 @@ func TestCollection_Start(t *testing.T) {
 
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
-		if err := col.Start(ctx, &sync.WaitGroup{}); err != nil {
+		if err := col.start(ctx, &sync.WaitGroup{}); err != nil {
 			t.Errorf("unexpected error: %s", err)
 		}
 

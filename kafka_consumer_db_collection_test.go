@@ -67,7 +67,7 @@ func TestKafkaConsumerDbCollection_Start(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*1)
 		defer cancel()
 		var wg sync.WaitGroup
-		if err := col.Start(ctx, &wg); err == nil {
+		if err := col.start(ctx, &wg); err == nil {
 			t.Error("expected an error but got nil")
 		}
 		wg.Wait()
@@ -78,7 +78,7 @@ func TestKafkaConsumerDbCollection_Start(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*1)
 		defer cancel()
 		var wg sync.WaitGroup
-		if err := col.Start(ctx, &wg); err == nil {
+		if err := col.start(ctx, &wg); err == nil {
 			t.Error("expected an error but got nil")
 		}
 		wg.Wait()
@@ -92,7 +92,7 @@ func TestKafkaConsumerDbCollection_Start(t *testing.T) {
 		defer cancel()
 		var wg sync.WaitGroup
 		// errors from consume should be logged, but not returned
-		if err := col.Start(ctx, &wg); err != nil {
+		if err := col.start(ctx, &wg); err != nil {
 			t.Errorf("unexpected error: %s", err)
 		}
 		wg.Wait()
@@ -114,7 +114,7 @@ func TestKafkaConsumerDbCollection_Start(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*50)
 		defer cancel()
 		var wg sync.WaitGroup
-		if err := col.Start(ctx, &wg); err != nil {
+		if err := col.start(ctx, &wg); err != nil {
 			t.Errorf("unexpected error: %s", err)
 		}
 		wg.Wait()
@@ -143,7 +143,7 @@ func TestKafkaConsumerDbCollection_Start(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*50)
 		defer cancel()
 		var wg sync.WaitGroup
-		if err := col.Start(ctx, &wg); err != nil {
+		if err := col.start(ctx, &wg); err != nil {
 			t.Errorf("unexpected error: %s", err)
 		}
 		wg.Wait()
@@ -167,7 +167,7 @@ func TestKafkaConsumerDbCollection_Start(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*50)
 		defer cancel()
 		var wg sync.WaitGroup
-		if err := col.Start(ctx, &wg); err != nil {
+		if err := col.start(ctx, &wg); err != nil {
 			t.Errorf("unexpected error: %s", err)
 		}
 		wg.Wait()
@@ -192,7 +192,7 @@ func TestKafkaConsumerDbCollection_Start(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*50)
 		defer cancel()
 		var wg sync.WaitGroup
-		if err := col.Start(ctx, &wg); err != nil {
+		if err := col.start(ctx, &wg); err != nil {
 			t.Errorf("unexpected error: %s", err)
 		}
 		wg.Wait()
@@ -217,7 +217,7 @@ func TestKafkaConsumerDbCollection_Start(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*50)
 		defer cancel()
 		var wg sync.WaitGroup
-		if err := col.Start(ctx, &wg); err != nil {
+		if err := col.start(ctx, &wg); err != nil {
 			t.Errorf("unexpected error: %s", err)
 		}
 		wg.Wait()
@@ -239,7 +239,7 @@ func TestKafkaConsumerDbCollection_Start(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*50)
 		defer cancel()
 		var wg sync.WaitGroup
-		if err := col.Start(ctx, &wg); err != nil {
+		if err := col.start(ctx, &wg); err != nil {
 			t.Errorf("unexpected error: %s", err)
 		}
 		wg.Wait()
@@ -255,7 +255,7 @@ func TestKafkaConsumerDbCollection_Close(t *testing.T) {
 		t.Parallel()
 		mcg1 := saramatest.NewMockConsumerGroup()
 		col := &kafkaConsumerDbCollection{mainKafkaConsumer: mcg1}
-		col.Close()
+		col.close()
 
 		if !mcg1.WasClosed() {
 			t.Error("consumer collection was not closed properly")
@@ -268,7 +268,7 @@ func TestKafkaConsumerDbCollection_Close(t *testing.T) {
 		mcg1.ErrorOnClose()
 
 		col := &kafkaConsumerDbCollection{mainKafkaConsumer: mcg1, logger: log.NullLogger{}}
-		col.Close()
+		col.close()
 
 		if col.mainKafkaConsumer != nil {
 			t.Errorf("consumer collection was not closed properly")
@@ -279,7 +279,7 @@ func TestKafkaConsumerDbCollection_Close(t *testing.T) {
 		t.Parallel()
 
 		col := &kafkaConsumerDbCollection{logger: log.NullLogger{}}
-		col.Close()
+		col.close()
 
 		if col.mainKafkaConsumer != nil {
 			t.Errorf("consumer collection was not closed properly")
