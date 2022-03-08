@@ -12,7 +12,7 @@ Following [the Prometheus guide](https://prometheus.io/docs/guides/go-applicatio
 
 ### Dead-lettered message count
 
-This observer will update a gauge with the latest total number of dead-lettered messages in your database.
+This observer will update a gauge with the latest total number of dead-lettered messages in your database. Its name is `kafka_consumer_dead_lettered_count`.
 
 >_NOTE: You must be using the [DB retries](/tools/docs/configuration.md#database-retries) feature to make use of this gauge._
 
@@ -39,7 +39,7 @@ func main() {
 		panic(err)
 	}
 
-	// this gauge will update every 30 seconds, and will appear in prometheus with the "my_app_dead_lettered_count" identifier
+	// this gauge will update every 30 seconds
 	go prometheus.ObserveDeadLetteredCount(ctx, kafkaCfg, time.Second*30)
 
 	http.Handle("/metrics", promhttp.Handler())
