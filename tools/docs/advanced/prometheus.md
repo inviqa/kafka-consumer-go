@@ -23,14 +23,17 @@ package main
 
 import (
 	"context"
+	"net/http"
 	"time"
+
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/inviqa/kafka-consumer-go/config"
 	"github.com/inviqa/kafka-consumer-go/prometheus"
 )
 
 func main() {
-	ctx := context.Background() // use a suitable context
+	ctx := context.Background()                   // use a suitable context
 	kafkaCfg, err := config.NewBuilder().Config() // build the config as needed
 	if err != nil {
 		panic(err)
@@ -39,7 +42,6 @@ func main() {
 	// this gauge will update every 30 seconds, and will appear in prometheus with the "my_app_dead_lettered_count" identifier
 	go prometheus.ObserveDeadLetteredCount(ctx, kafkaCfg, time.Second*30)
 
-	// setup prometheus server following their docs
-	// ...
+	http.Handle("/metrics", promhttp.Handler())
 }
 ```
