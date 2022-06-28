@@ -196,6 +196,7 @@ func (cfg *Config) loadFromBuilder(b *Builder) error {
 	cfg.db.Pass = b.dBPass
 	cfg.db.Schema = b.dBSchema
 	cfg.db.Port = b.dBPort
+	cfg.db.Driver = b.dBDriver
 	cfg.MaintenanceInterval = b.maintenanceInterval
 	cfg.topicNameGenerator = b.topicNameGenerator
 
