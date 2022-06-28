@@ -47,7 +47,7 @@ type Database struct {
 	Schema string
 	User   string
 	Pass   string
-    Driver string
+	Driver string
 }
 
 type TopicKey string
@@ -164,13 +164,13 @@ func (cfg *Config) dsn() string {
 	}
 
 	return fmt.Sprintf(
-        "%s://%s@%s:%d/%s?sslmode=%s",
-        url.UserPassword(cfg.db.User, cfg.db.Pass),
-        cfg.db.Driver,
-        cfg.db.Host,
-        cfg.db.Port,
-        cfg.db.Schema,
-        sslMode,
+		"%s://%s@%s:%d/%s?sslmode=%s",
+		url.UserPassword(cfg.db.User, cfg.db.Pass),
+		cfg.db.Driver,
+		cfg.db.Host,
+		cfg.db.Port,
+		cfg.db.Schema,
+		sslMode,
 	)
 }
 
