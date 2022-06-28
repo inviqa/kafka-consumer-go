@@ -47,6 +47,7 @@ type Database struct {
 	Schema string
 	User   string
 	Pass   string
+    Driver string
 }
 
 type TopicKey string
@@ -162,7 +163,15 @@ func (cfg *Config) dsn() string {
 		sslMode = "verify-full"
 	}
 
-	return fmt.Sprintf("postgres://%s@%s:%d/%s?sslmode=%s", url.UserPassword(cfg.db.User, cfg.db.Pass), cfg.db.Host, cfg.db.Port, cfg.db.Schema, sslMode)
+	return fmt.Sprintf(
+        "%s://%s@%s:%d/%s?sslmode=%s",
+        url.UserPassword(cfg.db.User, cfg.db.Pass),
+        cfg.db.Driver,
+        cfg.db.Host,
+        cfg.db.Port,
+        cfg.db.Schema,
+        sslMode,
+	)
 }
 
 func (cfg *Config) addTopics(topics []*KafkaTopic) {
