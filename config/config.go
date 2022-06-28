@@ -165,8 +165,8 @@ func (cfg *Config) dsn() string {
 
 	return fmt.Sprintf(
 		"%s://%s@%s:%d/%s?sslmode=%s",
-		url.UserPassword(cfg.db.User, cfg.db.Pass),
 		cfg.db.Driver,
+		url.UserPassword(cfg.db.User, cfg.db.Pass),
 		cfg.db.Host,
 		cfg.db.Port,
 		cfg.db.Schema,
