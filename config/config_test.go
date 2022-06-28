@@ -330,7 +330,7 @@ func TestConfig_dsn(t *testing.T) {
 			name: "without TLS enabled",
 			cfg: Config{
 				db: Database{
-                    Driver: "postgres",
+					Driver: "postgres",
 					Host:   "postgres-db",
 					Port:   5002,
 					Schema: "data",
@@ -344,7 +344,7 @@ func TestConfig_dsn(t *testing.T) {
 			name: "with TLS enabled",
 			cfg: Config{
 				db: Database{
-                    Driver: "postgres",
+					Driver: "postgres",
 					Host:   "postgres-db",
 					Port:   5002,
 					Schema: "data",
@@ -359,7 +359,7 @@ func TestConfig_dsn(t *testing.T) {
 			name: "with password that should be encoded",
 			cfg: Config{
 				db: Database{
-                    Driver: "postgres",
+					Driver: "postgres",
 					Host:   "postgres-db",
 					Port:   5002,
 					Schema: "data",

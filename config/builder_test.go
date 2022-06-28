@@ -17,7 +17,7 @@ func TestNewBuilder(t *testing.T) {
 		dBPort:              5432,
 		maintenanceInterval: time.Hour * 1,
 		topicNameGenerator:  defaultTopicNameGenerator,
-        dBDriver: "postgres",
+		dBDriver:            "postgres",
 	}
 
 	got := NewBuilder()
