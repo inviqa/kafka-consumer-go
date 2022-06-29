@@ -12,6 +12,7 @@ type Builder struct {
 	dBSchema            string
 	dBUser              string
 	dBPass              string
+	dBDriver            string
 	useDbForRetries     bool
 	maintenanceInterval time.Duration
 	topicNameGenerator  topicNameGenerator
@@ -24,6 +25,7 @@ func NewBuilder() *Builder {
 		topicNameGenerator:  defaultTopicNameGenerator,
 		maintenanceInterval: defaultMaintenanceInterval,
 		dBPort:              5432,
+		dBDriver:            "postgres",
 	}
 }
 
