@@ -66,7 +66,7 @@ func TestBuilder_Config(t *testing.T) {
 				},
 			},
 			db: Database{
-                Driver: "postgres",
+				Driver: "postgres",
 				Host:   "postgres",
 				Port:   15432,
 				Schema: "schema",
@@ -127,7 +127,7 @@ func TestBuilder_Config(t *testing.T) {
 				"product": {},
 			},
 			db: Database{
-                Driver: "postgres",
+				Driver: "postgres",
 				Host:   "postgres",
 				Port:   5432,
 				Schema: "schema",
