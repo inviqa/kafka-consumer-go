@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        go: ['1.16']
+        go: ['1.19']
     name: run lint @ ${{ matrix.go }}
     steps:
     - uses: actions/checkout@v2
@@ -31,7 +31,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        go: [ '1.16' ]
+        go: [ '1.19' ]
     name: run tests @ ${{ matrix.go }}
     services:
       zookeeper:
@@ -109,7 +109,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        go: [ '1.16', '1.17' ]
+        go: [ '1.16', '1.17', '1.19' ]
     name: run build @ ${{ matrix.go }}
     steps:
       - uses: actions/checkout@v2
