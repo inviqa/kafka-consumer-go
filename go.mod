@@ -5,7 +5,7 @@ go 1.16
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/Shopify/sarama v1.30.0
-	github.com/containerd/containerd v1.6.0 // indirect
+	github.com/containerd/containerd v1.6.6 // indirect
 	github.com/docker/distribution v2.8.0+incompatible // indirect
 	github.com/go-test/deep v1.0.8
 	github.com/golang-migrate/migrate/v4 v4.15.1
