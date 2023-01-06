@@ -2,6 +2,7 @@ package consumer
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -38,7 +39,7 @@ func newKafkaFailureProducerWithDefaults(cfg *config.Config, fch <-chan model.Fa
 		// the cluster may be temporarily unreachable so if we see ErrOutOfBrokers we continue to the
 		// next iteration to make another attempt to connect (the sarama.NewSyncProducer also internally
 		// makes retry attempts so we should connect within 3 attempts here (see maxConnectionAttempts)
-		if err != sarama.ErrOutOfBrokers {
+		if !errors.Is(err, sarama.ErrOutOfBrokers) {
 			return nil, fmt.Errorf("error occurred creating Kafka producer for retries: %w", err)
 		}
 

@@ -30,7 +30,7 @@ func connectToKafka(cfg *config.Config, saramaCfg *sarama.Config, logger log.Log
 
 		// the cluster may be temporarily unreachable so if we see ErrOutOfBrokers we continue to the
 		// next iteration to make another attempt to connect
-		if err != sarama.ErrOutOfBrokers {
+		if !errors.Is(err, sarama.ErrOutOfBrokers) {
 			return nil, fmt.Errorf("error occurred creating Kafka consumer group client: %w", err)
 		}
 
