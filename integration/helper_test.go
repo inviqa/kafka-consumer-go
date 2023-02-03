@@ -68,7 +68,7 @@ func createConfig() *config.Config {
 		SetKafkaHost([]string{"localhost:9092"}).
 		SetKafkaGroup("test").
 		SetSourceTopics([]string{"mainTopic"}).
-		SetRetryIntervals([]int{1}).
+		SetRetryIntervals([]int{1, 2}).
 		SetDBHost("127.0.0.1").
 		SetDBPass("kafka-consumer").
 		SetDBUser("kafka-consumer").
@@ -122,7 +122,7 @@ func consumeFromKafkaUsingDbRetriesUntil(done func(chan<- bool), handler consume
 		cfg.UseDBForRetryQueue = false
 	}()
 
-	return test.ConsumeFromKafkaUntil(cfg, consumer.HandlerMap{"mainTopic": handler}, time.Second*10, done)
+	return test.ConsumeFromKafkaUntil(cfg, consumer.HandlerMap{"mainTopic": handler}, time.Second*20, done)
 }
 
 func dbRetryWithEventId(eventId string) (*Retry, error) {

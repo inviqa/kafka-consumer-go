@@ -44,7 +44,7 @@ func TestMessagesAreConsumedFromKafka_WithError(t *testing.T) {
 
 	err := consumeFromKafkaUntil(func(doneCh chan<- bool) {
 		for {
-			if len(handler.RecvdMessages) == 2 {
+			if len(handler.RecvdMessages) == 3 {
 				doneCh <- true
 				return
 			}
@@ -56,8 +56,8 @@ func TestMessagesAreConsumedFromKafka_WithError(t *testing.T) {
 		t.Fatalf("unexpected error: %s", err)
 	}
 
-	if len(handler.RecvdMessages) != 2 {
-		t.Errorf("expected 2 messages to be received by handler, received %d", len(handler.RecvdMessages))
+	if len(handler.RecvdMessages) != 3 {
+		t.Errorf("expected 3 messages to be received by handler, received %d", len(handler.RecvdMessages))
 	}
 }
 
@@ -96,6 +96,7 @@ func TestMessagesAreConsumedFromKafka_WithDbRetries(t *testing.T) {
 
 		exp := testExpectedRetryModelBase("test-consume-db-retry-1", got.ID, got.KafkaOffset)
 		exp.Successful = true
+		exp.Attempts = 2
 
 		if diff := deep.Equal(exp, got); diff != nil {
 			t.Error(diff)
@@ -112,7 +113,7 @@ func TestMessagesAreConsumedFromKafka_WithDbRetries(t *testing.T) {
 
 		err := consumeFromKafkaUsingDbRetriesUntil(func(doneCh chan<- bool) {
 			for {
-				if len(handler.RecvdMessages) >= 2 {
+				if len(handler.RecvdMessages) >= 3 {
 					doneCh <- true
 					return
 				}
@@ -123,10 +124,10 @@ func TestMessagesAreConsumedFromKafka_WithDbRetries(t *testing.T) {
 			t.Fatalf("unexpected error: %s", err)
 		}
 
-		// we expect 2 messages to have been received, one for the original consume operation and
-		// another for retry which should have been picked up from the database retry table
-		if len(handler.RecvdMessages) != 2 {
-			t.Fatalf("expected 2 messages to be received by handler, received %d", len(handler.RecvdMessages))
+		// we expect 3 messages to have been received, one for the original consume operation and
+		// another two for retries which should have been picked up from the database retry table
+		if len(handler.RecvdMessages) != 3 {
+			t.Fatalf("expected 3 messages to be received by handler, received %d", len(handler.RecvdMessages))
 		}
 
 		got, err := dbRetryWithEventId("test-consume-db-retry-2")
@@ -155,7 +156,7 @@ func testExpectedRetryModelBase(eventId string, id, offset int64) *Retry {
 			PayloadKey:     []byte(`message-key`),
 			KafkaOffset:    offset,
 			KafkaPartition: 0,
-			Attempts:       2,
+			Attempts:       3,
 		},
 	}
 }
