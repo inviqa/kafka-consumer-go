@@ -141,7 +141,7 @@ func TestManager_MarkErrored(t *testing.T) {
 		retry := model.Retry{
 			ID:       123,
 			Topic:    "foo",
-			Attempts: 1,
+			Attempts: 2,
 		}
 		err := manager.MarkErrored(ctx, retry, errors.New("foo"))
 		if err != nil {
@@ -153,7 +153,7 @@ func TestManager_MarkErrored(t *testing.T) {
 			Topic:        "foo",
 			Errored:      true,
 			Deadlettered: true,
-			Attempts:     2,
+			Attempts:     3,
 		}
 
 		if diff := deep.Equal(&expRetry, repo.RetryMarkedErrored); diff != nil {

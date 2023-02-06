@@ -91,7 +91,7 @@ func (r Repository) createEventBatch(ctx context.Context, topic string, sequence
 			SELECT id FROM kafka_consumer_retries
 			WHERE topic = $2
 			AND (
-				(batch_id IS NULL AND retry_started_at IS NULL) OR 
+				batch_id IS NULL OR
 				(batch_id IS NOT NULL AND retry_finished_at IS NULL AND retry_started_at < $3)
 			)
 			AND attempts = $4 AND deadlettered = false AND successful = false AND updated_at <= $5

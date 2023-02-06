@@ -25,7 +25,7 @@ func (dr DBRetries) MakeRetryErrored(retry model.Retry) model.Retry {
 	retry.Errored = true
 	retry.Attempts = retry.Attempts + 1
 
-	if retry.Attempts >= dr.maxAttemptsForTopic(retry.Topic) {
+	if retry.Attempts > dr.maxAttemptsForTopic(retry.Topic) {
 		retry.Deadlettered = true
 	}
 

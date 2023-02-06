@@ -38,10 +38,10 @@ func TestDBRetries_MakeRetryErrored(t *testing.T) {
 	})
 
 	t.Run("it marks retry as dead-lettered", func(t *testing.T) {
-		retry := model.Retry{Topic: "foo", Attempts: 1}
+		retry := model.Retry{Topic: "foo", Attempts: 2}
 		exp := model.Retry{
 			Topic:        "foo",
-			Attempts:     2,
+			Attempts:     3,
 			Errored:      true,
 			Deadlettered: true,
 		}
