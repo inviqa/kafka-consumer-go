@@ -1,8 +1,20 @@
 # Changelog
 
-## [0.5.0](https://github.com/inviqa/kafka-consumer-go/tree/0.5.0) (2022-03-08)
+## [v0.6.0](https://github.com/inviqa/kafka-consumer-go/tree/v0.6.0) (2023-02-07)
 
-[Full Changelog](https://github.com/inviqa/kafka-consumer-go/compare/v0.4.0...0.5.0)
+[Full Changelog](https://github.com/inviqa/kafka-consumer-go/compare/v0.5.0...v0.6.0)
+
+**Merged pull requests:**
+
+- handling more than 1 retries [\#49](https://github.com/inviqa/kafka-consumer-go/pull/49) ([bertalan-kis](https://github.com/bertalan-kis))
+- Update samara ErrOutOfBrokers check to cope with wrapping [\#48](https://github.com/inviqa/kafka-consumer-go/pull/48) ([andytson-inviqa](https://github.com/andytson-inviqa))
+- Support specifying the driver [\#42](https://github.com/inviqa/kafka-consumer-go/pull/42) ([dantleech](https://github.com/dantleech))
+- Remove test.NewConfig\(\) helper [\#41](https://github.com/inviqa/kafka-consumer-go/pull/41) ([jameshalsall](https://github.com/jameshalsall))
+- Increase max connection attempts to 20 [\#40](https://github.com/inviqa/kafka-consumer-go/pull/40) ([jameshalsall](https://github.com/jameshalsall))
+
+## [v0.5.0](https://github.com/inviqa/kafka-consumer-go/tree/v0.5.0) (2022-03-08)
+
+[Full Changelog](https://github.com/inviqa/kafka-consumer-go/compare/v0.4.0...v0.5.0)
 
 **Implemented enhancements:**
 
