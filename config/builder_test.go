@@ -66,7 +66,7 @@ func TestBuilder_Config(t *testing.T) {
 				},
 			},
 			db: Database{
-				Driver: "postgres",
+				Driver: "mariadb",
 				Host:   "postgres",
 				Port:   15432,
 				Schema: "schema",
@@ -86,6 +86,7 @@ func TestBuilder_Config(t *testing.T) {
 			SetKafkaGroup("group").
 			SetSourceTopics([]string{"product"}).
 			SetRetryIntervals([]int{120}).
+			SetDBDriver("mariadb").
 			SetDBHost("postgres").
 			SetDBPass("pass").
 			SetDBUser("user").

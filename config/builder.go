@@ -74,6 +74,11 @@ func (cb *Builder) SetDBPass(pass string) *Builder {
 	return cb
 }
 
+func (cb *Builder) SetDBDriver(driver string) *Builder {
+	cb.dBDriver = driver
+	return cb
+}
+
 func (cb *Builder) UseDbForRetries(useDbForRetries bool) *Builder {
 	cb.useDbForRetries = useDbForRetries
 	return cb
