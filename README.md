@@ -7,7 +7,7 @@ This is a module that provides Kafka consumer and retry logic for services. It r
 It can be installed into a concrete consumer service using:
 
 ```
-go get github.com/inviqa/kafka-consumer-go
+go get github.com/revdaalex/kafka-consumer-go
 ```
 
 ## Documentation

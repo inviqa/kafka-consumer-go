@@ -28,8 +28,8 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
-	"github.com/inviqa/kafka-consumer-go/config"
-	"github.com/inviqa/kafka-consumer-go/prometheus"
+	"github.com/revdaalex/kafka-consumer-go/config"
+	"github.com/revdaalex/kafka-consumer-go/prometheus"
 )
 
 func main() {

@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/inviqa/kafka-consumer-go/integration/kafka"
+	"github.com/revdaalex/kafka-consumer-go/integration/kafka"
 )
 
 func TestRegularDbMaintenance(t *testing.T) {

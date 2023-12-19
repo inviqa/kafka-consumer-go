@@ -5,7 +5,7 @@ import (
 
 	"github.com/Shopify/sarama"
 
-	"github.com/inviqa/kafka-consumer-go/config"
+	"github.com/revdaalex/kafka-consumer-go/config"
 )
 
 type Handler func(ctx context.Context, msg *sarama.ConsumerMessage) error

@@ -9,8 +9,8 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/go-test/deep"
 
-	failuremodel "github.com/inviqa/kafka-consumer-go/data/failure/model"
-	"github.com/inviqa/kafka-consumer-go/data/retry/model"
+	failuremodel "github.com/revdaalex/kafka-consumer-go/data/failure/model"
+	"github.com/revdaalex/kafka-consumer-go/data/retry/model"
 )
 
 func TestNewRepository(t *testing.T) {

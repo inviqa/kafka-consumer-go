@@ -8,9 +8,9 @@ import (
 
 	"github.com/Shopify/sarama"
 
-	"github.com/inviqa/kafka-consumer-go/config"
-	"github.com/inviqa/kafka-consumer-go/data/failure/model"
-	"github.com/inviqa/kafka-consumer-go/log"
+	"github.com/revdaalex/kafka-consumer-go/config"
+	"github.com/revdaalex/kafka-consumer-go/data/failure/model"
+	"github.com/revdaalex/kafka-consumer-go/log"
 )
 
 type failureProducer interface {

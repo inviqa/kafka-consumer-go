@@ -3,7 +3,7 @@ package config
 import (
 	"time"
 
-	"github.com/inviqa/kafka-consumer-go/data/retry/model"
+	"github.com/revdaalex/kafka-consumer-go/data/retry/model"
 )
 
 type DBRetries map[string][]*DBTopicRetry

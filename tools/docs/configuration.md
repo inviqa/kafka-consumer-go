@@ -29,7 +29,7 @@ package main
 import (
 	"time"
 
-	"github.com/inviqa/kafka-consumer-go/config"
+	"github.com/revdaalex/kafka-consumer-go/config"
 )
 
 func main() {

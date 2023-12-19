@@ -4,8 +4,8 @@ import (
 	"context"
 	"sync"
 
-	"github.com/inviqa/kafka-consumer-go/data/failure/model"
-	"github.com/inviqa/kafka-consumer-go/log"
+	"github.com/revdaalex/kafka-consumer-go/data/failure/model"
+	"github.com/revdaalex/kafka-consumer-go/log"
 )
 
 // databaseProducer is a producer that listens for failed push attempts to kafka

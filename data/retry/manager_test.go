@@ -9,10 +9,10 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/go-test/deep"
 
-	"github.com/inviqa/kafka-consumer-go/config"
-	failuremodel "github.com/inviqa/kafka-consumer-go/data/failure/model"
-	"github.com/inviqa/kafka-consumer-go/data/retry/internal"
-	"github.com/inviqa/kafka-consumer-go/data/retry/model"
+	"github.com/revdaalex/kafka-consumer-go/config"
+	failuremodel "github.com/revdaalex/kafka-consumer-go/data/failure/model"
+	"github.com/revdaalex/kafka-consumer-go/data/retry/internal"
+	"github.com/revdaalex/kafka-consumer-go/data/retry/model"
 )
 
 func TestNewManagerWithDefaults(t *testing.T) {

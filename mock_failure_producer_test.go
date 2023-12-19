@@ -4,7 +4,7 @@ import (
 	"context"
 	"sync"
 
-	"github.com/inviqa/kafka-consumer-go/data/failure/model"
+	"github.com/revdaalex/kafka-consumer-go/data/failure/model"
 )
 
 type mockFailureProducer struct {

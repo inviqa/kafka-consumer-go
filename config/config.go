@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/inviqa/kafka-consumer-go/data"
+	"github.com/revdaalex/kafka-consumer-go/data"
 )
 
 var (

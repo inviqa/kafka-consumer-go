@@ -4,9 +4,9 @@ import (
 	"context"
 	"time"
 
-	consumer "github.com/inviqa/kafka-consumer-go"
-	"github.com/inviqa/kafka-consumer-go/config"
-	"github.com/inviqa/kafka-consumer-go/log"
+	consumer "github.com/revdaalex/kafka-consumer-go"
+	"github.com/revdaalex/kafka-consumer-go/config"
+	"github.com/revdaalex/kafka-consumer-go/log"
 )
 
 func ConsumeFromKafkaUntil(cfg *config.Config, hm consumer.HandlerMap, timeout time.Duration, done func(chan<- bool)) error {

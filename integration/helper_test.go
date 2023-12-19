@@ -12,11 +12,11 @@ import (
 
 	"github.com/Shopify/sarama"
 
-	consumer "github.com/inviqa/kafka-consumer-go"
-	"github.com/inviqa/kafka-consumer-go/config"
-	"github.com/inviqa/kafka-consumer-go/data"
-	"github.com/inviqa/kafka-consumer-go/integration/kafka"
-	"github.com/inviqa/kafka-consumer-go/test"
+	consumer "github.com/revdaalex/kafka-consumer-go"
+	"github.com/revdaalex/kafka-consumer-go/config"
+	"github.com/revdaalex/kafka-consumer-go/data"
+	"github.com/revdaalex/kafka-consumer-go/integration/kafka"
+	"github.com/revdaalex/kafka-consumer-go/test"
 )
 
 var (

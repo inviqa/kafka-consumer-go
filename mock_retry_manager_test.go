@@ -5,8 +5,8 @@ import (
 	"errors"
 	"time"
 
-	failuremodel "github.com/inviqa/kafka-consumer-go/data/failure/model"
-	"github.com/inviqa/kafka-consumer-go/data/retry/model"
+	failuremodel "github.com/revdaalex/kafka-consumer-go/data/failure/model"
+	"github.com/revdaalex/kafka-consumer-go/data/retry/model"
 )
 
 type mockRetryManager struct {

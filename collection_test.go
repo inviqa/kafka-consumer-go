@@ -5,9 +5,9 @@ import (
 
 	"github.com/Shopify/sarama"
 
-	"github.com/inviqa/kafka-consumer-go/config"
-	"github.com/inviqa/kafka-consumer-go/log"
-	"github.com/inviqa/kafka-consumer-go/test/saramatest"
+	"github.com/revdaalex/kafka-consumer-go/config"
+	"github.com/revdaalex/kafka-consumer-go/log"
+	"github.com/revdaalex/kafka-consumer-go/test/saramatest"
 )
 
 type testKafkaConnector struct {
