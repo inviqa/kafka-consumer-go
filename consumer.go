@@ -11,6 +11,11 @@ import (
 	"github.com/revdaalex/kafka-consumer-go/log"
 )
 
+const (
+	nextTimeRetry = "NextTimeRetry"
+	timeLayout    = "2006-01-02 15:04:05.999999999 -0700 MST"
+)
+
 type consumer struct {
 	failureCh chan<- model.Failure
 	cfg       *config.Config
@@ -42,8 +47,8 @@ func (c *consumer) ConsumeClaim(session sarama.ConsumerGroupSession, claim saram
 
 			if len(message.Headers) != 0 {
 				for _, header := range message.Headers {
-					if string(header.Key) == "NextTimeRetry" {
-						retryTime, err = time.Parse("2006-01-02 15:04:05.999999999 -0700 MST", string(header.Value))
+					if string(header.Key) == nextTimeRetry {
+						retryTime, err = time.Parse(timeLayout, string(header.Value))
 						if err != nil {
 							return err
 						}
@@ -98,7 +103,7 @@ func (c *consumer) sendToFailureChannel(message *sarama.ConsumerMessage, err err
 	}
 
 	retryHeader := &sarama.RecordHeader{
-		Key:   []byte("NextTimeRetry"),
+		Key:   []byte(nextTimeRetry),
 		Value: []byte(netTimeRetry.String()),
 	}
 

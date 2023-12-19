@@ -85,8 +85,9 @@ func (p kafkaFailureProducer) publishFailure(f model.Failure) {
 	p.logger.Debugf("publishing retry to Kafka topic '%s'", f.NextTopic)
 
 	_, _, err := p.producer.SendMessage(&sarama.ProducerMessage{
-		Topic: f.NextTopic,
-		Value: sarama.ByteEncoder(f.Message),
+		Topic:   f.NextTopic,
+		Value:   sarama.ByteEncoder(f.Message),
+		Headers: f.MessageHeaders,
 	})
 
 	if err != nil {

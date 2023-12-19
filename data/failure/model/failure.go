@@ -1,8 +1,6 @@
 package model
 
 import (
-	"encoding/json"
-
 	"github.com/Shopify/sarama"
 )
 
@@ -12,7 +10,7 @@ type Failure struct {
 	NextTopic      string
 	Message        []byte
 	MessageKey     []byte
-	MessageHeaders []byte
+	MessageHeaders []sarama.RecordHeader
 	KafkaPartition int32
 	KafkaOffset    int64
 }
@@ -27,24 +25,19 @@ func FailureFromSaramaMessage(err error, nextTopic string, sm *sarama.ConsumerMe
 		NextTopic:      nextTopic,
 		Message:        sm.Value,
 		MessageKey:     sm.Key,
-		MessageHeaders: saramaRecordHeadersToJson(sm.Headers),
+		MessageHeaders: convertSaramaRecordHeaders(sm.Headers),
 		KafkaPartition: sm.Partition,
 		KafkaOffset:    sm.Offset,
 	}
 }
 
-func saramaRecordHeadersToJson(headers []*sarama.RecordHeader) []byte {
-	headerMap := map[string]string{}
+func convertSaramaRecordHeaders(headers []*sarama.RecordHeader) []sarama.RecordHeader {
+	nonPointHeaders := make([]sarama.RecordHeader, len(headers))
 
-	for _, h := range headers {
-		headerMap[string(h.Key)] = string(h.Value)
+	for i, h := range headers {
+		nonPointHeaders[i].Key = h.Key
+		nonPointHeaders[i].Value = h.Value
 	}
 
-	// we silence the error if the marshalling fails, as the data is likely not valid
-	// anyway and there is nothing else we can do at this stage, in the future we may
-	// look at bubbling up a special error to the caller, but it would need to be logged
-	// and the message would still need to be sent for retry anyway
-	headerJson, _ := json.Marshal(headerMap)
-
-	return headerJson
+	return nonPointHeaders
 }
