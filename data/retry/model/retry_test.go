@@ -3,7 +3,7 @@ package model
 import (
 	"testing"
 
-	"github.com/Shopify/sarama"
+	"github.com/IBM/sarama"
 	"github.com/go-test/deep"
 )
 

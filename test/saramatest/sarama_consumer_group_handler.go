@@ -1,6 +1,6 @@
 package saramatest
 
-import "github.com/Shopify/sarama"
+import "github.com/IBM/sarama"
 
 type MockConsumerGroupHandler struct{}
 

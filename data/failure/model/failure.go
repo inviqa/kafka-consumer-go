@@ -1,7 +1,7 @@
 package model
 
 import (
-	"github.com/Shopify/sarama"
+	"github.com/IBM/sarama"
 )
 
 type Failure struct {
