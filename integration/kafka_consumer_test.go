@@ -9,8 +9,8 @@ import (
 
 	"github.com/go-test/deep"
 
-	"github.com/inviqa/kafka-consumer-go/data/retry/model"
-	"github.com/inviqa/kafka-consumer-go/integration/kafka"
+	"github.com/revdaalex/kafka-consumer-go/data/retry/model"
+	"github.com/revdaalex/kafka-consumer-go/integration/kafka"
 )
 
 func TestMessagesAreConsumedFromKafka(t *testing.T) {

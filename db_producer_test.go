@@ -8,8 +8,8 @@ import (
 
 	"github.com/go-test/deep"
 
-	"github.com/inviqa/kafka-consumer-go/data/failure/model"
-	"github.com/inviqa/kafka-consumer-go/log"
+	"github.com/revdaalex/kafka-consumer-go/data/failure/model"
+	"github.com/revdaalex/kafka-consumer-go/log"
 )
 
 func TestNewDatabaseProducer(t *testing.T) {

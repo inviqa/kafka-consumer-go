@@ -8,10 +8,10 @@ import (
 
 	"github.com/Shopify/sarama"
 
-	"github.com/inviqa/kafka-consumer-go/config"
-	failuremodel "github.com/inviqa/kafka-consumer-go/data/failure/model"
-	"github.com/inviqa/kafka-consumer-go/data/retry/model"
-	"github.com/inviqa/kafka-consumer-go/log"
+	"github.com/revdaalex/kafka-consumer-go/config"
+	failuremodel "github.com/revdaalex/kafka-consumer-go/data/failure/model"
+	"github.com/revdaalex/kafka-consumer-go/data/retry/model"
+	"github.com/revdaalex/kafka-consumer-go/log"
 )
 
 // kafkaConsumerDbCollection is a collection of consumers that initially consume messages from Kafka

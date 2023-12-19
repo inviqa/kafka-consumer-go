@@ -9,7 +9,7 @@ import (
 	prom "github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 
-	"github.com/inviqa/kafka-consumer-go/data/deadletter"
+	"github.com/revdaalex/kafka-consumer-go/data/deadletter"
 )
 
 type dbFactory interface {

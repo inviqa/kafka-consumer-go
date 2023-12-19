@@ -7,11 +7,11 @@ import (
 
 	"github.com/Shopify/sarama"
 
-	"github.com/inviqa/kafka-consumer-go/config"
-	"github.com/inviqa/kafka-consumer-go/data"
-	"github.com/inviqa/kafka-consumer-go/data/failure/model"
-	"github.com/inviqa/kafka-consumer-go/data/retry"
-	"github.com/inviqa/kafka-consumer-go/log"
+	"github.com/revdaalex/kafka-consumer-go/config"
+	"github.com/revdaalex/kafka-consumer-go/data"
+	"github.com/revdaalex/kafka-consumer-go/data/failure/model"
+	"github.com/revdaalex/kafka-consumer-go/data/retry"
+	"github.com/revdaalex/kafka-consumer-go/log"
 )
 
 func Start(cfg *config.Config, ctx context.Context, hs HandlerMap, logger log.Logger) error {

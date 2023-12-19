@@ -10,7 +10,7 @@ Configuration for this module, as described in its [documentation](/tools/docs/c
 package integration
 
 import (
-	kctest "github.com/inviqa/kafka-consumer-go/test"
+	kctest "github.com/revdaalex/kafka-consumer-go/test"
 )
 
 func init() {
@@ -36,8 +36,8 @@ import (
 	"testing"
 	"time"
 	
-	"github.com/inviqa/kafka-consumer-go"
-	kctest "github.com/inviqa/kafka-consumer-go/test"
+	"github.com/revdaalex/kafka-consumer-go"
+	kctest "github.com/revdaalex/kafka-consumer-go/test"
 )
 
 func TestSomething(t *testing.T) {

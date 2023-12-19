@@ -36,7 +36,7 @@ Currently, **our recommendation is that you continue to use Kafka for retries** 
 
 This module should be imported into your Go service using:
 
-    go get github.com/inviqa/kafka-consumer-go
+    go get github.com/revdaalex/kafka-consumer-go
 
 You will now need to configure the consumer, see [configuration] for more on this.
 

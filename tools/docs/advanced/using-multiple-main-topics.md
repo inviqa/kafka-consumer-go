@@ -30,8 +30,8 @@ This would look something like:
 package main
 
 import (
-	okc "github.com/inviqa/kafka-consumer-go"
-	okconf "github.com/inviqa/kafka-consumer-go/config"
+	okc "github.com/revdaalex/kafka-consumer-go"
+	okconf "github.com/revdaalex/kafka-consumer-go/config"
 	log "github.com/sirupsen/logrus"
 )
 

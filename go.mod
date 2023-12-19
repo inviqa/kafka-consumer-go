@@ -1,4 +1,4 @@
-module github.com/inviqa/kafka-consumer-go
+module github.com/revdaalex/kafka-consumer-go
 
 go 1.16
 
