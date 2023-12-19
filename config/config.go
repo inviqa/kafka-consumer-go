@@ -68,6 +68,21 @@ func (cfg *Config) NextTopicNameInChain(currentTopic string) (string, error) {
 	return next.Name, nil
 }
 
+func (cfg *Config) NextTopicInChain(currentTopic string) (*KafkaTopic, error) {
+	topic, ok := cfg.TopicMap[TopicKey(currentTopic)]
+	if !ok {
+		return nil, fmt.Errorf("topic not found")
+	}
+
+	next := topic.Next
+
+	if next == nil {
+		return nil, fmt.Errorf("there is no next topic in the chain")
+	}
+
+	return next, nil
+}
+
 func (cfg *Config) FindTopicKey(topicName string) TopicKey {
 	topic, ok := cfg.TopicMap[TopicKey(topicName)]
 	if !ok {
