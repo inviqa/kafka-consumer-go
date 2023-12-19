@@ -59,9 +59,7 @@ func (c *consumer) ConsumeClaim(session sarama.ConsumerGroupSession, claim saram
 
 			if needCheckRetryTime {
 				if retryTime.After(messageTime) {
-					session.MarkOffset(message.Topic, message.Partition, message.Offset-1, "")
-
-					continue
+					time.Sleep(retryTime.Sub(messageTime))
 				}
 			}
 
