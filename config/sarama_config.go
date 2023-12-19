@@ -16,7 +16,6 @@ func NewSaramaConfig(tlsEnable bool, tlsSkipVerify bool) *sarama.Config {
 	cfg.Version = sarama.V2_4_0_0
 	cfg.Consumer.Return.Errors = true
 	cfg.Consumer.Offsets.Initial = sarama.OffsetOldest
-	cfg.Consumer.Offsets.AutoCommit.Enable = false
 
 	cfg.Producer.Return.Successes = true
 
