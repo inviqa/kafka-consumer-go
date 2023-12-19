@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Shopify/sarama"
+	"github.com/IBM/sarama"
 
 	"github.com/revdaalex/kafka-consumer-go/config"
 	"github.com/revdaalex/kafka-consumer-go/data/failure/model"
@@ -60,6 +60,7 @@ func (c *consumer) ConsumeClaim(session sarama.ConsumerGroupSession, claim saram
 			if needCheckRetryTime {
 				if retryTime.Before(messageTime) {
 					session.MarkOffset(message.Topic, message.Partition, message.Offset, "")
+					session.Commit()
 
 					continue
 				}
@@ -88,6 +89,7 @@ func (c *consumer) ConsumeClaim(session sarama.ConsumerGroupSession, claim saram
 func (c *consumer) markMessageProcessed(session sarama.ConsumerGroupSession, msg *sarama.ConsumerMessage) {
 	c.logger.Debugf("marking messages as processed")
 	session.MarkMessage(msg, "")
+	session.Commit()
 }
 
 func (c *consumer) sendToFailureChannel(message *sarama.ConsumerMessage, err error) {

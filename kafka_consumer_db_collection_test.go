@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Shopify/sarama"
+	"github.com/IBM/sarama"
 	"github.com/go-test/deep"
 
 	"github.com/revdaalex/kafka-consumer-go/config"

@@ -10,7 +10,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/Shopify/sarama"
+	"github.com/IBM/sarama"
 
 	consumer "github.com/revdaalex/kafka-consumer-go"
 	"github.com/revdaalex/kafka-consumer-go/config"

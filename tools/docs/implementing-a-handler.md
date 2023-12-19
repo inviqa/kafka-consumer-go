@@ -20,7 +20,7 @@ package kafka
 import (
 	"database/sql"
 	
-	"github.com/Shopify/sarama"
+	"github.com/IBM/sarama"
 )
 
 type ProductHandler struct {

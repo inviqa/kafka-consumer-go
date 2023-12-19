@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/Shopify/sarama"
+	"github.com/IBM/sarama"
 
 	"github.com/revdaalex/kafka-consumer-go/config"
 	"github.com/revdaalex/kafka-consumer-go/data"

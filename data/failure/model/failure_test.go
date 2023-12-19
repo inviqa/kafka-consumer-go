@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/Shopify/sarama"
+	"github.com/IBM/sarama"
 	"github.com/go-test/deep"
 )
 
@@ -28,7 +28,6 @@ func TestFailureFromSaramaMessage(t *testing.T) {
 			NextTopic:      "retry1.product",
 			Message:        []byte(`{"foo":"bar"}`),
 			MessageKey:     []byte("baz"),
-			MessageHeaders: []byte(`{"foo":"buzz"}`),
 			KafkaPartition: 21002,
 			KafkaOffset:    3048453957483304,
 		}

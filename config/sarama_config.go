@@ -3,9 +3,8 @@ package config
 import (
 	"crypto/tls"
 	"os"
-	"time"
 
-	"github.com/Shopify/sarama"
+	"github.com/IBM/sarama"
 )
 
 func NewSaramaConfig(tlsEnable bool, tlsSkipVerify bool) *sarama.Config {
@@ -17,10 +16,7 @@ func NewSaramaConfig(tlsEnable bool, tlsSkipVerify bool) *sarama.Config {
 	cfg.Version = sarama.V2_4_0_0
 	cfg.Consumer.Return.Errors = true
 	cfg.Consumer.Offsets.Initial = sarama.OffsetOldest
-	cfg.Consumer.Offsets.AutoCommit = struct {
-		Enable   bool
-		Interval time.Duration
-	}{Enable: false}
+	cfg.Consumer.Offsets.AutoCommit.Enable = false
 
 	cfg.Producer.Return.Successes = true
 

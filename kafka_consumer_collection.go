@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Shopify/sarama"
+	"github.com/IBM/sarama"
 
 	"github.com/revdaalex/kafka-consumer-go/config"
 	"github.com/revdaalex/kafka-consumer-go/data/failure/model"

@@ -3,7 +3,7 @@ package saramatest
 import (
 	"errors"
 
-	"github.com/Shopify/sarama"
+	"github.com/IBM/sarama"
 )
 
 type MockSyncProducer struct {

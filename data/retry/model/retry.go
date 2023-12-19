@@ -3,7 +3,7 @@ package model
 import (
 	"encoding/json"
 
-	"github.com/Shopify/sarama"
+	"github.com/IBM/sarama"
 )
 
 type Retry struct {

@@ -5,7 +5,7 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/Shopify/sarama"
+	"github.com/IBM/sarama"
 )
 
 type MockConsumerGroup struct {

@@ -8,7 +8,7 @@ import (
 	"errors"
 	"log"
 
-	"github.com/Shopify/sarama"
+	"github.com/IBM/sarama"
 )
 
 type TestConsumerHandler struct {
