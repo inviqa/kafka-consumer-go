@@ -13,7 +13,7 @@ func NewSaramaConfig(tlsEnable bool, tlsSkipVerify bool) *sarama.Config {
 	host, _ := os.Hostname()
 
 	cfg.ClientID = host
-	cfg.Version = sarama.V2_4_0_0
+	cfg.Version = sarama.V0_11_0_2
 	cfg.Consumer.Return.Errors = true
 	cfg.Consumer.Offsets.Initial = sarama.OffsetOldest
 
